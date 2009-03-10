@@ -7,12 +7,32 @@ issues:
  - Retrieving the source video from a "flash-only" website
  - Finding out contextual data about a pasted url.. title/description/etc
 
-Vidscraper provides a unified api for an issue that requires one-off
-scraping for multiple types of sites.
+Vidscraper provides a unified api for an issue that requires a lot of
+one-off scraping.
 
 ** Usage
 
 *** Simple usage: auto_scrape
+
+Most use cases will simply require the auto_scrape function.  Usage is
+incredibly easy;
+
+: >>> from vidscraper import auto_scrape
+: >>> data = auto_scrape(my_url)
+
+That's it!  Couldn't be eaiser.  auto_scrape will figure out what
+scraping methods map to your url and return a dictionary full of what
+information it can find out about the data.  (If it can't, it'll
+return a [[CantIdentifyUrl]] error.. see [[Handling errors]] below.)
+
+auto_scrape returns a dictionary with fields that represent the data
+it knows how to figure out for that site (some sites might not support
+some fields... in that case, auto_scrape simply won't include those
+fields in the dictionary).  Common fields are:
+ - *title:* title of the video
+ - *description:* description of the video
+ - *submit_date:* date the video was submitted
+ - *file_url:* The url of the source video file
 
 *** Scrape from a particular site: scrape_suite
 

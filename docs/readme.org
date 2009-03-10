@@ -1,0 +1,39 @@
+VidScraper: A simple python library for scraping common video sites
+
+* About
+
+VidScraper is a clean, simple library for a couple of rather messy
+issues:
+ - Retrieving the source video from a "flash-only" website
+ - Finding out contextual data about a pasted url.. title/description/etc
+
+Vidscraper provides a unified api for an issue that requires one-off
+scraping for multiple types of sites.
+
+** Usage
+
+*** Simple usage: auto_scrape
+
+*** Scrape from a particular site: scrape_suite
+
+*** Retrieving only certain fields
+
+*** Calling the methods manually
+
+*** Handling errors
+
+**** BaseUrlLoadFailure
+**** ParsingError
+**** FieldNotFound
+**** CantIdentifyUrl
+
+** Adding more sites
+
+*** Creating the methods
+
+Decorator
+
+*** Creating and registering a suite
+
+*** Using shortmem to preserve space
+

@@ -1,7 +1,7 @@
  VidScraper: A simple python library for scraping common video sites
  ===================================================================
 
-Author: Christopher Webber <cwebber@gentileschi.dustycloud.org>
+Author: Christopher Webber <cwebber@dustycloud.org>
 Date: 2009-03-10 15:21:41 CDT
 
 

@@ -3,12 +3,13 @@ import re
 from lxml import etree
 from lxml.html.clean import clean_html
 
-from vidscraper.decorators import provide_shortmem
+from vidscraper.decorators import provide_shortmem, parse_url
 from vidscraper import errors
 from vidscraper import util
 
 
 @provide_shortmem
+@parse_url
 def scrape_title(url, shortmem=None):
     try:
         return shortmem['base_etree'].xpath(
@@ -18,15 +19,19 @@ def scrape_title(url, shortmem=None):
 
 
 @provide_shortmem
+@parse_url
 def scrape_description(url, shortmem=None):
     try:
-        return util.lxml_inner_html(
-            shortmem['base_etree'].xpath('id("description")')[0]).strip()
+        return clean_html(
+            util.lxml_inner_html(
+                shortmem['base_etree'].xpath(
+                    'id("description")')[0]).strip())
     except IndexError:
         raise errors.FieldNotFound('Could not find the description field')
 
 
 @provide_shortmem
+@parse_url
 def scrape_file_url(url, shortmem=None):
     vimeo_match = VIMEO_REGEX.match(url)
     video_id = vimeo_match.group(2)

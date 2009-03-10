@@ -3,11 +3,12 @@ import re
 from lxml import etree
 from lxml.html.clean import clean_html
 
-from vidscraper.decorators import provide_shortmem
+from vidscraper.decorators import provide_shortmem, parse_url
 from vidscraper import errors
 
 
 @provide_shortmem
+@parse_url
 def scrape_title(url, shortmem=None):
     try:
         return shortmem['base_etree'].xpath(
@@ -17,6 +18,7 @@ def scrape_title(url, shortmem=None):
 
 
 @provide_shortmem
+@parse_url
 def scrape_description(url, shortmem=None):
     span_elts = shortmem['base_etree'].xpath(
         "id('watch-video-details-inner')/"

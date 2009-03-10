@@ -87,7 +87,8 @@ An error if the specific field is not found
 *** CantIdentifyUrl
 Can't find a suite to handle the url
 
-* Adding more sites
+* TODO Adding more sites
+
 ** Creating the methods
 *** The decorators
 *** Using shortmem to reduce redundancy

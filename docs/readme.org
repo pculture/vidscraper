@@ -76,6 +76,8 @@ Nothing magical about it... they just take the url as their first argument.
 : 'Big Buck Bunny'
 
 ** Handling errors
+Exceptions are defined in the vidscraper.errors module.
+
 *** BaseUrlLoadFailure
 Error if you can't even load the base url
 *** ParsingError

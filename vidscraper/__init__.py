@@ -1,3 +1,10 @@
+from vidscraper import errors
+from vidscraper.sites import (
+    vimeo, google_video, youtube)
+
+AUTOSCRAPE_SUITES = [vimeo.SUITE, google_video.SUITE, youtube.SUITE]
+
+
 def scrape_suite(url, suite, fields=None):
     scraped_data = {}
 
@@ -16,11 +23,18 @@ def scrape_suite(url, suite, fields=None):
 
     shortmem = {}
     for field in fields:
-        try:
-            func = funcs_map[field]
-            scraped_data[field] = func(url, shortmem=shortmem)
-        except KeyError:
-            # should probably only pass conditionally
-            pass
+        func = funcs_map[field]
+        scraped_data[field] = func(url, shortmem=shortmem)
 
     return scraped_data
+
+
+def auto_scrape(url, fields=None):
+    for suite in AUTOSCRAPE_SUITES:
+        if suite['regex'].match(url):
+            return scrape_suite(url, suite, fields)
+
+    # If we get here that means that none of the regexes matched, so
+    # throw an error
+    raise errors.CantIdentifyUrl(
+        "No video scraping suite was found that can scrape that url")

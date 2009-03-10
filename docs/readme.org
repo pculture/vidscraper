@@ -10,9 +10,9 @@ issues:
 Vidscraper provides a unified api for an issue that requires a lot of
 one-off scraping.
 
-** Usage
+* Usage
 
-*** Simple usage: auto_scrape
+** Simple usage: auto_scrape
 
 Most use cases will simply require the auto_scrape function.  Usage is
 incredibly easy;
@@ -34,26 +34,26 @@ fields in the dictionary).  Common fields are:
  - *submit_date:* date the video was submitted
  - *file_url:* The url of the source video file
 
-*** Scrape from a particular site: scrape_suite
+** Scrape from a particular site: scrape_suite
 
-*** Retrieving only certain fields
+** Retrieving only certain fields
 
-*** Calling the methods manually
+** Calling the methods manually
 
-*** Handling errors
+** Handling errors
 
-**** BaseUrlLoadFailure
-**** ParsingError
-**** FieldNotFound
-**** CantIdentifyUrl
+*** BaseUrlLoadFailure
+*** ParsingError
+*** FieldNotFound
+*** CantIdentifyUrl
 
-** Adding more sites
+* Adding more sites
 
-*** Creating the methods
+** Creating the methods
 
 Decorator
 
-*** Creating and registering a suite
+** Creating and registering a suite
 
-*** Using shortmem to preserve space
+** Using shortmem to preserve space
 

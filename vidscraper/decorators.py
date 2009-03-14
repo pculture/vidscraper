@@ -18,3 +18,13 @@ def parse_url(scraper_func):
         return scraper_func(url, shortmem=shortmem, *args, **kwargs)
 
     return new_scraper_func
+
+
+def returns_unicode(scraper_func):
+    def new_scraper_func(url, shortmem=None, *args, **kwargs):
+        result = scraper_func(url, shortmem=shortmem, *args, **kwargs)
+    
+        if result is not None:
+            return unicode(result)
+
+    return new_scraper_func

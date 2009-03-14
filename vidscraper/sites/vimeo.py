@@ -3,13 +3,14 @@ import re
 from lxml import etree
 from lxml.html.clean import clean_html
 
-from vidscraper.decorators import provide_shortmem, parse_url
+from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
 from vidscraper import errors
 from vidscraper import util
 
 
 @provide_shortmem
 @parse_url
+@returns_unicode
 def scrape_title(url, shortmem=None):
     try:
         return shortmem['base_etree'].xpath(
@@ -20,6 +21,7 @@ def scrape_title(url, shortmem=None):
 
 @provide_shortmem
 @parse_url
+@returns_unicode
 def scrape_description(url, shortmem=None):
     try:
         return clean_html(
@@ -32,6 +34,7 @@ def scrape_description(url, shortmem=None):
 
 @provide_shortmem
 @parse_url
+@returns_unicode
 def scrape_file_url(url, shortmem=None):
     vimeo_match = VIMEO_REGEX.match(url)
     video_id = vimeo_match.group(2)

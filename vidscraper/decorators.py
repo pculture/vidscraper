@@ -25,6 +25,10 @@ def returns_unicode(scraper_func):
         result = scraper_func(url, shortmem=shortmem, *args, **kwargs)
     
         if result is not None:
-            return unicode(result)
+            if shortmem and shortmem.has_key('base_etree'):
+                encoding = shortmem['base_etree'].docinfo.encoding
+            else:
+                encoding = 'utf8'
+            return result.decode(encoding)
 
     return new_scraper_func

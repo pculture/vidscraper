@@ -1,11 +1,21 @@
 import re
 
+from lxml import builder
 from lxml import etree
+from lxml.html import builder as E
+from lxml.html import tostring
 from lxml.html.clean import clean_html
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
 from vidscraper import errors
 from vidscraper import util
+
+
+EMaker = builder.ElementMaker()
+EMBED = EMaker.embed
+
+EMBED_WIDTH = 400
+EMBED_HEIGHT = 225
 
 
 @provide_shortmem
@@ -43,8 +53,32 @@ def scrape_file_url(url, shortmem=None):
     vimeo_data = etree.parse(video_data_url)
     req_sig = vimeo_data.find('request_signature').text
     req_sig_expires = vimeo_data.find('request_signature_expires').text
-    return "http://www.vimeo.com/moogaloop/play/clip:%s/%s/%s/?q=sd" % (
-        video_id, req_sig, req_sig_expires)            
+    file_url = "http://www.vimeo.com/moogaloop/play/clip:%s/%s/%s/?q=sd" % (
+        video_id, req_sig, req_sig_expires)
+    shortmem['file_url'] = file_url
+    return file_url
+
+
+@provide_shortmem
+@parse_url
+@returns_unicode
+def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
+    if not shortmem.get('file_url'):
+        scrape_file_url(url, shortmem=shortmem)
+    
+    object_children = (
+        E.PARAM(name="allowfullscreen", value="true"),
+        E.PARAM(name="allowscriptaccess", value="always"),
+        E.PARAM(name="movie", value=shortmem['file_url']),
+        EMBED(src=shortmem['file_url'],
+              type="application/x-shockwave-flash",
+              allowfullscreen="true",
+              allowscriptaccess="always",
+              width=str(EMBED_WIDTH), height=str(EMBED_HEIGHT)))
+    main_object = E.OBJECT(
+        width=str(EMBED_WIDTH), height=str(EMBED_HEIGHT), *object_children)
+
+    return tostring(main_object)
 
 
 VIMEO_REGEX = re.compile(r'http://([^/]+\.)?vimeo.com/(\d+)')
@@ -53,5 +87,7 @@ SUITE = {
     'funcs': {
         'title': scrape_title,
         'description': scrape_description,
-        'file_url': scrape_file_url}}
+        'file_url': scrape_file_url,
+        'embed': get_embed},
+    'order': ['title', 'description', 'file_url', 'embed']}
             

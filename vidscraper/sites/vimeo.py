@@ -24,7 +24,7 @@ EMBED_HEIGHT = 225
 def scrape_title(url, shortmem=None):
     try:
         return shortmem['base_etree'].xpath(
-            "id('header')/div/div[@class='title']/text()")[0]
+            "id('header')/div/div[@class='title']")[0].text_content().strip()
     except IndexError:
         raise errors.FieldNotFound('Could not find the title field')
 

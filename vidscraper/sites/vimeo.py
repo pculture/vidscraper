@@ -1,4 +1,5 @@
 import re
+import urllib
 
 from lxml import builder
 from lxml import etree
@@ -60,17 +61,24 @@ def scrape_file_url(url, shortmem=None):
 
 
 @provide_shortmem
-@parse_url
 @returns_unicode
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
-    if not shortmem.get('file_url'):
-        scrape_file_url(url, shortmem=shortmem)
-    
+    get_dict = {'server': 'vimeo.com',
+                'show_title': 1,
+                'show_byline': 1,
+                'show_portrait': 0,
+                'color': '',
+                'fullscreen': 1}
+
+    get_dict['clip_id'] = VIMEO_REGEX.match(url).groupdict()['video_id']
+
+    flash_url = 'http://vimeo.com/moogaloop.swf?' + urllib.urlencode(get_dict)
+
     object_children = (
         E.PARAM(name="allowfullscreen", value="true"),
         E.PARAM(name="allowscriptaccess", value="always"),
-        E.PARAM(name="movie", value=shortmem['file_url']),
-        EMBED(src=shortmem['file_url'],
+        E.PARAM(name="movie", value=flash_url),
+        EMBED(src=flash_url,
               type="application/x-shockwave-flash",
               allowfullscreen="true",
               allowscriptaccess="always",
@@ -81,7 +89,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return tostring(main_object)
 
 
-VIMEO_REGEX = re.compile(r'http://([^/]+\.)?vimeo.com/(\d+)')
+VIMEO_REGEX = re.compile(r'http://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
 SUITE = {
     'regex': VIMEO_REGEX,
     'funcs': {

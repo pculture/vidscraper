@@ -15,8 +15,8 @@ from vidscraper import util
 EMaker = builder.ElementMaker()
 EMBED = EMaker.embed
 
-EMBED_WIDTH = 400
-EMBED_HEIGHT = 225
+EMBED_WIDTH = 425
+EMBED_HEIGHT = 344
 
 
 @provide_shortmem

@@ -6,7 +6,6 @@ from lxml import builder
 from lxml import etree
 from lxml.html import builder as E
 from lxml.html import tostring
-from lxml import etree
 from lxml.html.clean import clean_html
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode

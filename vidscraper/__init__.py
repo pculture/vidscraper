@@ -1,6 +1,6 @@
 from vidscraper import errors
 from vidscraper.sites import (
-    vimeo, google_video, youtube)
+    vimeo, google_video, youtube, blip)
 
 AUTOSCRAPE_SUITES = [
     vimeo.SUITE, google_video.SUITE, youtube.SUITE,

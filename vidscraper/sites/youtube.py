@@ -1,3 +1,4 @@
+import copy
 import cgi
 import re
 import urlparse
@@ -64,8 +65,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return tostring(main_object)
 
 
-YOUTUBE_REGEX = re.compile(
-    r'http://([^/]+\.)?youtube.com/watch')
+YOUTUBE_REGEX = re.compile(r'http://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
     'funcs': {

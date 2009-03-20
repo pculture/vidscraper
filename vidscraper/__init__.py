@@ -25,7 +25,10 @@ def scrape_suite(url, suite, fields=None):
 
     shortmem = {}
     for field in fields:
-        func = funcs_map[field]
+        try:
+            func = funcs_map[field]
+        except KeyError:
+            continue
         scraped_data[field] = func(url, shortmem=shortmem)
 
     return scraped_data

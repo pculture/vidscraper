@@ -56,7 +56,6 @@ def scrape_description(url, shortmem=None):
 
 
 @provide_shortmem
-@returns_unicode
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     file_id = BLIP_REGEX.match(url).groupdict()['file_id']
     oembed_get_dict = {
@@ -67,7 +66,13 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     oembed_response = urllib.urlopen(
         'http://blip.tv/oembed/?' + urllib.urlencode(oembed_get_dict)).read()
 
-    return simplejson.decode(oembed_response)['html']
+
+    try:
+        embed_code = simplejson.decode(oembed_response.decode('utf8'))['html']
+    except ValueError:
+        embed_code = None
+
+    return embed_code
 
 
 BLIP_REGEX = re.compile(r'^http://blip.tv/file/(?P<file_id>\d+)')

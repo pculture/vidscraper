@@ -35,7 +35,7 @@ def scrape_title(url, shortmem=None):
 @returns_unicode
 def scrape_description(url, shortmem=None):
     try:
-        return clean_html(
+        return util.clean_description_html(
             util.lxml_inner_html(
                 shortmem['base_etree'].xpath(
                     'id("description")')[0]).strip())

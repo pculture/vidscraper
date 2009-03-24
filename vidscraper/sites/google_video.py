@@ -28,9 +28,10 @@ def scrape_description(url, shortmem=None):
         details = shortmem['base_etree'].xpath("//p[@id='details-desc']")[0]
         long_details = details.find("span[@id='long-desc']")
         if long_details:
-            return clean_html(util.lxml_inner_html(long_details))
+            return util.clean_description_html(
+                util.lxml_inner_html(long_details))
         else:
-            return clean_html(util.lxml_inner_html(details))
+            return util.clean_description_html(util.lxml_inner_html(details))
     except IndexError:
         raise errors.FieldNotFound('Could not find the description field')
 

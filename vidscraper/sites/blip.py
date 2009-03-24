@@ -12,7 +12,7 @@ from lxml.html import tostring
 from lxml.html.clean import clean_html
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
-from vidscraper import errors
+from vidscraper import errors, util
 
 
 EMaker = builder.ElementMaker()
@@ -50,7 +50,8 @@ def scrape_title(url, shortmem=None):
 @returns_unicode
 def scrape_description(url, shortmem=None):
     try:
-        return clean_html(shortmem['feed_item']['summary_detail']['value'])
+        return util.clean_description_html(
+            shortmem['feed_item']['summary_detail']['value'])
     except KeyError:
         raise errors.FieldNotFound('Could not find the title field')
 

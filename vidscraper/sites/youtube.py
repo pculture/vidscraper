@@ -1,4 +1,3 @@
-import copy
 import cgi
 import re
 import urlparse
@@ -10,7 +9,7 @@ from lxml.html import tostring
 from lxml.html.clean import clean_html
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
-from vidscraper import errors
+from vidscraper import errors, util
 
 
 EMaker = builder.ElementMaker()
@@ -39,7 +38,7 @@ def scrape_description(url, shortmem=None):
         "id('watch-video-details-inner')/"
         "div[@class='expand-content']/"
         "div[position()=1]/span")
-    return clean_html(
+    return util.clean_description_html(
         '\n'.join([etree.tostring(span_elt) for span_elt in span_elts])).strip()
 
 

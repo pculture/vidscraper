@@ -20,23 +20,18 @@ def parse_youtube_entry(entry):
 def get_entries(include_terms, exclude_terms=None,
                 order_by='relevant', **kwargs):
 
-    print "include_terms: %s" % include_terms
-    print "exclude_terms: %s" % exclude_terms
-
     marked_exclude_terms = ['-' + term for term in exclude_terms]
     search_term_list = list(include_terms) + marked_exclude_terms
     search_terms = ' '.join(search_term_list)
-
-    print "search_terms: %s" % search_terms
 
     get_params = {
         'vq': search_terms,
         'alt': 'rss'}
 
     if order_by == 'latest':
-        get_params['order_by'] = 'published'
+        get_params['orderby'] = 'published'
     elif order_by == 'relevant':
-        get_params['order_by'] = 'relevance'
+        get_params['orderby'] = 'relevance'
     else:
         pass #TODO: throw an error here
 

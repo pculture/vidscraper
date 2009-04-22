@@ -20,7 +20,7 @@ def parse_youtube_entry(entry):
 def get_entries(include_terms, exclude_terms=None,
                 order_by='relevant', **kwargs):
 
-    marked_exclude_terms = ['-' + term for term in exclude_terms]
+    marked_exclude_terms = ['-' + term for term in exclude_terms or []]
     search_term_list = list(include_terms) + marked_exclude_terms
     search_terms = ' '.join(search_term_list)
 

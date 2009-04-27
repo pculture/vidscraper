@@ -69,7 +69,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 
 
     try:
-        embed_code = simplejson.decode(oembed_response.decode('utf8'))['html']
+        embed_code = simplejson.loads(oembed_response.decode('utf8'))['html']
     except ValueError:
         embed_code = None
 

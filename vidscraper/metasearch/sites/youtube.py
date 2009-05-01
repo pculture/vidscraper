@@ -1,7 +1,10 @@
+import cgi
 import urllib
+import urlparse
 
 import feedparser
 
+from vidscraper import util
 from vidscraper.sites import youtube as youtube_scraper
 
 #'http://gdata.youtube.com/feeds/api/videos?vq=%s&amp;alt=rss'
@@ -14,6 +17,12 @@ def parse_youtube_entry(entry):
         'description': entry['summary'],
         'link': entry['link']}
     parsed_entry['embed'] = youtube_scraper.get_embed(entry['link'])
+
+    video_id = cgi.parse_qs(urlparse.urlsplit(entry['link'])[3])['v'][0]
+    parsed_entry['thumbnail_url'] = \
+        'http://img.youtube.com/vi/%s/default.jpg' % video_id
+    print "parsed_entry['thumbnail_url']: %s" % parsed_entry['thumbnail_url']
+
     return parsed_entry
 
 

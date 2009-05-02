@@ -64,10 +64,18 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return tostring(main_object)
 
 
+@provide_shortmem
+@returns_unicode
+def get_thumbnail_url(url, shortmem=None):
+    video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
+    return 'http://img.youtube.com/vi/%s/default.jpg' % video_id
+
+
 YOUTUBE_REGEX = re.compile(r'http://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
     'funcs': {
         'title': scrape_title,
         'description': scrape_description,
-        'embed': get_embed}}
+        'embed': get_embed,
+        'thumbnail_url': get_thumbnail_url}}

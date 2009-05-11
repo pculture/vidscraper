@@ -1,9 +1,9 @@
 import copy
 
 #from vidscraper import errors
-from vidscraper.metasearch.sites import (youtube)
+from vidscraper.metasearch.sites import (youtube, blip)
 
-AUTOSEARCH_SUITES = [youtube.SUITE]
+AUTOSEARCH_SUITES = [youtube.SUITE, blip.SUITE]
 
 
 def auto_search(include_terms, exclude_terms=None,

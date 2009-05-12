@@ -41,10 +41,22 @@ def unfriendlysort_results(results, add_suite=True):
     return new_results
 
 
-def friendlysort_results(results):
+def intersperse_results(results, add_suite=True):
     """
     Intersperse the results of a suite search
     """
-    new_sort = []
+    new_results = []
 
-    pass
+    len_biggest_list = len(max(key=lambda x: len(x), *results))
+
+    video_id = 0
+    for i in range(len_biggest_list):
+        for suite, this_results in results:
+            if video_id < len(this_results):
+                if add_suite:
+                    result['suite'] = suite
+                result['id'] = video_id
+                video_id += 1
+                new_results.append(this_results[i])
+
+    return friendlysort_results

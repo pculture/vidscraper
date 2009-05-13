@@ -47,16 +47,17 @@ def intersperse_results(results, add_suite=True):
     """
     new_results = []
 
-    len_biggest_list = len(max(key=lambda x: len(x), *results))
+    len_biggest_list = len(max(key=lambda x: len(x[1]), *results)[1])
 
     video_id = 0
     for i in range(len_biggest_list):
         for suite, this_results in results:
             if video_id < len(this_results):
+                result = this_results[i]
                 if add_suite:
                     result['suite'] = suite
                 result['id'] = video_id
                 video_id += 1
-                new_results.append(this_results[i])
+                new_results.append(result)
 
-    return friendlysort_results
+    return new_results

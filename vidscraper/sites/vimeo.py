@@ -61,6 +61,15 @@ def scrape_file_url(url, shortmem=None):
 
 
 @provide_shortmem
+@parse_url
+@returns_unicode
+def get_flash_enclosure_url(url, shortmem=None):
+    vimeo_match = VIMEO_REGEX.match(url)
+    video_id = vimeo_match.group(2)
+    return 'http://vimeo.com/moogaloop.swf?clip_id=' + video_id
+
+
+@provide_shortmem
 @returns_unicode
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     get_dict = {'server': 'vimeo.com',
@@ -96,6 +105,7 @@ SUITE = {
         'title': scrape_title,
         'description': scrape_description,
         'file_url': scrape_file_url,
+        'flash_enclosure_url': get_flash_enclosure_url,
         'embed': get_embed},
     'order': ['title', 'description', 'file_url', 'embed']}
             

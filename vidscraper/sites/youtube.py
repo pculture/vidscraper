@@ -65,6 +65,13 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 
 
 @provide_shortmem
+@parse_url
+@returns_unicode
+def get_flash_enclosure_url(url, shortmem=None):
+    return url
+
+
+@provide_shortmem
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
     video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
@@ -78,4 +85,5 @@ SUITE = {
         'title': scrape_title,
         'description': scrape_description,
         'embed': get_embed,
-        'thumbnail_url': get_thumbnail_url}}
+        'thumbnail_url': get_thumbnail_url,
+        'flash_enclosure_url': get_flash_enclosure_url}}

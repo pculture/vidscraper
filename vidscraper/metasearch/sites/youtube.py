@@ -20,6 +20,8 @@ def parse_youtube_entry(entry):
         'link': entry['link'],
         }
     parsed_entry['embed'] = youtube_scraper.get_embed(entry['link'])
+    parsed_entry['flash_enclosure_url'] = \
+        youtube_scraper.get_flash_enclosure_url(entry['link'])
 
     video_id = cgi.parse_qs(urlparse.urlsplit(entry['link'])[3])['v'][0]
     parsed_entry['thumbnail_url'] = \

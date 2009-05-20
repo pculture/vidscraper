@@ -34,6 +34,15 @@ def parse_feed(scraper_func):
     return new_scraper_func
 
 
+@provide_shortmem
+@parse_feed
+@returns_unicode
+def get_thumbnail_url(url, shortmem=None):
+    try:
+        return shortmem['feed_item'].get('blip_picture')
+    except KeyError:
+        raise errors.FieldNotFound('Could not find the title field')
+
 
 @provide_shortmem
 @parse_feed
@@ -82,4 +91,5 @@ SUITE = {
     'funcs': {
         'title': scrape_title,
         'description': scrape_description,
-        'embed': get_embed}}
+        'embed': get_embed,
+        'thumbnail_url': get_thumbnail_url}}

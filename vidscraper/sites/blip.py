@@ -42,7 +42,7 @@ def get_thumbnail_url(url, shortmem=None):
         return 'http://a.images.blip.tv/%s' % (
             shortmem['feed_item']['blip_thumbnail_src'])
     except KeyError:
-        raise errors.FieldNotFound('Could not find the title field')
+        raise errors.FieldNotFound('Could not find the thumbnail field')
 
 
 @provide_shortmem

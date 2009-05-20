@@ -39,7 +39,8 @@ def parse_feed(scraper_func):
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
     try:
-        return shortmem['feed_item']['blip_smallthumbnail']
+        return 'http://a.images.blip.tv/%s' % (
+            shortmem['feed_item']['blip_thumbnail_src'])
     except KeyError:
         raise errors.FieldNotFound('Could not find the title field')
 

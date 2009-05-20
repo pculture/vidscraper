@@ -47,7 +47,7 @@ def intersperse_results(results, add_suite=True):
     """
     new_results = []
 
-    len_biggest_list = len(max(key=lambda x: len(x[1]), *results)[1])
+    len_biggest_list = max([len(r[1]) for r in results])
 
     video_id = 0
     for i in range(len_biggest_list):

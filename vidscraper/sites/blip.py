@@ -38,11 +38,14 @@ def parse_feed(scraper_func):
 @parse_feed
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
-    try:
+    feed_item = shortmem['feed_item']
+    if feed_item.has_key('blip_thumbnail_src'):
         return 'http://a.images.blip.tv/%s' % (
             shortmem['feed_item']['blip_thumbnail_src'])
-    except KeyError:
-        raise errors.FieldNotFound('Could not find the thumbnail field')
+    elif feed_item.has_key('blip_smallthumbnail'):
+        return feed_item['blip_smallthumbnail']
+    else:
+        return feed_item.get('blip_picture')
 
 
 @provide_shortmem
@@ -76,7 +79,6 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     
     oembed_response = urllib.urlopen(
         'http://blip.tv/oembed/?' + urllib.urlencode(oembed_get_dict)).read()
-
 
     try:
         embed_code = simplejson.loads(oembed_response.decode('utf8'))['html']

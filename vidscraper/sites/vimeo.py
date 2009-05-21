@@ -98,7 +98,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return tostring(main_object)
 
 
-VIMEO_REGEX = re.compile(r'http://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
+VIMEO_REGEX = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
 SUITE = {
     'regex': VIMEO_REGEX,
     'funcs': {

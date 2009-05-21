@@ -78,7 +78,7 @@ def get_thumbnail_url(url, shortmem=None):
     return 'http://img.youtube.com/vi/%s/default.jpg' % video_id
 
 
-YOUTUBE_REGEX = re.compile(r'http://([^/]+\.)?youtube.com/(?:watch)?\?v=')
+YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
     'funcs': {

@@ -49,7 +49,7 @@ def scrape_file_url(url, shortmem=None):
 
 
 GOOGLE_VIDEO_REGEX = re.compile(
-    r'^http://video.google.com/videoplay')
+    r'^https?://video.google.com/videoplay')
 SUITE = {
     'regex': GOOGLE_VIDEO_REGEX,
     'funcs': {

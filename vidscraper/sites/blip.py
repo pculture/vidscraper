@@ -12,7 +12,7 @@ from lxml.html import tostring
 from lxml.html.clean import clean_html
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
-from vidscraper import errors, util
+from vidscraper import errors, util, miroguide_util
 
 
 EMaker = builder.ElementMaker()
@@ -70,6 +70,18 @@ def scrape_description(url, shortmem=None):
 
 
 @provide_shortmem
+@parse_feed
+@returns_unicode
+def scrape_file_url(url, shortmem=None):
+    try:
+        video_enclosure = miroguide_util.get_first_video_enclosure(
+            shortmem['feed_item'])
+        return video_enclosure.get('href')
+    except KeyError:
+        raise errors.FieldNotFound('Could not find the feed_item field')
+
+
+@provide_shortmem
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     file_id = BLIP_REGEX.match(url).groupdict()['file_id']
     oembed_get_dict = {
@@ -88,11 +100,13 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return embed_code
 
 
-BLIP_REGEX = re.compile(r'^http://blip.tv/file/(?P<file_id>\d+)')
+BLIP_REGEX = re.compile(
+    r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/file/(?P<file_id>\d+)')
 SUITE = {
     'regex': BLIP_REGEX,
     'funcs': {
         'title': scrape_title,
         'description': scrape_description,
         'embed': get_embed,
+        'file_url': scrape_file_url,
         'thumbnail_url': get_thumbnail_url}}

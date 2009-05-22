@@ -71,6 +71,11 @@ def scrape_file_url(url, shortmem=None):
 
 
 @provide_shortmem
+def file_url_is_flaky(url, shortmem=None):
+    return True
+
+
+@provide_shortmem
 @parse_url
 @returns_unicode
 def get_flash_enclosure_url(url, shortmem=None):
@@ -116,6 +121,7 @@ SUITE = {
         'description': scrape_description,
         'publish_date': scrape_publish_date,
         'file_url': scrape_file_url,
+        'file_url_is_flaky': file_url_is_flaky,
         'flash_enclosure_url': get_flash_enclosure_url,
         'embed': get_embed},
     'order': ['title', 'description', 'file_url', 'embed']}

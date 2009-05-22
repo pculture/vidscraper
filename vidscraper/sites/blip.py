@@ -1,3 +1,4 @@
+import datetime
 import re
 import simplejson
 import urllib
@@ -109,6 +110,13 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
         embed_code = None
 
     return embed_code
+
+
+@provide_shortmem
+@parse_feed
+def scrape_publish_date(url, shortmem=None):
+    if shortmem['feed_item'].has_key('updated_parsed'):
+        return datetime.datetime(*shortmem['feed_item']['updated_parsed'][:7])
 
 
 BLIP_REGEX = re.compile(

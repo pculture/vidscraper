@@ -6,6 +6,7 @@ from lxml import builder
 from lxml import etree
 from lxml.html import builder as E
 from lxml.html import tostring
+import simplejson
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
 from vidscraper import errors
@@ -113,6 +114,17 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return tostring(main_object)
 
 
+@provide_shortmem
+@parse_url
+def scrape_publish_date(url, shortmem=None):
+    api_url = 'http://vimeo.com/api/clip/%s.json' % (
+        VIMEO_REGEX.match(url).groupdict()['video_id'])
+    api_data = simplejson.decode(
+        util.open_url_while_lying_about_agent(api_url).read().decode('utf8'))[0]
+    return datetime.datetime.strptime(
+        api_data['upload_date'], '%Y-%m-%d %H:%M:%S')
+    
+
 VIMEO_REGEX = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
 SUITE = {
     'regex': VIMEO_REGEX,
@@ -123,6 +135,7 @@ SUITE = {
         'file_url': scrape_file_url,
         'file_url_is_flaky': file_url_is_flaky,
         'flash_enclosure_url': get_flash_enclosure_url,
+        'publish_date': scrape_publish_date,
         'embed': get_embed},
     'order': ['title', 'description', 'file_url', 'embed']}
             

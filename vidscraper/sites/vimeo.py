@@ -1,3 +1,4 @@
+import datetime
 import re
 import urllib
 
@@ -5,7 +6,6 @@ from lxml import builder
 from lxml import etree
 from lxml.html import builder as E
 from lxml.html import tostring
-from lxml.html.clean import clean_html
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
 from vidscraper import errors
@@ -42,6 +42,16 @@ def scrape_description(url, shortmem=None):
     except IndexError:
         raise errors.FieldNotFound('Could not find the description field')
 
+
+@provide_shortmem
+@parse_url
+def scrape_publish_date(url, shortmem=None):
+    clip_date = shortmem['base_etree'].xpath(
+        "id('clip-date')")[0].text_content()
+    ago, time = clip_date.split(': ')
+    time, _ = time.split(' (')
+    return datetime.datetime.strptime(time,
+                                      '%a, %b %d, %Y %I:%M%p %Z')
 
 @provide_shortmem
 @parse_url
@@ -104,6 +114,7 @@ SUITE = {
     'funcs': {
         'title': scrape_title,
         'description': scrape_description,
+        'publish_date': scrape_publish_date,
         'file_url': scrape_file_url,
         'flash_enclosure_url': get_flash_enclosure_url,
         'embed': get_embed},

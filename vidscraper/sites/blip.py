@@ -1,17 +1,12 @@
-import cgi
 import re
 import simplejson
 import urllib
-import urlparse
 
 import feedparser
 from lxml import builder
-from lxml import etree
-from lxml.html import builder as E
-from lxml.html import tostring
-from lxml.html.clean import clean_html
 
-from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
+from vidscraper.decorators import (provide_shortmem, returns_unicode,
+                                   returns_struct_time)
 from vidscraper import errors, util, miroguide_util
 
 
@@ -28,7 +23,6 @@ def parse_feed(scraper_func):
             file_id = BLIP_REGEX.match(url).groupdict()['file_id']
             rss_url = 'http://blip.tv/file/%s?skin=rss' % file_id
             shortmem['feed_item'] = feedparser.parse(rss_url)['entries'][0]
-
         return scraper_func(url, shortmem=shortmem, *args, **kwargs)
 
     return new_scraper_func
@@ -66,7 +60,7 @@ def scrape_description(url, shortmem=None):
         return util.clean_description_html(
             shortmem['feed_item']['summary_detail']['value'])
     except KeyError:
-        raise errors.FieldNotFound('Could not find the title field')
+        raise errors.FieldNotFound('Could not find the description field')
 
 
 @provide_shortmem
@@ -80,6 +74,16 @@ def scrape_file_url(url, shortmem=None):
     except KeyError:
         raise errors.FieldNotFound('Could not find the feed_item field')
 
+
+@provide_shortmem
+@parse_feed
+@returns_struct_time
+def scrape_publish_date(url, shortmem=None):
+    # sure it's not exactly the publish date, but it's close
+    try:
+        return shortmem['feed_item'].updated_parsed
+    except KeyError:
+        raise errors.FieldNotFound('Could not find the publish_date field')
 
 @provide_shortmem
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
@@ -109,4 +113,5 @@ SUITE = {
         'description': scrape_description,
         'embed': get_embed,
         'file_url': scrape_file_url,
-        'thumbnail_url': get_thumbnail_url}}
+        'thumbnail_url': get_thumbnail_url,
+        'publish_date': scrape_publish_date}}

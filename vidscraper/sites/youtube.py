@@ -1,7 +1,5 @@
 import cgi
-import datetime
 import re
-import time
 import urlparse
 
 import feedparser
@@ -11,7 +9,8 @@ from lxml import etree
 from lxml.html import builder as E
 from lxml.html import tostring
 
-from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
+from vidscraper.decorators import (provide_shortmem, parse_url,
+                                   returns_unicode, returns_struct_time)
 from vidscraper import errors, util
 
 
@@ -82,12 +81,12 @@ def get_thumbnail_url(url, shortmem=None):
 
 
 @provide_shortmem
+@returns_struct_time
 def scrape_published_date(url, shortmem=None):
     video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
     api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
     feed = feedparser.parse(api_url)
-    return datetime.datetime.fromtimestamp(time.mktime(
-            feed.entries[0].published_parsed))
+    return feed.entries[0].published_parsed
 
 
 YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')

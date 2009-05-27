@@ -1,3 +1,5 @@
+import datetime
+import time
 from lxml import html as lxml_html
 
 def provide_shortmem(scraper_func):
@@ -25,10 +27,22 @@ def returns_unicode(scraper_func):
         result = scraper_func(url, shortmem=shortmem, *args, **kwargs)
     
         if result is not None:
-            if shortmem and shortmem.has_key('base_etree'):
-                encoding = shortmem['base_etree'].docinfo.encoding
+            if not isinstance(result, unicode):
+                if shortmem and shortmem.has_key('base_etree'):
+                    encoding = shortmem['base_etree'].docinfo.encoding
+                else:
+                    encoding = 'utf8'
+                return result.decode(encoding)
             else:
-                encoding = 'utf8'
-            return result.decode(encoding)
+                return result
+
+    return new_scraper_func
+
+def returns_struct_time(scraper_func):
+    def new_scraper_func(url, shortmem=None, *args, **kwargs):
+        result = scraper_func(url, shortmem=shortmem, *args, **kwargs)
+    
+        if result is not None:
+            return datetime.datetime.fromtimestamp(time.mktime(result))
 
     return new_scraper_func

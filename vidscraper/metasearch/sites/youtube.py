@@ -1,4 +1,6 @@
 import cgi
+import datetime
+import time
 import urllib
 import urlparse
 
@@ -26,6 +28,8 @@ def parse_youtube_entry(entry):
     video_id = cgi.parse_qs(urlparse.urlsplit(entry['link'])[3])['v'][0]
     parsed_entry['thumbnail_url'] = \
         'http://img.youtube.com/vi/%s/default.jpg' % video_id
+    parsed_entry['publish_date'] = youtube_scraper.scrape_published_date(
+        entry['link'])
 
     return parsed_entry
 

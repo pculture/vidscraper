@@ -18,6 +18,8 @@ def parse_entry(entry):
         'thumbnail_url': entry.get('blip_picture'),
         }
     parsed_entry['embed'] = blip_scraper.get_embed(entry['link'])
+    parsed_entry['publish_date'] = blip_scraper.scrape_publish_date(
+        entry['link'])
 
     return parsed_entry
 

@@ -22,8 +22,15 @@ def parse_feed(scraper_func):
         if not shortmem.get('feed_item'):
             file_id = BLIP_REGEX.match(url).groupdict()['file_id']
             rss_url = 'http://blip.tv/file/%s?skin=rss' % file_id
-            shortmem['feed_item'] = feedparser.parse(rss_url)['entries'][0]
-        return scraper_func(url, shortmem=shortmem, *args, **kwargs)
+            parsed = feedparser.parse(rss_url)
+            if 'entries' not in parsed or not parsed.entries:
+                shortmem['feed_item'] = None
+            else:
+                shortmem['feed_item'] = feedparser.parse(rss_url)['entries'][0]
+        if shortmem['feed_item'] is None:
+            return None
+        else:
+            return scraper_func(url, shortmem=shortmem, *args, **kwargs)
 
     return new_scraper_func
 
@@ -98,7 +105,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 
     try:
         embed_code = simplejson.loads(oembed_response.decode('utf8'))['html']
-    except ValueError:
+    except (ValueError, KeyError):
         embed_code = None
 
     return embed_code

@@ -13,10 +13,12 @@ def scrape_suite(url, suite, fields=None):
     funcs_map = suite['funcs']
     fields = fields or funcs_map.keys()
     order = suite.get('order')
+
     if order:
         # remove items in the order that are not in the fields
+        order = order[:] # don't want to modify the one from the suite
         for field in set(order).difference(fields):
-            order.pop(field)
+            order.remove(field)
 
         # add items that may have been missing from the order but
         # which are in the fields

@@ -6,8 +6,6 @@ from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
 from vidscraper import errors
 from vidscraper import util
 
-from lxml.html.clean import clean_html
-
 
 @provide_shortmem
 @parse_url

@@ -1,12 +1,9 @@
 import cgi
-import datetime
-import time
 import urllib
 import urlparse
 
 import feedparser
 
-from vidscraper import util
 from vidscraper.sites import youtube as youtube_scraper
 from vidscraper.metasearch import defaults
 from vidscraper.metasearch import util as metasearch_util

@@ -16,6 +16,7 @@ def parse_entry(entry):
             entry.get('summary') or entry.get('blip_puredescription'),
         'link': entry['link'],
         'thumbnail_url': entry.get('blip_picture'),
+        'tags': [tag['term'] for tag in entry.tags]
         }
     parsed_entry['embed'] = blip_scraper.get_embed(entry['link'])
     parsed_entry['publish_date'] = blip_scraper.scrape_publish_date(

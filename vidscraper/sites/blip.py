@@ -27,7 +27,7 @@ def parse_feed(scraper_func):
             if 'entries' not in parsed or not parsed.entries:
                 shortmem['feed_item'] = None
             else:
-                shortmem['feed_item'] = feedparser.parse(rss_url)['entries'][0]
+                shortmem['feed_item'] = parsed['entries'][0]
         if shortmem['feed_item'] is None:
             return None
         else:
@@ -114,9 +114,8 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 
 @provide_shortmem
 @parse_feed
-def scrape_publish_date(url, shortmem=None):
-    if shortmem['feed_item'].has_key('updated_parsed'):
-        return datetime.datetime(*shortmem['feed_item']['updated_parsed'][:7])
+def get_tags(url, shortmem=None):
+    return [tag['term'] for tag in shortmem['feed_item'].tags]
 
 
 BLIP_REGEX = re.compile(
@@ -129,4 +128,5 @@ SUITE = {
         'embed': get_embed,
         'file_url': scrape_file_url,
         'thumbnail_url': get_thumbnail_url,
+        'tags': get_tags,
         'publish_date': scrape_publish_date}}

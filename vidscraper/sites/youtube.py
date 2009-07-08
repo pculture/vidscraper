@@ -80,14 +80,31 @@ def get_thumbnail_url(url, shortmem=None):
     return 'http://img.youtube.com/vi/%s/default.jpg' % video_id
 
 
+def provide_api(func):
+    """
+    A quick decorator to provide the scraped YouTube API data for the video.
+    """
+    def wrapper(url, shortmem=None):
+        if shortmem.get('parsed_feed') is None:
+            video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
+            api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
+            feed = feedparser.parse(api_url)
+            shortmem['parsed_feed'] = feed
+        return func(url, shortmem)
+    return wrapper
+
+
 @provide_shortmem
+@provide_api
 @returns_struct_time
 def scrape_published_date(url, shortmem=None):
-    video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
-    api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
-    feed = feedparser.parse(api_url)
-    return feed.entries[0].published_parsed
+    return shortmem['parsed_feed'].entries[0].published_parsed
 
+
+@provide_shortmem
+@provide_api
+def get_tags(url, shortmem=None):
+    return [tag['term'] for tag in shortmem['parsed_feed'].entries[0].tags]
 
 YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
@@ -98,4 +115,5 @@ SUITE = {
         'embed': get_embed,
         'thumbnail_url': get_thumbnail_url,
         'publish_date': scrape_published_date,
+        'tags': get_tags,
         'flash_enclosure_url': get_flash_enclosure_url}}

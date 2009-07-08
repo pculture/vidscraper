@@ -46,16 +46,6 @@ def scrape_description(url, shortmem=None):
 
 @provide_shortmem
 @parse_url
-def scrape_publish_date(url, shortmem=None):
-    clip_date = shortmem['base_etree'].xpath(
-        "id('clip-date')")[0].text_content()
-    ago, time = clip_date.split(': ')
-    time, _ = time.split(' (')
-    return datetime.datetime.strptime(time,
-                                      '%a, %b %d, %Y %I:%M%p %Z')
-
-@provide_shortmem
-@parse_url
 @returns_unicode
 def scrape_file_url(url, shortmem=None):
     vimeo_match = VIMEO_REGEX.match(url)

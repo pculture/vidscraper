@@ -17,7 +17,8 @@ def parse_youtube_entry(entry):
         'title': entry['title'],
         'description': entry['summary'],
         'link': entry['link'],
-        'tags': [tag['term'] for tag in entry.tags]
+        'tags': [tag['term'] for tag in entry.tags
+                 if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
         }
     parsed_entry['embed'] = youtube_scraper.get_embed(entry['link'])
     parsed_entry['flash_enclosure_url'] = \

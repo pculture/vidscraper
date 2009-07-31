@@ -104,7 +104,8 @@ def scrape_published_date(url, shortmem=None):
 @provide_shortmem
 @provide_api
 def get_tags(url, shortmem=None):
-    return [tag['term'] for tag in shortmem['parsed_feed'].entries[0].tags]
+    return [tag['term'][:25] for tag in shortmem['parsed_feed'].entries[0].tags
+            if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
 
 YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {

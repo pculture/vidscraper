@@ -37,11 +37,11 @@ def scrape_title(url, shortmem=None):
 @returns_unicode
 def scrape_description(url, shortmem=None):
     span_elts = shortmem['base_etree'].xpath(
-        "id('watch-video-details-inner')/"
-        "div[@class='expand-content']/"
-        "div[position()=1]/span")
+        "id('watch-video-details-inner-more')/"
+        "div[contains(@class, 'description')]/"
+        "span/text()")
     return util.clean_description_html(
-        '\n'.join([etree.tostring(span_elt) for span_elt in span_elts])).strip()
+        '\n'.join(span_elts)).strip()
 
 
 @provide_shortmem

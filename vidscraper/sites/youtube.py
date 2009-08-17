@@ -77,7 +77,7 @@ def get_flash_enclosure_url(url, shortmem=None):
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
     video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
-    return 'http://img.youtube.com/vi/%s/default.jpg' % video_id
+    return 'http://img.youtube.com/vi/%s/hqdefault.jpg' % video_id
 
 
 def provide_api(func):

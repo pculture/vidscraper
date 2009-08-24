@@ -98,12 +98,16 @@ def provide_api(func):
 @provide_api
 @returns_struct_time
 def scrape_published_date(url, shortmem=None):
+    if not shortmem['parsed_feed'].entries:
+        return
     return shortmem['parsed_feed'].entries[0].published_parsed
 
 
 @provide_shortmem
 @provide_api
 def get_tags(url, shortmem=None):
+    if not shortmem['parsed_feed'].entries:
+        return
     return [tag['term'] for tag in shortmem['parsed_feed'].entries[0].tags
             if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
 

@@ -52,7 +52,16 @@ def scrape_file_url(url, shortmem=None):
     video_id = vimeo_match.group(2)
     video_data_url = (
         u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id)
-    vimeo_data = etree.parse(video_data_url)
+    vimeo_data = None
+    for i in range(5):
+        try:
+            vimeo_data = etree.parse(video_data_url)
+        except etree.XMLSyntaxError:
+            pass
+        else:
+            break
+    if not vimeo_data:
+        return ''
     req_sig = vimeo_data.find('request_signature').text
     req_sig_expires = vimeo_data.find('request_signature_expires').text
     file_url = "http://www.vimeo.com/moogaloop/play/clip:%s/%s/%s/?q=sd" % (

@@ -19,6 +19,17 @@ EMBED = EMaker.embed
 EMBED_WIDTH = 425
 EMBED_HEIGHT = 344
 
+def parse_api(scraper_func, shortmem=None):
+    def new_scraper_func(url, shortmem=None, *args, **kwargs):
+        if not shortmem.get('api_data'):
+            api_url = 'http://vimeo.com/api/clip/%s.json' % (
+                VIMEO_REGEX.match(url).groupdict()['video_id'])
+            api_data = simplejson.decode(
+                util.open_url_while_lying_about_agent(api_url).read().decode(
+                    'utf8'))[0]
+            shortmem['api_data'] = api_data
+        return scraper_func(url, shortmem=shortmem, *args, **kwargs)
+    return new_scraper_func
 
 @provide_shortmem
 @parse_url
@@ -112,17 +123,21 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 
     return tostring(main_object)
 
+@provide_shortmem
+@parse_url
+@parse_api
+@returns_unicode
+def get_thumbnail_url(url, shortmem=None):
+    return shortmem['api_data'].get('thumbnail_large')
+
 
 @provide_shortmem
 @parse_url
+@parse_api
 def scrape_publish_date(url, shortmem=None):
-    api_url = 'http://vimeo.com/api/clip/%s.json' % (
-        VIMEO_REGEX.match(url).groupdict()['video_id'])
-    api_data = simplejson.decode(
-        util.open_url_while_lying_about_agent(api_url).read().decode('utf8'))[0]
     return datetime.datetime.strptime(
-        api_data['upload_date'], '%Y-%m-%d %H:%M:%S')
-    
+        shortmem['api_data']['upload_date'], '%Y-%m-%d %H:%M:%S')
+
 
 VIMEO_REGEX = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
 SUITE = {
@@ -135,6 +150,7 @@ SUITE = {
         'file_url_is_flaky': file_url_is_flaky,
         'flash_enclosure_url': get_flash_enclosure_url,
         'publish_date': scrape_publish_date,
-        'embed': get_embed},
+        'embed': get_embed,
+        'thumbnail_url': get_thumbnail_url},
     'order': ['title', 'description', 'file_url', 'embed']}
             

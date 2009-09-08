@@ -116,6 +116,15 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 def get_tags(url, shortmem=None):
     return [tag['term'] for tag in shortmem['feed_item'].tags]
 
+@provide_shortmem
+@parse_feed
+def get_user(url, shortmem=None):
+    return shortmem['feed_item']['blip_user']
+
+@provide_shortmem
+@parse_feed
+def get_user_url(url, shortmem=None):
+    return 'http://%s' % (shortmem['feed_item']['blip_showpage'],)
 
 BLIP_REGEX = re.compile(
     r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/file/(?P<file_id>\d+)')
@@ -128,4 +137,6 @@ SUITE = {
         'file_url': scrape_file_url,
         'thumbnail_url': get_thumbnail_url,
         'tags': get_tags,
-        'publish_date': scrape_publish_date}}
+        'publish_date': scrape_publish_date,
+        'user': get_user,
+        'user_url': get_user_url}}

@@ -111,6 +111,22 @@ def get_tags(url, shortmem=None):
     return [tag['term'] for tag in shortmem['parsed_feed'].entries[0].tags
             if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
 
+
+@provide_shortmem
+@provide_api
+def get_user(url, shortmem=None):
+    if not shortmem['parsed_feed'].entries:
+        return ''
+    return shortmem['parsed_feed'].entries[0]['author']
+
+@provide_shortmem
+@provide_api
+def get_user_url(url, shortmem=None):
+    if not shortmem['parsed_feed'].entries:
+        return ''
+    return 'http://www.youtube.com/user/%s' % (
+        shortmem['parsed_feed'].entries[0]['author'],)
+
 YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
@@ -121,4 +137,6 @@ SUITE = {
         'thumbnail_url': get_thumbnail_url,
         'publish_date': scrape_published_date,
         'tags': get_tags,
-        'flash_enclosure_url': get_flash_enclosure_url}}
+        'flash_enclosure_url': get_flash_enclosure_url,
+        'user': get_user,
+        'user_url': get_user_url}}

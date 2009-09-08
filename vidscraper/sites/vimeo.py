@@ -130,6 +130,20 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 def get_thumbnail_url(url, shortmem=None):
     return shortmem['api_data'].get('thumbnail_large')
 
+@provide_shortmem
+@parse_url
+@parse_api
+@returns_unicode
+def get_user(url, shortmem=None):
+    return shortmem['api_data'].get('user_name')
+
+@provide_shortmem
+@parse_url
+@parse_api
+@returns_unicode
+def get_user_url(url, shortmem=None):
+    return shortmem['api_data'].get('user_url')
+
 
 @provide_shortmem
 @parse_url
@@ -137,6 +151,7 @@ def get_thumbnail_url(url, shortmem=None):
 def scrape_publish_date(url, shortmem=None):
     return datetime.datetime.strptime(
         shortmem['api_data']['upload_date'], '%Y-%m-%d %H:%M:%S')
+
 
 
 VIMEO_REGEX = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
@@ -151,6 +166,8 @@ SUITE = {
         'flash_enclosure_url': get_flash_enclosure_url,
         'publish_date': scrape_publish_date,
         'embed': get_embed,
-        'thumbnail_url': get_thumbnail_url},
+        'thumbnail_url': get_thumbnail_url,
+        'user': get_user,
+        'user_url': get_user_url},
     'order': ['title', 'description', 'file_url', 'embed']}
             

@@ -34,19 +34,26 @@ def parse_feed(scraper_func):
 
     return new_scraper_func
 
+def _fp_get(shortmem, key):
+    """
+    Feedparser sometimes strips off the blip_ prefix in its dictionary.  This
+    function helps by checking both for us.
+    """
+    fp = shortmem['feed_item']
+    return fp.get('blip_%s' % key,
+                  fp.get(key))
 
 @provide_shortmem
 @parse_feed
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
-    feed_item = shortmem['feed_item']
-    if feed_item.has_key('blip_thumbnail_src'):
+    if _fp_get(shortmem, 'thumbnail_src'):
         return 'http://a.images.blip.tv/%s' % (
-            shortmem['feed_item']['blip_thumbnail_src'])
-    elif feed_item.has_key('blip_smallthumbnail'):
-        return feed_item['blip_smallthumbnail']
+            _fp_get(shortmem, 'thumbnail_src'),)
+    elif _fp_get(shortmem, 'smallthumbnail'):
+        return _fp_get(shortmem, 'smallthumbnail')
     else:
-        return feed_item.get('blip_picture')
+        return _fp_get(shortmem, 'picture')
 
 
 @provide_shortmem
@@ -119,12 +126,13 @@ def get_tags(url, shortmem=None):
 @provide_shortmem
 @parse_feed
 def get_user(url, shortmem=None):
-    return shortmem['feed_item']['blip_user']
+    return _fp_get(shortmem, 'user')
 
 @provide_shortmem
 @parse_feed
 def get_user_url(url, shortmem=None):
-    return 'http://%s' % (shortmem['feed_item']['blip_showpage'],)
+    return 'http://%s' % (_fp_get(shortmem, 'showpage'),)
+
 
 BLIP_REGEX = re.compile(
     r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/file/(?P<file_id>\d+)')

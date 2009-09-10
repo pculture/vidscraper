@@ -5,13 +5,11 @@ import urlparse
 import feedparser
 
 from lxml import builder
-from lxml import etree
 from lxml.html import builder as E
 from lxml.html import tostring
 
-from vidscraper.decorators import (provide_shortmem, parse_url,
+from vidscraper.decorators import (provide_shortmem,
                                    returns_unicode, returns_struct_time)
-from vidscraper import errors, util
 
 
 EMaker = builder.ElementMaker()
@@ -20,29 +18,35 @@ EMBED = EMaker.embed
 EMBED_WIDTH = 425
 EMBED_HEIGHT = 344
 
+def provide_api(func):
+    """
+    A quick decorator to provide the scraped YouTube API data for the video.
+    """
+    def wrapper(url, shortmem=None):
+        if shortmem.get('parsed_feed') is None:
+            video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
+            api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
+            feed = feedparser.parse(api_url)
+            shortmem['parsed_feed'] = feed
+        return func(url, shortmem)
+    return wrapper
+
 
 @provide_shortmem
-@parse_url
+@provide_api
 @returns_unicode
 def scrape_title(url, shortmem=None):
-    try:
-        return shortmem['base_etree'].xpath(
-            "//div[@id='watch-vid-title']/h1")[0].text
-    except IndexError:
-        raise errors.FieldNotFound('Could not find the title field')
-
+    return shortmem['parsed_feed'].entries[0].title
 
 @provide_shortmem
-@parse_url
+@provide_api
 @returns_unicode
 def scrape_description(url, shortmem=None):
-    span_elts = shortmem['base_etree'].xpath(
-        "id('watch-video-details-inner-more')/"
-        "div[contains(@class, 'description')]/"
-        "span/text()")
-    return util.clean_description_html(
-        '\n'.join(span_elts)).strip()
-
+    entry = shortmem['parsed_feed'].entries[0]
+    if 'media_description' in entry:
+        return entry.media_description
+    else:
+        return entry.description
 
 @provide_shortmem
 @returns_unicode
@@ -67,7 +71,6 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 
 
 @provide_shortmem
-@parse_url
 @returns_unicode
 def get_flash_enclosure_url(url, shortmem=None):
     return url
@@ -78,20 +81,6 @@ def get_flash_enclosure_url(url, shortmem=None):
 def get_thumbnail_url(url, shortmem=None):
     video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
     return 'http://img.youtube.com/vi/%s/hqdefault.jpg' % video_id
-
-
-def provide_api(func):
-    """
-    A quick decorator to provide the scraped YouTube API data for the video.
-    """
-    def wrapper(url, shortmem=None):
-        if shortmem.get('parsed_feed') is None:
-            video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
-            api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
-            feed = feedparser.parse(api_url)
-            shortmem['parsed_feed'] = feed
-        return func(url, shortmem)
-    return wrapper
 
 
 @provide_shortmem

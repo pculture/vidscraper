@@ -131,7 +131,11 @@ def get_user(url, shortmem=None):
 @provide_shortmem
 @parse_feed
 def get_user_url(url, shortmem=None):
-    return 'http://%s' % (_fp_get(shortmem, 'showpage'),)
+    url = _fp_get(shortmem, 'showpage')
+    if url.startswith('http://') or url.startswith('https://'):
+        return url
+    else:
+        return 'http://%s' % (url,)
 
 
 BLIP_REGEX = re.compile(

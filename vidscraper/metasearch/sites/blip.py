@@ -13,7 +13,8 @@ def parse_entry(entry):
     parsed_entry = {
         'title': entry['title'],
         'description':
-            entry.get('summary') or entry.get('blip_puredescription'),
+            entry.get('summary') or entry.get('blip_puredescription') or \
+            entry.get('puredescription') or '',
         'link': entry['link'],
         'thumbnail_url': entry.get('blip_picture'),
         'tags': [tag['term'] for tag in entry.tags]

@@ -16,7 +16,7 @@ def parse_youtube_entry(entry):
     parsed_entry = {
         'title': entry['title'],
         'description': entry['summary'],
-        'link': entry['link'],
+        'link': youtube_scraper.canonical_url(entry['link']),
         'tags': [tag['term'] for tag in entry.tags
                  if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
         }

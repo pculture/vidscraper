@@ -59,6 +59,12 @@ def get_thumbnail_url(url, shortmem=None):
 @provide_shortmem
 @parse_feed
 @returns_unicode
+def get_link(url, shortmem=None):
+    return shortmem['feed_item'].link
+
+@provide_shortmem
+@parse_feed
+@returns_unicode
 def scrape_title(url, shortmem=None):
     try:
         return shortmem['feed_item']['title']
@@ -146,6 +152,7 @@ BLIP_REGEX = re.compile(
 SUITE = {
     'regex': BLIP_REGEX,
     'funcs': {
+        'link': get_link,
         'title': scrape_title,
         'description': scrape_description,
         'embed': get_embed,

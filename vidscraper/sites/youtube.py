@@ -18,6 +18,20 @@ EMBED = EMaker.embed
 EMBED_WIDTH = 425
 EMBED_HEIGHT = 344
 
+def canonical_url(url):
+    """
+    Return the canonical URL for a given YouTube URL.  This strips off any
+    trailing &feature= nonsense.
+    """
+    if '&feature=' in url:
+        start = url.find('&feature=')
+        end = url.find('&', start+1)
+        if end != -1:
+            return url[:start] + url[end:]
+        else:
+            url = url[:start]
+    return url
+
 def provide_api(func):
     """
     A quick decorator to provide the scraped YouTube API data for the video.
@@ -31,6 +45,11 @@ def provide_api(func):
         return func(url, shortmem)
     return wrapper
 
+@provide_shortmem
+@provide_api
+@returns_unicode
+def get_link(url, shortmem=None):
+    return canonical_url(shortmem['parsed_feed'].entries[0].link)
 
 @provide_shortmem
 @provide_api
@@ -73,7 +92,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 @provide_shortmem
 @returns_unicode
 def get_flash_enclosure_url(url, shortmem=None):
-    return url
+    return canonical_url(url)
 
 
 @provide_shortmem
@@ -120,6 +139,7 @@ YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
     'funcs': {
+        'link': get_link,
         'title': scrape_title,
         'description': scrape_description,
         'embed': get_embed,

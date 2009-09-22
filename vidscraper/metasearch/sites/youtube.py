@@ -68,7 +68,7 @@ def get_entries(include_terms, exclude_terms=None,
     # queries for RSS "pagination" with youtube's API.  Maybe we should
     # implement that later.
     get_params = {
-        'vq': search_string,
+        'vq': search_string.encode('utf8'),
         'alt': 'rss',
         'max-results': defaults.DEFAULT_MAX_RESULTS}
 

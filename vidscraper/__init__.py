@@ -26,11 +26,11 @@
 
 from vidscraper import errors
 from vidscraper.sites import (
-    vimeo, google_video, youtube, blip)
+    vimeo, google_video, youtube, blip, ustream)
 
 AUTOSCRAPE_SUITES = [
     vimeo.SUITE, google_video.SUITE, youtube.SUITE,
-    blip.SUITE]
+    blip.SUITE, ustream.SUITE]
 
 
 def scrape_suite(url, suite, fields=None):

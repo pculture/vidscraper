@@ -154,7 +154,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 @parse_api
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
-    return shortmem['api_data'].get('thumbnail_large')
+    return shortmem['api_data'].get('thumbnail_medium')
 
 @provide_shortmem
 @parse_url

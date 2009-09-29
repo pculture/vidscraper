@@ -32,14 +32,23 @@ def bulk_import(parsed_feed):
         json_data = simplejson.load(open_url_while_lying_about_agent(
                 post_url % i))
         for video in json_data:
-            parsed_feed.entries.append(
-                feedparser.FeedParserDict(_json_to_feedparser(video)))
+            parsed_feed.entries.append(feedparser_dict(
+                    _json_to_feedparser(video)))
 
     # clean up cache
     if parsed_feed.feed.link in _cached_video_count:
         del _cached_video_count[parsed_feed.feed.link]
 
     return parsed_feed
+
+def feedparser_dict(obj):
+    if isinstance(obj, dict):
+        return feedparser.FeedParserDict(dict(
+                [(key, feedparser_dict(value))
+                 for (key, value) in obj.items()]))
+    if isinstance(obj, (list, tuple)):
+        return [feedparser_dict(member) for member in obj]
+    return obj
 
 def safe_decode(str_or_unicode):
     if isinstance(str_or_unicode, unicode):

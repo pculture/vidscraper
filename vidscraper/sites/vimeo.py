@@ -50,7 +50,7 @@ def parse_api(scraper_func, shortmem=None):
         if not shortmem.get('api_data'):
             api_url = 'http://vimeo.com/api/clip/%s.json' % (
                 VIMEO_REGEX.match(url).groupdict()['video_id'])
-            api_data = simplejson.decode(
+            api_data = simplejson.loads(
                 util.open_url_while_lying_about_agent(api_url).read().decode(
                     'utf8'))[0]
             shortmem['api_data'] = api_data

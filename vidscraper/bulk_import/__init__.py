@@ -1,10 +1,11 @@
 import feedparser
 
-from vidscraper.bulk_import import opensearch, blip
+from vidscraper.bulk_import import opensearch, blip, vimeo
 
 IMPORTERS = (
     opensearch,
     blip,
+    vimeo,
     )
 
 def bulk_import(feed_url, parsed_feed=None):

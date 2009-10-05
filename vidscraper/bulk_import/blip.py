@@ -10,7 +10,8 @@ VIDEO_COUNT_RE = re.compile('totalPages: (\d+)')
 _cached_video_count = {}
 
 def video_count(parsed_feed):
-    if parsed_feed.feed.generator_detail['name'] != 'http://blip.tv':
+    if 'generator_detail' not in parsed_feed or \
+            parsed_feed.feed.generator_detail.get('name') != 'http://blip.tv':
         # not a blip.tv feed
         return None
     if parsed_feed.feed.link in _cached_video_count:

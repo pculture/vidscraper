@@ -12,7 +12,7 @@ USERNAME_RE = re.compile('http://vimeo\.com/(\w+)/')
 _cached_video_count = {}
 
 def video_count(parsed_feed):
-    if parsed_feed.feed.generator != 'The Vimeo':
+    if parsed_feed.feed.get('generator') != 'The Vimeo':
         return None
     username = USERNAME_RE.search(parsed_feed.feed.link).group(1)
     json_data = simplejson.load(open_url_while_lying_about_agent(

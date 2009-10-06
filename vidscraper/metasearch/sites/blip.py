@@ -59,7 +59,7 @@ def get_entries(include_terms, exclude_terms=None,
 
     get_params = {
         'skin': 'rss',
-        'search': search_string}
+        'search': search_string.encode('utf8')}
 
     get_url = '%s?%s' % (BLIP_QUERY_BASE, urllib.urlencode(get_params))
 

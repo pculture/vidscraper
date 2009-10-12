@@ -69,12 +69,15 @@ def get_first_video_enclosure(entry):
         enclosures = entry.enclosures
     except (KeyError, AttributeError):
         return None
+    best_enclosure = None
     for enclosure in enclosures:
-        if has_video_type(enclosure):
-            return enclosure
-        if filetypes.isAllowedFilename(enclosure['href']):
-            return enclosure
-    return None
+        if has_video_type(enclosure) or \
+                filetypes.isAllowedFilename(enclosure['href']):
+            if enclosure.get('isdefault'):
+                return enclosure
+            elif best_enclosure is None:
+                best_enclosure = enclosure
+    return best_enclosure
 
 
 def get_thumbnail_url(entry):

@@ -1,3 +1,4 @@
+# -*- test-case-name: vidscraper.tests.test_youtube -*-
 # Miro - an RSS based video player application
 # Copyright 2009 - Participatory Culture Foundation
 # 

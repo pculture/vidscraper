@@ -24,7 +24,10 @@ def video_count(parsed_feed):
 
 def bulk_import(parsed_feed):
     username = USERNAME_RE.search(parsed_feed.feed.link).group(1)
-    count = _cached_video_count[parsed_feed.feed.link]
+    if parsed_feed.feed.link in _cached_video_count:
+        count = _cached_video_count[parsed_feed.feed.link]
+    else:
+        count = video_count(parsed_feed)
     post_url = 'http://vimeo.com/api/v2/%s/videos.json?page=%%i' % username
     parsed_feed = feedparser.FeedParserDict(parsed_feed.copy())
     parsed_feed.entries = []

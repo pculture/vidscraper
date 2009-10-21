@@ -24,9 +24,11 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import feedparser
 import unittest
 
 from vidscraper.sites import vimeo
+from vidscraper.bulk_import import vimeo as bulk_vimeo
 
 BASE_URL = "http://vimeo.com/2"
 
@@ -120,3 +122,27 @@ allowfullscreen="true" type="application/x-shockwave-flash"></embed>\
         """
         self.assertEquals(vimeo.get_user_url(BASE_URL),
                           'http://vimeo.com/jakob')
+
+
+class VimeoBulkImportTestCase(unittest.TestCase):
+
+    url = "http://www.vimeo.com/snippets/videos/rss"
+    parsed_feed = feedparser.parse(url)
+
+    def test_video_count(self):
+        """
+        video_count() should return the number of videos total in the Vimeo
+        feed.
+        """
+        self.assertEquals(bulk_vimeo.video_count(self.parsed_feed),
+                          90)
+
+    def test_bulk_import(self):
+        """
+        bulk_import() should return a FeedParser dict with all of the videos
+        from the feed.
+        """
+        big_parsed = bulk_vimeo.bulk_import(self.parsed_feed)
+        self.assertEquals(len(big_parsed.entries), 90)
+        self.assertEquals(big_parsed.entries[0].title, 'Favorite Songs')
+        self.assertEquals(big_parsed.entries[-1].title, 'First Snippet')

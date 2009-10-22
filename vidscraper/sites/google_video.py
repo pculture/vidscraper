@@ -62,7 +62,8 @@ def scrape_file_url(url, shortmem=None):
     return shortmem['base_etree'].xpath(
         "//div[@id='download-instructions-detail']/a/@href")[0]
 
-def file_url_is_flaky(url):
+@provide_shortmem
+def file_url_is_flaky(url, shortmem=None):
     return True
 
 @provide_shortmem

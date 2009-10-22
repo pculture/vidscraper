@@ -60,7 +60,7 @@ class GoogleVideoScrapingTestCase(unittest.TestCase):
         file_url_is_flaky() should return True because the URL from
         scrape_file_url() is not a permalink.
         """
-        self.assertTrue(google_video.file_url_is_flaky(BASE_URL))
+        self.assertTrue(google_video.file_url_is_flaky(BASE_URL, {}))
 
     def test_scrape_embed_code(self):
         """

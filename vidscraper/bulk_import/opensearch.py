@@ -24,7 +24,7 @@ def bulk_import(parsed_feed):
     itemsperpage = int(_opensearch_get(parsed_feed, 'itemsperpage'))
     totalresults = int(_opensearch_get(parsed_feed, 'totalresults'))
     feeds = []
-    for i in range(startindex, totalresults,
+    for i in range(startindex, max(totalresults, itemsperpage),
                    itemsperpage):
         if '?' in parsed_feed.href:
             postfix = '&start-index=%i' % (i,)

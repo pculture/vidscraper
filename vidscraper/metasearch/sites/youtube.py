@@ -39,20 +39,10 @@ YOUTUBE_QUERY_BASE = 'http://gdata.youtube.com/feeds/api/videos'
 
 
 def parse_youtube_entry(entry):
-    parsed_entry = {
-        'title': entry['title'],
-        'description': entry['summary'],
-        'link': youtube_scraper.canonical_url(entry['link']),
-        'tags': [tag['term'] for tag in entry.tags
-                 if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
-        }
-    parsed_entry['embed'] = youtube_scraper.get_embed(entry['link'])
-    parsed_entry['flash_enclosure_url'] = \
-        youtube_scraper.get_flash_enclosure_url(entry['link'])
-    parsed_entry['thumbnail_url'] = youtube_scraper.get_thumbnail_url(
-        entry['link'])
-    parsed_entry['publish_date'] = youtube_scraper.scrape_published_date(
-        entry['link'])
+    shortmem = {'parsed_entry': entry}
+    parsed_entry = {}
+    for field, func in youtube_scraper.SUITE['funcs'].items():
+        parsed_entry[field] = func(entry['link'], shortmem)
 
     return parsed_entry
 

@@ -36,18 +36,10 @@ BLIP_QUERY_BASE = 'http://blip.tv/search/'
 
 
 def parse_entry(entry):
-    parsed_entry = {
-        'title': entry['title'],
-        'description':
-            entry.get('summary') or entry.get('blip_puredescription') or \
-            entry.get('puredescription') or '',
-        'link': entry['link'],
-        'thumbnail_url': entry.get('blip_picture'),
-        'tags': [tag['term'] for tag in entry.tags]
-        }
-    parsed_entry['embed'] = blip_scraper.get_embed(entry['link'])
-    parsed_entry['publish_date'] = blip_scraper.scrape_publish_date(
-        entry['link'])
+    shortmem = {'feed_item': entry}
+    parsed_entry = {}
+    for field, func in blip_scraper.SUITE['funcs'].items():
+        parsed_entry[field] = func(entry['link'], shortmem)
 
     return parsed_entry
 

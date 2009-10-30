@@ -103,10 +103,14 @@ def scrape_title(url, shortmem=None):
 @parse_feed
 @returns_unicode
 def scrape_description(url, shortmem=None):
-    try:
-        return util.clean_description_html(
-            shortmem['feed_item']['summary_detail']['value'])
-    except KeyError:
+    if 'summary' in shortmem['feed_item']:
+        description = shortmem['feed_item'].summary
+    else:
+        description = _fp_get(shortmem, 'puredescription')
+
+    if description:
+        return util.clean_description_html(description)
+    else:
         raise errors.FieldNotFound('Could not find the description field')
 
 

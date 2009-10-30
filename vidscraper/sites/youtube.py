@@ -64,11 +64,11 @@ def provide_api(func):
     A quick decorator to provide the scraped YouTube API data for the video.
     """
     def wrapper(url, shortmem=None):
-        if shortmem.get('parsed_feed') is None:
+        if shortmem.get('parsed_entry') is None:
             video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
             api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
             feed = feedparser.parse(api_url)
-            shortmem['parsed_feed'] = feed
+            shortmem['parsed_entry'] = feed.entries[0]
         return func(url, shortmem)
     return wrapper
 
@@ -76,19 +76,19 @@ def provide_api(func):
 @provide_api
 @returns_unicode
 def get_link(url, shortmem=None):
-    return canonical_url(shortmem['parsed_feed'].entries[0].link)
+    return canonical_url(shortmem['parsed_entry'].link)
 
 @provide_shortmem
 @provide_api
 @returns_unicode
 def scrape_title(url, shortmem=None):
-    return shortmem['parsed_feed'].entries[0].title
+    return shortmem['parsed_entry'].title
 
 @provide_shortmem
 @provide_api
 @returns_unicode
 def scrape_description(url, shortmem=None):
-    entry = shortmem['parsed_feed'].entries[0]
+    entry = shortmem['parsed_entry']
     if 'media_description' in entry:
         return entry.media_description
     else:
@@ -133,34 +133,37 @@ def get_thumbnail_url(url, shortmem=None):
 @provide_api
 @returns_struct_time
 def scrape_published_date(url, shortmem=None):
-    if not shortmem['parsed_feed'].entries:
+    if not shortmem['parsed_entry']:
         return
-    return shortmem['parsed_feed'].entries[0].published_parsed
+    if 'published_parsed' in shortmem['parsed_entry']:
+        return shortmem['parsed_entry'].published_parsed
+    else:
+        return shortmem['parsed_entry'].get('updated_parsed', None)
 
 
 @provide_shortmem
 @provide_api
 def get_tags(url, shortmem=None):
-    if not shortmem['parsed_feed'].entries:
+    if not shortmem['parsed_entry']:
         return
-    return [tag['term'] for tag in shortmem['parsed_feed'].entries[0].tags
+    return [tag['term'] for tag in shortmem['parsed_entry'].tags
             if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
 
 
 @provide_shortmem
 @provide_api
 def get_user(url, shortmem=None):
-    if not shortmem['parsed_feed'].entries:
+    if not shortmem['parsed_entry']:
         return ''
-    return shortmem['parsed_feed'].entries[0]['author']
+    return shortmem['parsed_entry'].author
 
 @provide_shortmem
 @provide_api
 def get_user_url(url, shortmem=None):
-    if not shortmem['parsed_feed'].entries:
+    if not shortmem['parsed_entry']:
         return ''
     return 'http://www.youtube.com/user/%s' % (
-        shortmem['parsed_feed'].entries[0]['author'],)
+        shortmem['parsed_entry'].author,)
 
 YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {

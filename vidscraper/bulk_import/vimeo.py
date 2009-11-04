@@ -7,28 +7,40 @@ import simplejson
 
 from vidscraper.util import open_url_while_lying_about_agent
 
-USERNAME_RE = re.compile('http://vimeo\.com/(\w+)/')
+USERNAME_RE = re.compile('http://vimeo\.com/(?P<name>(channels/)?\w+)')
 
 _cached_video_count = {}
+
+def _post_url(username, type, query=None):
+    if 'channels/' in username:
+        username = username.replace('channels/', 'channel/')
+    return 'http://vimeo.com/api/v2/%s/%s.json%s' % (username, type,
+                                                     query and '?%s' % query or
+                                                     '')
 
 def video_count(parsed_feed):
     if parsed_feed.feed.get('generator') != 'The Vimeo':
         return None
-    username = USERNAME_RE.search(parsed_feed.feed.link).group(1)
-    json_data = simplejson.load(open_url_while_lying_about_agent(
-            'http://vimeo.com/api/v2/%s/info.json' % username))
-    _cached_video_count[parsed_feed.feed.link] = count = \
-        json_data['total_videos_uploaded']
+    username = USERNAME_RE.search(parsed_feed.feed.link).group('name')
+    url = _post_url(username, 'info')
+    json_data = simplejson.load(open_url_while_lying_about_agent(url))
+    if 'total_videos_uploaded' in json_data:
+        count = json_data['total_videos_uploaded']
+    elif 'total_videos' in json_data:
+        count = json_data['total_videos']
+    else:
+        return None
+    _cached_video_count[parsed_feed.feed.link] = count
     return count
 
 
 def bulk_import(parsed_feed):
-    username = USERNAME_RE.search(parsed_feed.feed.link).group(1)
+    username = USERNAME_RE.search(parsed_feed.feed.link).group('name')
     if parsed_feed.feed.link in _cached_video_count:
         count = _cached_video_count[parsed_feed.feed.link]
     else:
         count = video_count(parsed_feed)
-    post_url = 'http://vimeo.com/api/v2/%s/videos.json?page=%%i' % username
+    post_url = _post_url(username, 'videos', 'page=%i')
     parsed_feed = feedparser.FeedParserDict(parsed_feed.copy())
     parsed_feed.entries = []
     for i in range(1, int(math.ceil(count / 20.0)) + 1):

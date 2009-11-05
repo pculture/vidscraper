@@ -98,13 +98,13 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
                           'http://img.youtube.com/vi/oHg5SJYRHA0/'
                           'hqdefault.jpg')
 
-    def test_scrape_pubished_date(self):
+    def test_scrape_published_date(self):
         """
         scrape_published_date() should return a C{datetime.datetime} object of
         the date/time the video was originally published.
         """
         self.assertEquals(youtube.scrape_published_date(BASE_URL),
-                          datetime.datetime(2007, 5, 15, 8, 21, 50))
+                          datetime.datetime(2007, 5, 15, 7, 21, 50))
 
     def test_get_tags(self):
         """

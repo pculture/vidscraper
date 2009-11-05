@@ -65,14 +65,13 @@ def get_first_video_enclosure(entry):
     enclosure, or None if no video enclosure is found.
     """
 
-    try:
-        enclosures = entry.enclosures
-    except (KeyError, AttributeError):
+    enclosures = entry.get('media_content') or entry.get('enclosures')
+    if not enclosures:
         return None
     best_enclosure = None
     for enclosure in enclosures:
         if has_video_type(enclosure) or \
-                filetypes.isAllowedFilename(enclosure['href']):
+                filetypes.isAllowedFilename(enclosure.url):
             if enclosure.get('isdefault'):
                 return enclosure
             elif best_enclosure is None:

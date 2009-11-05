@@ -2,11 +2,15 @@ import feedparser
 
 from vidscraper.bulk_import import util
 
+# add the OpenSearch namespace to FeedParser
+# http://code.google.com/p/feedparser/issues/detail?id=55
+feedparser._FeedParserMixin.namespaces[
+    'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
+
+
 def _opensearch_get(parsed_feed, key):
-    # some versions of FeedParser strip off the opensearch_ prefix
-    return parsed_feed.feed.get(
-        'opensearch_%s' % key,
-        parsed_feed.feed.get(key, None))
+    return (parsed_feed.feed.get('opensearch_%s' % key) or
+            parsed_feed.feed.get(key, None))
 
 def video_count(parsed_feed):
     """

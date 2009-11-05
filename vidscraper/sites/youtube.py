@@ -147,7 +147,8 @@ def get_tags(url, shortmem=None):
     if not shortmem['parsed_entry']:
         return
     return [tag['term'] for tag in shortmem['parsed_entry'].tags
-            if tag['scheme'] != 'http://schemas.google.com/g/2005#kind']
+            if tag.get('scheme', '').startswith(
+            'http://gdata.youtube.com/schemas/2007/')]
 
 
 @provide_shortmem

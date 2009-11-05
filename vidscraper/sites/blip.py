@@ -121,7 +121,7 @@ def scrape_file_url(url, shortmem=None):
     try:
         video_enclosure = miroguide_util.get_first_video_enclosure(
             shortmem['feed_item'])
-        return video_enclosure.get('href')
+        return video_enclosure.get('url')
     except KeyError:
         raise errors.FieldNotFound('Could not find the feed_item field')
 

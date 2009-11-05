@@ -55,7 +55,15 @@ def get_flash_enclosure_url(url, shortmem=None):
 @provide_api
 @returns_unicode
 def get_embed(url, shortmem=None):
-    return shortmem['results']['embedTag']
+    tag = shortmem['results']['embedTag']
+    start = tag.find('<embed ')
+    end = tag.find(' />', start)
+    tag = tag[start:end + 3]
+    for attr in 'id', 'name':
+        start = tag.find('%s="' % attr)
+        end = tag.find('"', start + len(attr) + 2)
+        tag = tag[:start] + tag[end+2:]
+    return tag
 
 
 @provide_shortmem

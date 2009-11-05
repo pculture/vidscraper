@@ -66,8 +66,8 @@ New and improved, Miro 2.0!</span>""")
         """
         get_embed() should return the HTML to embed the given blip.tv video.
         """
-        embed_code = """<embed src="http://blip.tv/play/t2Hr0lQC" \
-type="application/x-shockwave-flash" width="480" height="364" \
+        embed_code = """<embed src="http://blip.tv/play/hMtu69JUAg" \
+type="application/x-shockwave-flash" width="480" height="350" \
 allowscriptaccess="always" allowfullscreen="true"></embed>"""
         self.assertEquals(blip.get_embed(BASE_URL), embed_code)
 

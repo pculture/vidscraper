@@ -97,7 +97,7 @@ allowfullscreen="true" type="application/x-shockwave-flash"></embed>\
         """
         self.assertEquals(vimeo.get_thumbnail_url(BASE_URL),
                           'http://ts.vimeo.com.s3.amazonaws.com/'
-                          '228/979/22897998_200.jpg')
+                          '228/979/22897998_640.jpg')
 
     def test_scrape_pubish_date(self):
         """

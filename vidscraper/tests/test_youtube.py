@@ -26,6 +26,7 @@
 import datetime
 import unittest
 
+from vidscraper import errors
 from vidscraper.sites import youtube
 
 BASE_URL = "http://www.youtube.com/watch?v=oHg5SJYRHA0"
@@ -132,3 +133,14 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         """
         self.assertEquals(youtube.get_user_url(BASE_URL),
                           'http://www.youtube.com/user/cotter548')
+
+
+    def test_provide_api_invalid_url(self):
+        """
+        If an unknown URL is accessed, the provide_api decorator should raise
+        BaseUrlLoadFailure.
+        """
+        func = youtube.provide_api(lambda x, shortmem: True)
+        self.assertRaises(
+            errors.BaseUrlLoadFailure, func,
+            'http://www.youtube.com/watch?v=Vbvf1Q3DrPY', {})

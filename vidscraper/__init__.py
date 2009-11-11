@@ -57,7 +57,11 @@ def scrape_suite(url, suite, fields=None):
             func = funcs_map[field]
         except KeyError:
             continue
-        scraped_data[field] = func(url, shortmem=shortmem)
+        try:
+            scraped_data[field] = func(url, shortmem=shortmem)
+        except errors.Error:
+            # ignore vidscraper errors
+            pass
 
     return scraped_data
 

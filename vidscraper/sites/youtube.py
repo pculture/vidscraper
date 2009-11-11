@@ -37,6 +37,7 @@ from lxml.html import tostring
 
 from vidscraper.decorators import (provide_shortmem,
                                    returns_unicode, returns_struct_time)
+from vidscraper.errors import BaseUrlLoadFailure
 
 
 EMaker = builder.ElementMaker()
@@ -68,6 +69,8 @@ def provide_api(func):
             video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
             api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
             feed = feedparser.parse(api_url)
+            if len(feed.entries) == 0:
+                raise BaseUrlLoadFailure(feed.bozo_exception)
             shortmem['parsed_entry'] = feed.entries[0]
         return func(url, shortmem)
     return wrapper

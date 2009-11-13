@@ -1,6 +1,7 @@
 import feedparser
 
 from vidscraper.bulk_import import opensearch, blip, vimeo
+from vidscraper import miroguide_util
 
 IMPORTERS = (
     opensearch,
@@ -38,4 +39,8 @@ def video_count(feed_url, parsed_feed=None):
         if count is not None:
             return count
 
-    return len(parsed_feed.entries)
+    count = 0
+    for entry in parsed_feed.entries:
+        if miroguide_util.get_first_video_enclosure(entry) is not None:
+            count += 1
+    return count

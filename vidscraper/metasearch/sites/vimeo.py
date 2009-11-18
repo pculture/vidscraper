@@ -60,6 +60,8 @@ def parse_entry(entry):
         'thumbnail_url': entry['thumbnails']['thumbnail'][-1]['_content'],
         'publish_date': datetime.strptime(entry['upload_date'],
                                           '%Y-%m-%d %H:%M:%S'),
+        'user': entry['owner']['fullname'],
+        'user_url': 'http://vimeo.com/%s' % entry['owner']['username'],
         }
     parsed['file_url'] = vimeo_scraper.scrape_file_url(parsed['link'])
     parsed['embed'] = vimeo_scraper.get_embed(parsed['link'])

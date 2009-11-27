@@ -62,6 +62,13 @@ New and improved, Miro 2.0!</span>""")
                           "http://blip.tv/file/get/"
                           "Miropcf-Miro20Introduction189.mp4")
 
+    def test_scrape_file_url_image(self):
+        """
+        scrape_file_url() should return None if the URL represents an image.
+        """
+        self.assertEquals(blip.scrape_file_url('http://blip.tv/file/728786'),
+                          None)
+
     def test_get_embed(self):
         """
         get_embed() should return the HTML to embed the given blip.tv video.

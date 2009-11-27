@@ -53,6 +53,9 @@ def get_entries(include_terms, exclude_terms=None,
         'skin': 'rss',
         'search': search_string.encode('utf8')}
 
+    if order_by == 'latest':
+        get_params['sort'] = 'date'
+
     get_url = '%s?%s' % (BLIP_QUERY_BASE, urllib.urlencode(get_params))
 
     parsed_feed = feedparser.parse(get_url)
@@ -63,5 +66,5 @@ def get_entries(include_terms, exclude_terms=None,
 SUITE = {
     'id': 'blip',
     'display_name': 'Blip.Tv',
-    'order_bys': ['relevant'],
+    'order_bys': ['latest', 'relevant'],
     'func': get_entries}

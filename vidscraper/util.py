@@ -38,6 +38,8 @@ def lxml_inner_html(elt):
     return (elt.text or '') + ''.join(etree.tostring(child) for child in elt)
 
 def clean_description_html(html):
+    if not html:
+        return html
     return DESCRIPTION_CLEANER.clean_html(html)
 
 

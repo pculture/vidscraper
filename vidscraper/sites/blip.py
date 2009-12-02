@@ -111,7 +111,7 @@ def scrape_description(url, shortmem=None):
     if description:
         return util.clean_description_html(description)
     else:
-        raise errors.FieldNotFound('Could not find the description field')
+        return u''
 
 
 @provide_shortmem

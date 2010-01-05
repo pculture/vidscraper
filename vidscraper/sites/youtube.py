@@ -92,7 +92,8 @@ def scrape_title(url, shortmem=None):
 @returns_unicode
 def scrape_description(url, shortmem=None):
     entry = shortmem['parsed_entry']
-    if 'media_description' in entry:
+    if 'media_description' in entry and isinstance(
+        entry['media_description'], basestring):
         return entry.media_description
     else:
         return entry.description

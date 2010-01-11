@@ -71,7 +71,7 @@ def get_first_video_enclosure(entry):
     best_enclosure = None
     for enclosure in enclosures:
         if has_video_type(enclosure) or \
-                filetypes.isAllowedFilename(enclosure['url']):
+                filetypes.isAllowedFilename(enclosure.get('url', '')):
             if enclosure.get('isdefault'):
                 return enclosure
             elif best_enclosure is None:

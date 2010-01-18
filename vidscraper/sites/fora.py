@@ -80,7 +80,7 @@ def scrape_publish_date(url, shortmem=None):
     return datetime.datetime.strptime(
         shortmem['base_etree'].xpath(
             "//div[@id='programinfo_content']"
-            "//dl/dd[3]/text()")[0],
+            "//dl/dt[3]/following-sibling::dd/text()")[0],
         '%m.%d.%y')
 
 

@@ -19,7 +19,7 @@ def _post_url(username, type, query=None):
                                                      '')
 
 def video_count(parsed_feed):
-    if parsed_feed.feed.get('generator') != 'The Vimeo':
+    if not parsed_feed.feed.get('generator', '').endswith('Vimeo'):
         return None
     username = USERNAME_RE.search(parsed_feed.feed.link).group('name')
     url = _post_url(username, 'info')

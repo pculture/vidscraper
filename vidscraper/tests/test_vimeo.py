@@ -95,9 +95,8 @@ allowfullscreen="true" type="application/x-shockwave-flash"></embed>\
         get_thubmanil_url() should return the thumbnail URL for the Vimeo
         video.
         """
-        self.assertEquals(vimeo.get_thumbnail_url(BASE_URL),
-                          'http://ts.vimeo.com.s3.amazonaws.com/'
-                          '228/979/22897998_640.jpg')
+        self.assertTrue(vimeo.get_thumbnail_url(BASE_URL).endswith(
+                '228/979/22897998_640.jpg'))
 
     def test_scrape_pubish_date(self):
         """

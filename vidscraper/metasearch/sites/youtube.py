@@ -24,9 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import cgi
 import urllib
-import urlparse
 
 import feedparser
 
@@ -41,8 +39,12 @@ YOUTUBE_QUERY_BASE = 'http://gdata.youtube.com/feeds/api/videos'
 def parse_youtube_entry(entry):
     shortmem = {'parsed_entry': entry}
     parsed_entry = {}
+    link = entry['link']
+    if '&amp;' in link:
+        # Feedparser doesn't always parse these into &s
+        link = link.replace('&amp;', '&')
     for field, func in youtube_scraper.SUITE['funcs'].items():
-        parsed_entry[field] = func(entry['link'], shortmem)
+        parsed_entry[field] = func(link, shortmem)
 
     return parsed_entry
 

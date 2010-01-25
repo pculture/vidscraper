@@ -7,7 +7,7 @@ import simplejson
 
 from vidscraper.util import open_url_while_lying_about_agent
 
-USERNAME_RE = re.compile('http://vimeo\.com/(?P<name>(channels/)?\w+)')
+USERNAME_RE = re.compile('http://(www\.)?vimeo\.com/(?P<name>(channels/)?\w+)')
 
 _cached_video_count = {}
 

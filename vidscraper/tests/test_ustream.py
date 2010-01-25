@@ -84,7 +84,7 @@ class UStreamScrapingTestCase(unittest.TestCase):
         """
         self.assertEquals(ustream.get_thumbnail_url(BASE_URL),
                           'http://static-cdn1.ustream.tv/videopic/0/1/2/2273/'
-                          '2273554/1_776545_2273554_320x240_b_1.jpg')
+                          '2273554/1_776545_2273554_320x240_b_1:1.jpg')
 
     def test_get_publish_date(self):
         """

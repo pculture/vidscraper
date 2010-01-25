@@ -5,6 +5,7 @@ import urllib2
 import simplejson
 
 from vidscraper.decorators import provide_shortmem, returns_unicode
+from vidscraper.errors import BaseUrlLoadFailure
 
 USTREAM_API_KEY = None
 
@@ -20,6 +21,8 @@ def provide_api(func):
                 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (
                     id, USTREAM_API_KEY))
             shortmem['results'] = simplejson.load(api_file)['results']
+            if shortmem['results'] is None:
+                raise BaseUrlLoadFailure('No results from uStream API')
         return func(url, shortmem)
     return wrapper
 

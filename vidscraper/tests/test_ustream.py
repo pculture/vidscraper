@@ -26,6 +26,7 @@
 import datetime
 import unittest
 
+from vidscraper import scrape_suite
 from vidscraper.sites import ustream
 
 BASE_URL = "http://www.ustream.tv/recorded/2273554"
@@ -108,3 +109,12 @@ class UStreamScrapingTestCase(unittest.TestCase):
         """
         self.assertEquals(ustream.get_user_url(BASE_URL),
                           'http://www.ustream.tv/dukeuniversity')
+
+    def test_scrape_removed_video(self):
+        """
+        A removed video should return a blank dictionary.
+        """
+        self.assertEquals(
+            scrape_suite('http://www.ustream.tv/recorded/4155845',
+                         ustream.SUITE),
+            {})

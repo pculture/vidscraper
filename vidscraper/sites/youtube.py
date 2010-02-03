@@ -51,6 +51,8 @@ def canonical_url(url):
     Return the canonical URL for a given YouTube URL.  This strips off any
     trailing &feature= nonsense.
     """
+    if '&amp;' in url:
+        url = url.replace('&amp;', '&')
     if '&feature=' in url:
         start = url.find('&feature=')
         end = url.find('&', start+1)

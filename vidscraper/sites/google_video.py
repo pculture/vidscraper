@@ -82,4 +82,4 @@ SUITE = {
         'description': scrape_description,
         'file_url_is_flaky': file_url_is_flaky,
         'file_url': scrape_file_url,
-        'embed_code': scrape_embed_code}}
+        'embed': scrape_embed_code}}

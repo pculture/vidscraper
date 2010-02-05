@@ -26,6 +26,7 @@
 import datetime
 import time
 from lxml import html as lxml_html
+from lxml.etree import _ElementUnicodeResult
 
 def provide_shortmem(scraper_func):
     def new_scraper_func(url, shortmem=None, *args, **kwargs):
@@ -58,8 +59,11 @@ def returns_unicode(scraper_func):
                 else:
                     encoding = 'utf8'
                 return result.decode(encoding)
+            elif isinstance(result, _ElementUnicodeResult):
+                return unicode(result)
             else:
                 return result
+
 
     return new_scraper_func
 

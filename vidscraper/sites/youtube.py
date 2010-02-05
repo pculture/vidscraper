@@ -174,6 +174,11 @@ def get_user_url(url, shortmem=None):
     return 'http://www.youtube.com/user/%s' % (
         shortmem['parsed_entry'].author,)
 
+@provide_shortmem
+@provide_api
+def is_embedable(url, shortmem=None):
+    return 'yt_noembed' not in shortmem['parsed_entry']
+
 YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
@@ -182,6 +187,7 @@ SUITE = {
         'title': scrape_title,
         'description': scrape_description,
         'embed': get_embed,
+        'is_embedable': is_embedable,
         'thumbnail_url': get_thumbnail_url,
         'publish_date': scrape_published_date,
         'tags': get_tags,

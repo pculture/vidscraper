@@ -35,7 +35,11 @@ DESCRIPTION_CLEANER = clean.Cleaner(
 
 
 def lxml_inner_html(elt):
-    return (elt.text or '') + ''.join(etree.tostring(child) for child in elt)
+    try:
+        return (elt.text or '') + ''.join(
+            etree.tostring(child) for child in elt)
+    except UnicodeError:
+        return u''
 
 def clean_description_html(html):
     if not html:

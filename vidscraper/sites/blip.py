@@ -145,8 +145,18 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
             'width': EMBED_WIDTH,
             'height': EMBED_HEIGHT}
 
-    oembed_response = urllib.urlopen(
-        'http://blip.tv/oembed/?' + urllib.urlencode(oembed_get_dict)).read()
+    oembed_response = None
+    for i in range(5):
+        try:
+            oembed_response = urllib.urlopen(
+                'http://blip.tv/oembed/?' + urllib.urlencode(
+                    oembed_get_dict)).read()
+            break
+        except IOError:
+            pass
+
+    if not oembed_response:
+        return None
 
     oembed_response = oembed_response.replace(r"\'", "'")
     # simplejson doesn't like the \' escape

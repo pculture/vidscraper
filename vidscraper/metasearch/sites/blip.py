@@ -60,6 +60,10 @@ def get_entries(include_terms, exclude_terms=None,
 
     parsed_feed = feedparser.parse(get_url)
 
+    if len(parsed_feed.entries) == 1 and \
+            parsed_feed.entries[0].summary == 'Search returned no results.':
+        return [] # no results
+
     return [parse_entry(entry) for entry in parsed_feed.entries]
 
 

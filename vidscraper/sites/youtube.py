@@ -179,7 +179,8 @@ def get_user_url(url, shortmem=None):
 def is_embedable(url, shortmem=None):
     return 'yt_noembed' not in shortmem['parsed_entry']
 
-YOUTUBE_REGEX = re.compile(r'https?://([^/]+\.)?youtube.com/(?:watch)?\?v=')
+YOUTUBE_REGEX = re.compile(
+    r'https?://([^/]+\.)?youtube.com/(?:watch)?\?(\w+=\w+&)*v=')
 SUITE = {
     'regex': YOUTUBE_REGEX,
     'funcs': {

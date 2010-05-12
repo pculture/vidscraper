@@ -48,13 +48,15 @@ EMBED_HEIGHT = 344
 def parse_api(scraper_func, shortmem=None):
     def new_scraper_func(url, shortmem=None, *args, **kwargs):
         if not shortmem.get('api_data'):
-            api_url = 'http://vimeo.com/api/clip/%s.json' % (
+            api_url = 'http://vimeo.com/api/v2/video/%s.json' % (
                 VIMEO_REGEX.match(url).groupdict()['video_id'])
-            api_data = simplejson.loads(
-                util.open_url_while_lying_about_agent(api_url).read().decode(
-                    'utf8'))[0]
-            shortmem['api_data'] = api_data
-        return scraper_func(url, shortmem=shortmem, *args, **kwargs)
+            for i in range(5):
+                api_data = simplejson.loads(
+                    util.open_url_while_lying_about_agent(
+                        api_url).read().decode(
+                        'utf8'))[0]
+                shortmem['api_data'] = api_data
+                return scraper_func(url, shortmem=shortmem, *args, **kwargs)
     return new_scraper_func
 
 @provide_shortmem
@@ -99,10 +101,12 @@ def scrape_file_url(url, shortmem=None):
             break
     if not vimeo_data:
         return ''
-    req_sig = vimeo_data.find('request_signature').text
-    req_sig_expires = vimeo_data.find('request_signature_expires').text
+    req_sig = vimeo_data.find('request_signature')
+    req_sig_expires = vimeo_data.find('request_signature_expires')
+    if req_sig or not req_sig_expires:
+        return ''
     file_url = "http://www.vimeo.com/moogaloop/play/clip:%s/%s/%s/?q=sd" % (
-        video_id, req_sig, req_sig_expires)
+        video_id, req_sig.text, req_sig_expires.text)
     shortmem['file_url'] = file_url
     return file_url
 

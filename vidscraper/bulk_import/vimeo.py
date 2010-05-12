@@ -7,7 +7,9 @@ import simplejson
 
 from vidscraper.util import open_url_while_lying_about_agent
 
-USERNAME_RE = re.compile('http://(www\.)?vimeo\.com/(?P<name>(channels/)?\w+)')
+USERNAME_RE = re.compile(r'http://(www\.)?vimeo\.com/'
+                         r'(?P<name>((channels|groups)/)?\w+)/'
+                         r'(?P<type>\w+)')
 
 _cached_video_count = {}
 
@@ -21,31 +23,37 @@ def _post_url(username, type, query=None):
 def video_count(parsed_feed):
     if not parsed_feed.feed.get('generator', '').endswith('Vimeo'):
         return None
-    username = USERNAME_RE.search(parsed_feed.feed.link).group('name')
+    match = USERNAME_RE.search(parsed_feed.feed.link)
+    username = match.group('name')
     url = _post_url(username, 'info')
     json_data = simplejson.load(open_url_while_lying_about_agent(url))
-    if 'total_videos_uploaded' in json_data:
-        count = json_data['total_videos_uploaded']
-    elif 'total_videos' in json_data:
-        count = json_data['total_videos']
-    else:
-        return None
+    count = None
+    if match.group('type') == 'videos':
+        if 'total_videos_uploaded' in json_data:
+            count = json_data['total_videos_uploaded']
+        elif 'total_videos' in json_data:
+            count = json_data['total_videos']
+    elif match.group('type') == 'likes':
+        count = json_data.get('total_videos_liked')
     _cached_video_count[parsed_feed.feed.link] = count
     return count
 
 
 def bulk_import(parsed_feed):
-    username = USERNAME_RE.search(parsed_feed.feed.link).group('name')
+    match = USERNAME_RE.search(parsed_feed.feed.link)
+    username = match.group('name')
     if parsed_feed.feed.link in _cached_video_count:
         count = _cached_video_count[parsed_feed.feed.link]
     else:
         count = video_count(parsed_feed)
-    post_url = _post_url(username, 'videos', 'page=%i')
+    post_url = _post_url(username, match.group('type'), 'page=%i')
     parsed_feed = feedparser.FeedParserDict(parsed_feed.copy())
     parsed_feed.entries = []
     for i in range(1, int(math.ceil(count / 20.0)) + 1):
-        json_data = simplejson.load(open_url_while_lying_about_agent(
-                post_url % i))
+        data = open_url_while_lying_about_agent(post_url % i).read()
+        if not data:
+            break
+        json_data = simplejson.loads(data)
         for video in json_data:
             parsed_feed.entries.append(feedparser_dict(
                     _json_to_feedparser(video)))

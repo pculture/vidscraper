@@ -25,32 +25,13 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
-import md5
+import oauth2
 import simplejson
 import urllib
-import urllib2
 
 from vidscraper.metasearch import defaults
 from vidscraper.metasearch import util as metasearch_util
 from vidscraper.sites import vimeo as vimeo_scraper
-
-VIMEO_QUERY_BASE = 'http://vimeo.com/api/rest/?'
-
-VIMEO_API_KEY = None # set these elsewhere
-VIMEO_API_SECRET = None
-
-class VimeoRequest(urllib2.Request):
-    def __init__(self, params):
-        sorted_args = [VIMEO_API_SECRET]
-        for k in sorted(params.keys()):
-            sorted_args.append(k + params[k])
-
-        params['api_sig'] = md5.new(''.join(sorted_args)).hexdigest()
-
-        url = VIMEO_QUERY_BASE + urllib.urlencode(params)
-        urllib2.Request.__init__(self, url,
-                                 headers={
-                'User-Agent': 'Miro-Community'})
 
 def parse_entry(entry):
     parsed = {
@@ -82,13 +63,15 @@ def get_entries(include_terms, exclude_terms=None,
         'query': search_string,
         'per_page': str(defaults.DEFAULT_MAX_RESULTS),
         'fullResponse': '1',
-        'api_key': VIMEO_API_KEY
+        'api_key': vimeo_scraper.VIMEO_API_KEY
         }
-
-    request = VimeoRequest(get_params)
-    fp = urllib2.HTTPHandler().http_open(request)
-    json = simplejson.load(fp)
-
+    url = '%s?%s' % (vimeo_scraper.VIMEO_API_URL,
+                     urllib.urlencode(get_params))
+    consumer = oauth2.Consumer(vimeo_scraper.VIMEO_API_KEY,
+                               vimeo_scraper.VIMEO_API_SECRET)
+    client = oauth2.Client(consumer)
+    request = client.request(url)
+    json = simplejson.loads(request[1])
 
     return [parse_entry(entry) for entry in json['videos']['video']]
 

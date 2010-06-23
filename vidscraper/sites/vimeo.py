@@ -32,12 +32,16 @@ from lxml import builder
 from lxml import etree
 from lxml.html import builder as E
 from lxml.html import tostring
+import oauth2
 import simplejson
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
-from vidscraper import errors
 from vidscraper import util
 
+VIMEO_API_KEY = None # set these elsewhere
+VIMEO_API_SECRET = None
+
+VIMEO_API_URL = 'http://vimeo.com/api/rest/v2/'
 
 EMaker = builder.ElementMaker()
 EMBED = EMaker.embed
@@ -48,39 +52,37 @@ EMBED_HEIGHT = 344
 def parse_api(scraper_func, shortmem=None):
     def new_scraper_func(url, shortmem=None, *args, **kwargs):
         if not shortmem.get('api_data'):
-            api_url = 'http://vimeo.com/api/v2/video/%s.json' % (
-                VIMEO_REGEX.match(url).groupdict()['video_id'])
+            video_id = VIMEO_REGEX.match(url).groupdict()['video_id']
+            url = '%s?%s' % (VIMEO_API_URL,
+                             urllib.urlencode({
+                        'method': 'vimeo.videos.getInfo',
+                        'format': 'json',
+                        'video_id': video_id}))
+            consumer = oauth2.Consumer(VIMEO_API_KEY, VIMEO_API_SECRET)
+            client = oauth2.Client(consumer)
             for i in range(5):
-                api_data = simplejson.loads(
-                    util.open_url_while_lying_about_agent(
-                        api_url).read().decode(
-                        'utf8'))[0]
-                shortmem['api_data'] = api_data
-                return scraper_func(url, shortmem=shortmem, *args, **kwargs)
+                try:
+                    api_raw_data = client.request(url)[1]
+                    api_data = simplejson.loads(api_raw_data)
+                except Exception:
+                    continue
+                else:
+                    shortmem['api_data'] = api_data['video'][0]
+        return scraper_func(url, shortmem=shortmem, *args,
+                                        **kwargs)
     return new_scraper_func
 
 @provide_shortmem
-@parse_url
+@parse_api
 @returns_unicode
 def scrape_title(url, shortmem=None):
-    try:
-        return shortmem['base_etree'].xpath(
-            "id('header')/div/div[@class='title']")[0].text_content().strip()
-    except IndexError:
-        raise errors.FieldNotFound('Could not find the title field')
-
+    return shortmem['api_data']['title']
 
 @provide_shortmem
-@parse_url
+@parse_api
 @returns_unicode
 def scrape_description(url, shortmem=None):
-    try:
-        return util.clean_description_html(
-            util.lxml_inner_html(
-                shortmem['base_etree'].xpath(
-                    'id("description")')[0]).strip())
-    except IndexError:
-        raise errors.FieldNotFound('Could not find the description field')
+    return util.clean_description_html(shortmem['api_data']['description'])
 
 
 @provide_shortmem
@@ -103,13 +105,10 @@ def scrape_file_url(url, shortmem=None):
         return ''
     req_sig = vimeo_data.find('request_signature')
     req_sig_expires = vimeo_data.find('request_signature_expires')
-    if req_sig or not req_sig_expires:
+    if req_sig is None or req_sig_expires is None:
         return ''
-    file_url = "http://www.vimeo.com/moogaloop/play/clip:%s/%s/%s/?q=sd" % (
+    return "http://www.vimeo.com/moogaloop/play/clip:%s/%s/%s/?q=sd" % (
         video_id, req_sig.text, req_sig_expires.text)
-    shortmem['file_url'] = file_url
-    return file_url
-
 
 @provide_shortmem
 def file_url_is_flaky(url, shortmem=None):
@@ -117,7 +116,6 @@ def file_url_is_flaky(url, shortmem=None):
 
 
 @provide_shortmem
-@parse_url
 @returns_unicode
 def get_flash_enclosure_url(url, shortmem=None):
     vimeo_match = VIMEO_REGEX.match(url)
@@ -154,29 +152,32 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     return tostring(main_object)
 
 @provide_shortmem
-@parse_url
 @parse_api
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
-    return shortmem['api_data'].get('thumbnail_large')
+    max_size = 0
+    url = None
+    for thumbnail in shortmem['api_data']['thumbnails']['thumbnail']:
+        size = int(thumbnail['width']) * int(thumbnail['height'])
+        if size > max_size:
+            max_size = size
+            url = thumbnail['_content']
+    return url
 
 @provide_shortmem
-@parse_url
 @parse_api
 @returns_unicode
 def get_user(url, shortmem=None):
-    return shortmem['api_data'].get('user_name')
+    return shortmem['api_data']['owner']['display_name']
 
 @provide_shortmem
-@parse_url
 @parse_api
 @returns_unicode
 def get_user_url(url, shortmem=None):
-    return shortmem['api_data'].get('user_url')
+    return shortmem['api_data']['owner']['profileurl']
 
 
 @provide_shortmem
-@parse_url
 @parse_api
 def scrape_publish_date(url, shortmem=None):
     return datetime.datetime.strptime(

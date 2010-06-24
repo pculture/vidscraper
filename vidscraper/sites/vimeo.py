@@ -68,6 +68,9 @@ def parse_api(scraper_func, shortmem=None):
                     continue
                 else:
                     shortmem['api_data'] = api_data['video'][0]
+                    break
+        if 'api_data' not in shortmem:
+            return None
         return scraper_func(url, shortmem=shortmem, *args,
                                         **kwargs)
     return new_scraper_func
@@ -158,6 +161,11 @@ def get_thumbnail_url(url, shortmem=None):
     max_size = 0
     url = None
     for thumbnail in shortmem['api_data']['thumbnails']['thumbnail']:
+        if 'thumbnails/defaults' in thumbnail['_content']:
+            if not url:
+                url = thumbnail['_content'] # use it only if we don't have a
+                                            # better thumbnail
+            continue
         size = int(thumbnail['width']) * int(thumbnail['height'])
         if size > max_size:
             max_size = size

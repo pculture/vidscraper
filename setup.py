@@ -5,6 +5,7 @@ version = '0.0.1'
 setup(name="vidscraper",
       version=version,
       author='Participatory Culture Foundation',
-      license='BSD')
+      license='BSD',
+      install_requires=['oauth2'])
 
 

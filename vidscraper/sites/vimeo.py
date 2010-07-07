@@ -60,6 +60,7 @@ def parse_api(scraper_func, shortmem=None):
                         'video_id': video_id}))
             consumer = oauth2.Consumer(VIMEO_API_KEY, VIMEO_API_SECRET)
             client = oauth2.Client(consumer)
+            backoff = util.random_exponential_backoff(2)
             for i in range(5):
                 try:
                     api_raw_data = client.request(url)[1]
@@ -67,8 +68,10 @@ def parse_api(scraper_func, shortmem=None):
                 except Exception:
                     continue
                 else:
-                    shortmem['api_data'] = api_data['video'][0]
-                    break
+                    if 'video' in api_data:
+                        shortmem['api_data'] = api_data['video'][0]
+                        break
+                backoff.next()
         if 'api_data' not in shortmem:
             return None
         return scraper_func(url, shortmem=shortmem, *args,

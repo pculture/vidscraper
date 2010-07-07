@@ -24,7 +24,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import re
+import random
+import time
 import urllib
 
 from lxml import etree
@@ -62,3 +63,12 @@ class LiarOpener(urllib.FancyURLopener):
 def open_url_while_lying_about_agent(url):
     opener = LiarOpener()
     return opener.open(url)
+
+def random_exponential_backoff(denominator):
+    i = 1.0
+    while True:
+        sleep_range = (i ** 2) / denominator
+        sleep_time = random.uniform(0, sleep_range)
+        time.sleep(sleep_time)
+        i += 1
+        yield sleep_time

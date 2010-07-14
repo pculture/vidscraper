@@ -54,18 +54,6 @@ def scrape_description(url, shortmem=None):
         raise errors.FieldNotFound('Could not find the description field')
 
 
-# This isn't returning a working url any more :\
-@provide_shortmem
-@parse_url
-@returns_unicode
-def scrape_file_url(url, shortmem=None):
-    return shortmem['base_etree'].xpath(
-        "//div[@id='download-instructions-detail']/a/@href")[0]
-
-@provide_shortmem
-def file_url_is_flaky(url, shortmem=None):
-    return True
-
 @provide_shortmem
 @parse_url
 @returns_unicode
@@ -80,6 +68,4 @@ SUITE = {
     'funcs': {
         'title': scrape_title,
         'description': scrape_description,
-        'file_url_is_flaky': file_url_is_flaky,
-        'file_url': scrape_file_url,
         'embed': scrape_embed_code}}

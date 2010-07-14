@@ -158,8 +158,13 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     if not oembed_response:
         return None
 
-    oembed_response = oembed_response.replace(r"\'", "'")
     # simplejson doesn't like the \' escape
+    oembed_response = oembed_response.replace(r"\'", "'")
+
+    # clean up the response, and check for a trailing ,
+    oembed_response = oembed_response.replace('\n', '').replace('\t', '')
+    if oembed_response.endswith(',}'):
+        oembed_response = oembed_response[:-2] + '}'
 
     try:
         embed_code = simplejson.loads(oembed_response.decode('utf8'))['html']

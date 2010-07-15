@@ -6,6 +6,6 @@ setup(name="vidscraper",
       version=version,
       author='Participatory Culture Foundation',
       license='BSD',
-      install_requires=['oauth2'])
+      install_requires=['lxml', 'oauth2'])
 
 

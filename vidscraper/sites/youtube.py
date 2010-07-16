@@ -97,7 +97,7 @@ def scrape_description(url, shortmem=None):
     if 'media_description' in entry and isinstance(
         entry['media_description'], basestring):
         return entry.media_description
-    else:
+    elif 'description' in entry:
         return entry.description
 
 @provide_shortmem

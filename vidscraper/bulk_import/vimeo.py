@@ -8,8 +8,8 @@ import simplejson
 from vidscraper.util import open_url_while_lying_about_agent
 
 USERNAME_RE = re.compile(r'http://(www\.)?vimeo\.com/'
-                         r'(?P<name>((channels|groups)/)?\w+)/'
-                         r'(?P<type>\w+)')
+                         r'(?P<name>((channels|groups)/)?\w+)'
+                         r'(/(?P<type>(videos|likes)))?')
 
 _cached_video_count = {}
 
@@ -28,7 +28,7 @@ def video_count(parsed_feed):
     url = _post_url(username, 'info')
     json_data = simplejson.load(open_url_while_lying_about_agent(url))
     count = None
-    if match.group('type') == 'videos':
+    if match.group('type') in ('videos', None):
         if 'total_videos_uploaded' in json_data:
             count = json_data['total_videos_uploaded']
         elif 'total_videos' in json_data:

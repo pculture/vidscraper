@@ -46,11 +46,14 @@ def bulk_import(parsed_feed):
         count = _cached_video_count[parsed_feed.feed.link]
     else:
         count = video_count(parsed_feed)
-    post_url = _post_url(username, match.group('type'), 'page=%i')
+    post_url = _post_url(username, match.group('type') or 'videos', 'page=%i')
     parsed_feed = feedparser.FeedParserDict(parsed_feed.copy())
     parsed_feed.entries = []
     for i in range(1, int(math.ceil(count / 20.0)) + 1):
-        data = open_url_while_lying_about_agent(post_url % i).read()
+        response = open_url_while_lying_about_agent(post_url % i)
+        if response.getcode() != 200:
+            break
+        data = response.read()
         if not data:
             break
         json_data = simplejson.loads(data)

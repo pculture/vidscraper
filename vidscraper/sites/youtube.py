@@ -77,11 +77,9 @@ def provide_api(func):
         return func(url, shortmem)
     return wrapper
 
-@provide_shortmem
-@provide_api
 @returns_unicode
-def get_link(url, shortmem=None):
-    return canonical_url(shortmem['parsed_entry'].link)
+def get_link(url):
+    return canonical_url(url)
 
 @provide_shortmem
 @provide_api

@@ -25,6 +25,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from vidscraper import errors
+from vidscraper import metasearch # MC uses 'vidscraper.metasearch'
 from vidscraper.sites import (
     vimeo, google_video, youtube, blip, ustream, fora)
 

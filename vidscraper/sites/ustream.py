@@ -87,7 +87,7 @@ def get_publish_date(url, shortmem=None):
 @provide_shortmem
 @provide_api
 def get_tags(url, shortmem=None):
-    return [tag.decode('utf8') for tag in shortmem['results']['tags']]
+    return [tag.decode('utf8') for tag in shortmem['results']['tags'] if isinstance(tag, basestring)]
 
 
 @provide_shortmem

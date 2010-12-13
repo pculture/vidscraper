@@ -153,7 +153,7 @@ def get_tags(url, shortmem=None):
     return [(isinstance(tag['term'], unicode) and tag['term'])
             or tag['term'].decode('utf8')
             for tag in shortmem['parsed_entry'].tags
-            if tag and tag.get('scheme', '').startswith(
+            if tag.get('scheme', '') and tag.get('scheme', '').startswith(
             'http://gdata.youtube.com/schemas/2007/')]
 
 

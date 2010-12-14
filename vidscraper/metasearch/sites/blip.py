@@ -91,5 +91,5 @@ def get_entries(include_terms, exclude_terms=None,
 SUITE = {
     'id': 'blip',
     'display_name': 'Blip.Tv',
-    'order_bys': ['relevant'],
+    'order_bys': ['latest', 'relevant'],
     'func': get_entries}

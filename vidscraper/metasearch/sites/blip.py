@@ -31,8 +31,8 @@ import feedparser
 from vidscraper.metasearch import util as metasearch_util
 from vidscraper.sites import blip as blip_scraper
 
-#'http://www.blip.tv/search/?search=(string)skin=rss'
-BLIP_QUERY_BASE = 'http://blip.tv/search/'
+#'http://www.blip.tv/rss?q=(string)
+BLIP_QUERY_BASE = 'http://blip.tv/rss'
 
 
 def parse_entry(entry):
@@ -46,15 +46,36 @@ def parse_entry(entry):
 
 def get_entries(include_terms, exclude_terms=None,
                 order_by='relevant', **kwargs):
+    # NOTE: As of this writing, if you order_by 'relevant' from blip.tv,
+    # blip.tv finds you maximally *irrelevant* videos to your query.
+    #
+    # This is quite frustrating, so we override all searches to sort by
+    # date instead.
+    #
+    # Note also that sort by date doesn't actually sort by date.
+    # Example URLs with broken behavior:
+    #
+    # http://blip.tv/search/?q=va+floyd&skin=rss&sort=relevant
+    # irrelevant hits
+    #
+    # http://blip.tv/search/?q=va+floyd&skin=rss&sort=date
+    # more irrelevant hits
+    #
+    # At least http://blip.tv/rss?q=va+floyd&skin=rss&sort=date
+    # is mostly relevant. It's not sorted by date, though.
+    #
+    # Mega wtf.
+    #
+    # http://blip.tv/rss?q=va+floyd is equivalent to the above,
+    # and has fewer parameters, so we use that.
+    #
+    # -- Asheesh 2010-12-14.
     search_string = metasearch_util.search_string_from_terms(
         include_terms, exclude_terms)
 
     get_params = {
-        'skin': 'rss',
-        'search': search_string.encode('utf8')}
-
-    if order_by == 'latest':
-        get_params['sort'] = 'date'
+        'q': search_string.encode('utf8')
+    }
 
     get_url = '%s?%s' % (BLIP_QUERY_BASE, urllib.urlencode(get_params))
 
@@ -70,5 +91,5 @@ def get_entries(include_terms, exclude_terms=None,
 SUITE = {
     'id': 'blip',
     'display_name': 'Blip.Tv',
-    'order_bys': ['latest', 'relevant'],
+    'order_bys': ['relevant'],
     'func': get_entries}

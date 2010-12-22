@@ -33,3 +33,5 @@ class ParsingError(Error): pass
 class FieldNotFound(Error): pass
 # Can't identify the url
 class CantIdentifyUrl(Error): pass
+# If the remote server deletes the video
+class VideoDeleted(Error): pass

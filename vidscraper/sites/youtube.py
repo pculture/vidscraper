@@ -37,7 +37,7 @@ from lxml.html import tostring
 
 from vidscraper.decorators import (provide_shortmem,
                                    returns_unicode, returns_struct_time)
-from vidscraper.errors import BaseUrlLoadFailure
+from vidscraper.errors import BaseUrlLoadFailure, VideoDeleted
 
 
 EMaker = builder.ElementMaker()
@@ -71,9 +71,17 @@ def provide_api(func):
             video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
             api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
             feed = feedparser.parse(api_url)
-            if len(feed.entries) == 0:
-                raise BaseUrlLoadFailure(feed.bozo_exception)
-            shortmem['parsed_entry'] = feed.entries[0]
+            if len(feed.entries) > 0:
+                winning_entry = feed.entries[0]
+            else: # sad, no entries
+                # Is the reason a 403? If so, alert the upper layer that the video
+                # was deleted.
+                if feed.status == 403:
+                    raise VideoDeleted()
+                else:
+                    # Who knows what the deal is.
+                    raise BaseUrlLoadFailure(feed.bozo_exception)
+            shortmem['parsed_entry'] = winning_entry
         return func(url, shortmem)
     return wrapper
 

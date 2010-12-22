@@ -60,6 +60,8 @@ def scrape_suite(url, suite, fields=None):
             continue
         try:
             scraped_data[field] = func(url, shortmem=shortmem)
+        except errors.VideoDeleted:
+            raise
         except errors.Error:
             # ignore vidscraper errors
             pass

@@ -50,7 +50,7 @@ def clean_description_html(html):
 
 class LiarOpener(urllib.FancyURLopener):
     """
-    Some APIs (*cough* vimeo *cough) don't allow urllib's user agent
+    Some APIs (*cough* vimeo *cough*) don't allow urllib's user agent
     to access their site.
 
     (Why on earth would you ban Python's most common url fetching

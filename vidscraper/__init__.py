@@ -35,6 +35,14 @@ AUTOSCRAPE_SUITES = [
 
 
 def scrape_suite(url, suite, fields=None):
+    """Scrapes a specified url using the recipe for the specified
+    suite.  Returns a dict of data which can be constricted by the
+    fields argument.
+
+    :returns: dict of scraped data
+
+    :raises errors.VideoDeleted: if the video no longer exists
+    """
     scraped_data = {}
 
     funcs_map = suite['funcs']
@@ -69,7 +77,26 @@ def scrape_suite(url, suite, fields=None):
     return scraped_data
 
 
+def is_scrapable(url):
+    """Returns True if vidscraper can scrape this url, and False if
+    it can't.
+    """
+    for suite in AUTOSCRAPE_SUITES:
+        if suite['regex'].match(url):
+            return True
+
+    # If we get here that means that none of the regexes matched, so
+    # we can't scrape it.
+    return False
+
 def auto_scrape(url, fields=None):
+    """Scrapes the given url for the specified fields and returns them.
+
+    :returns: dict of scraped data
+
+    :raises errors.CantIdentifyUrl: if this is not a url that can be
+        scraped
+    """
     for suite in AUTOSCRAPE_SUITES:
         if suite['regex'].match(url):
             return scrape_suite(url, suite, fields)

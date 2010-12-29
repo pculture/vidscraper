@@ -23,15 +23,31 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# base error for this library
-class Error(Exception): pass
-# Error if you can't even load the base url
-class BaseUrlLoadFailure(Error): pass
-# An error if parsing the document with lxml fails
-class ParsingError(Error): pass
-# An error if the specific field is not found
-class FieldNotFound(Error): pass
-# Can't identify the url
-class CantIdentifyUrl(Error): pass
-# If the remote server deletes the video
-class VideoDeleted(Error): pass
+class Error(Exception):
+    """Base error for this library
+    """
+    pass
+
+class BaseUrlLoadFailure(Error):
+    """Error if you can't even load the base url
+    """
+    pass
+
+class ParsingError(Error):
+    """An error if parsing the document with lxml fails
+    """
+    pass
+
+class FieldNotFound(Error):
+    """An error if the specific field is not found
+    """
+    pass
+
+class CantIdentifyUrl(Error):
+    """Can't identify the url
+    """
+
+class VideoDeleted(Error):
+    """If the remote server deletes the video
+    """
+    pass

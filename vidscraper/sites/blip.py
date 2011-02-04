@@ -135,7 +135,9 @@ def scrape_publish_date(url, shortmem=None):
     if 'updated_parsed' in shortmem['feed_item']:
         return shortmem['feed_item'].updated_parsed
     if 'blip_datestamp' in shortmem['feed_item']:
-        return shortmem['feed_item'].blip_datestamp
+        as_string = shortmem['feed_item'].blip_datestamp
+        d = datetime.datetime(*map(int, re.split('[^\d]', s)[:-1]))
+        return d.timetuple()
 
     # otherwise, we can't find it
     raise errors.FieldNotFound('Could not find the publish_date field')

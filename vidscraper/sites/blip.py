@@ -183,6 +183,8 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
 @provide_shortmem
 @parse_feed
 def get_tags(url, shortmem=None):
+    if 'tags' not in shortmem['feed_item']:
+        return []
     return [tag['term'] for tag in shortmem['feed_item'].tags]
 
 @provide_shortmem

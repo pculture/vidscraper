@@ -132,10 +132,13 @@ def scrape_file_url(url, shortmem=None):
 @returns_struct_time
 def scrape_publish_date(url, shortmem=None):
     # sure it's not exactly the publish date, but it's close
-    try:
+    if 'updated_parsed' in shortmem['feed_item']:
         return shortmem['feed_item'].updated_parsed
-    except KeyError:
-        raise errors.FieldNotFound('Could not find the publish_date field')
+    if 'blip_datestamp' in shortmem['feed_item']:
+        return shortmem['feed_item'].blip_stamp
+
+    # otherwise, we can't find it
+    raise errors.FieldNotFound('Could not find the publish_date field')
 
 @provide_shortmem
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):

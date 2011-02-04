@@ -28,6 +28,7 @@
 import re
 import simplejson
 import urllib
+import datetime
 
 import feedparser
 from lxml import builder

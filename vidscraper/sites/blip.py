@@ -137,7 +137,7 @@ def scrape_publish_date(url, shortmem=None):
         return shortmem['feed_item'].updated_parsed
     if 'blip_datestamp' in shortmem['feed_item']:
         as_string = shortmem['feed_item'].blip_datestamp
-        d = datetime.datetime(*map(int, re.split('[^\d]', s)[:-1]))
+        d = datetime.datetime(*map(int, re.split('[^\d]', as_string)[:-1]))
         return d.timetuple()
 
     # otherwise, we can't find it

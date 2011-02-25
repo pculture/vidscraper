@@ -58,9 +58,8 @@ def get_flash_enclosure_url(url, shortmem=None):
 @provide_api
 @returns_unicode
 def get_embed(url, shortmem=None):
-    tag = shortmem['results']['embedTag']
-    return tag
-
+    url = shortmem['results']['embedTagSourceUrl']
+    return '<iframe src="%s" width="320" height="260" />' % url
 
 @provide_shortmem
 @provide_api

@@ -28,6 +28,7 @@
 import cgi
 import re
 import urlparse
+import urllib
 
 import feedparser
 
@@ -70,18 +71,27 @@ def provide_api(func):
         if shortmem.get('parsed_entry') is None:
             video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
             api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
-            feed = feedparser.parse(api_url)
-            if len(feed.entries) > 0:
-                winning_entry = feed.entries[0]
-            else: # sad, no entries
-                # Is the reason a 403? If so, alert the upper layer that the video
-                # was deleted.
-                if feed.status == 403:
-                    raise VideoDeleted()
+            api_request = urllib.urlopen(api_url)
+            if api_request.code == 200:
+                feed = feedparser.parse(api_request)
+                if len(feed.entries) > 0:
+                    shortmem['parsed_entry'] = feed.entries[0]
                 else:
-                    # Who knows what the deal is.
                     raise BaseUrlLoadFailure(feed.bozo_exception)
-            shortmem['parsed_entry'] = winning_entry
+            elif api_request.code in (403, 404):
+                data = api_request.read()
+                if api_request.code == 403: # possible private video
+                    if data == 'Private video':
+                        raise VideoDeleted(data)
+                elif api_request.code == 404: # possible deleted video
+                    if data == 'Video not found':
+                        raise VideoDeleted(data)
+                raise BaseUrlLoadFailure('status %s: %s' % (api_request.code,
+                                                            data))
+            else:
+                raise BaseUrlLoadFailure(
+                    'status %s: %s' % (api_request.code,
+                                       api_request.read()))
         return func(url, shortmem)
     return wrapper
 

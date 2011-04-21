@@ -143,4 +143,24 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         func = youtube.provide_api(lambda x, shortmem: True)
         self.assertRaises(
             errors.BaseUrlLoadFailure, func,
+            'http://www.youtube.com/watch?v=-1', {})
+
+    def test_provide_api_private_url(self):
+        """
+        If an private URL is accessed, the provide_api decorator should raise
+        VideoDeleted.
+        """
+        func = youtube.provide_api(lambda x, shortmem: True)
+        self.assertRaises(
+            errors.VideoDeleted, func,
             'http://www.youtube.com/watch?v=Vbvf1Q3DrPY', {})
+
+    def test_provide_api_deleted_video(self):
+        """
+        If a deleted URL is accessed, the provide_api decorator should raise
+        VideoDeleted.
+        """
+        func = youtube.provide_api(lambda x, shortmem: True)
+        self.assertRaises(
+            errors.VideoDeleted, func,
+            'http://www.youtube.com/watch?v=vLdfSn2xr-Q', {})

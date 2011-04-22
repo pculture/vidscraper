@@ -23,7 +23,7 @@ def video_count(parsed_feed):
         return None # not a valid OpenSearch feed
     return int(_opensearch_get(parsed_feed, 'totalresults'))
 
-def bulk_import(parsed_feed):
+def bulk_import_url_list(parsed_feed):
     startindex = int(_opensearch_get(parsed_feed, 'startindex'))
     itemsperpage = int(_opensearch_get(parsed_feed, 'itemsperpage'))
     totalresults = int(_opensearch_get(parsed_feed, 'totalresults'))
@@ -34,7 +34,11 @@ def bulk_import(parsed_feed):
             postfix = '&start-index=%i' % (i,)
         else:
             postfix = '?start-index=%i' % (i,)
-        feeds.append(feedparser.parse(parsed_feed.href + postfix))
+        feeds.append(parsed_feed.href + postfix)
+    return feeds
 
+def bulk_import(parsed_feed):
+    url_list = bulk_import_url_list(parsed_feed)
+    feeds = [feedparser.parse(url) for url in url_list]
     return util.join_feeds(feeds)
 

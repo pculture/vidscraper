@@ -7,6 +7,6 @@ setup(name="vidscraper",
       author='Participatory Culture Foundation',
       license='BSD',
       packages=find_packages(),
-      install_requires=['lxml', 'oauth2'])
+      install_requires=['lxml', 'oauth2', 'feedparser'])
 
 

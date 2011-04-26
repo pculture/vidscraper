@@ -1,3 +1,6 @@
+import urlparse
+import urllib
+
 import feedparser
 
 from vidscraper.bulk_import import util
@@ -35,13 +38,23 @@ def bulk_import_url_list(parsed_feed):
     itemsperpage = int(_opensearch_get(parsed_feed, 'itemsperpage'))
     totalresults = int(_opensearch_get(parsed_feed, 'totalresults'))
     feeds = []
+    feed_url_parsed = urlparse.urlparse(feed_url)
+
     for i in range(startindex, max(totalresults, itemsperpage),
                    itemsperpage):
-        if '?' in feed_url:
-            postfix = '&start-index=%i' % (i,)
-        else:
-            postfix = '?start-index=%i' % (i,)
-        feeds.append(feed_url + postfix)
+
+        query_dict = dict(urlparse.parse_qsl(feed_url_parsed.query))
+        query_dict['start-index'] = str(i)
+        new_query_string = urllib.urlencode(query_dict)
+        new_urlparse_data = (feed_url_parsed.scheme,
+                             feed_url_parsed.netloc,
+                             feed_url_parsed.path,
+                             feed_url_parsed.params,
+                             new_query_string,
+                             feed_url_parsed.fragment)
+
+        feed_url = urlparse.urlunparse(new_urlparse_data)
+        feeds.append(feed_url)
 
     return feeds
 

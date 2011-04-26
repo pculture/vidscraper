@@ -24,17 +24,25 @@ def video_count(parsed_feed):
     return int(_opensearch_get(parsed_feed, 'totalresults'))
 
 def bulk_import_url_list(parsed_feed):
+    feed_url = getattr(parsed_feed, 'href', None)
+    if feed_url is None:
+        # Google-specific hack:
+        back_to_us = [link for link in parsed_feed.feed.links
+                      if link['rel'] == 'self']
+        feed_url = back_to_us[0]['href']
+
     startindex = int(_opensearch_get(parsed_feed, 'startindex'))
     itemsperpage = int(_opensearch_get(parsed_feed, 'itemsperpage'))
     totalresults = int(_opensearch_get(parsed_feed, 'totalresults'))
     feeds = []
     for i in range(startindex, max(totalresults, itemsperpage),
                    itemsperpage):
-        if '?' in parsed_feed.href:
+        if '?' in feed_url:
             postfix = '&start-index=%i' % (i,)
         else:
             postfix = '?start-index=%i' % (i,)
-        feeds.append(parsed_feed.href + postfix)
+        feeds.append(feed_url + postfix)
+
     return feeds
 
 def bulk_import(parsed_feed):

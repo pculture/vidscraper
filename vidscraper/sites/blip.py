@@ -177,7 +177,7 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
     oembed_response = oembed_response.replace('\t', '')
 
     # Holy Jesus, sometimes author_url JSON lines do not have a
-    # semicolon at the end of the line.
+    # comma at the end of the line.
     oembed_response = re.sub(r'([^\\]")(\n)', r'\1,\2', oembed_response)
 
     if oembed_response.endswith(',}'):

@@ -45,16 +45,19 @@ EMBED = EMaker.embed
 EMBED_WIDTH = 425
 EMBED_HEIGHT = 344
 
+def _blip_feedify(url):
+    # add 'skin=rss' to the query string
+    parsed = urlparse.urlparse(url)
+    query_string = parsed.query
+    query_string += '&skin=rss'
+    rss_url = urlparse.urlunparse(
+        (parsed.scheme, parsed.netloc, parsed.path, parsed.params, query_string, parsed.fragment))
+    return rss_url
 
 def parse_feed(scraper_func):
     def new_scraper_func(url, shortmem=None, *args, **kwargs):
         if not shortmem.get('feed_item'):
-            # add 'skin=rss' to the query string
-            parsed = urlparse.urlparse(url)
-            query_string = parsed.query
-            query_string += '&skin=rss'
-            rss_url = urlparse.urlunparse(
-                (parsed.scheme, parsed.netloc, parsed.path, parsed.params, query_string, parsed.fragment))
+            rss_url = _blip_feedify(url)
             parsed = feedparser.parse(rss_url)
             if 'entries' not in parsed or not parsed.entries:
                 shortmem['feed_item'] = None

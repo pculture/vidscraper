@@ -29,6 +29,7 @@ import re
 import simplejson
 import urllib
 import datetime
+import urlparse
 
 import feedparser
 from lxml import builder
@@ -48,8 +49,12 @@ EMBED_HEIGHT = 344
 def parse_feed(scraper_func):
     def new_scraper_func(url, shortmem=None, *args, **kwargs):
         if not shortmem.get('feed_item'):
-            file_id = BLIP_REGEX.match(url).groupdict()['file_id']
-            rss_url = 'http://blip.tv/file/%s?skin=rss' % file_id
+            # add 'skin=rss' to the query string
+            parsed = urlparse.urlparse(url)
+            query_string = parsed.query
+            query_string += '&skin=rss'
+            rss_url = urlparse.urlunparse(
+                (parsed.scheme, parsed.netloc, parsed.path, parsed.params, query_string, parsed.fragment))
             parsed = feedparser.parse(rss_url)
             if 'entries' not in parsed or not parsed.entries:
                 shortmem['feed_item'] = None
@@ -144,31 +149,37 @@ def scrape_publish_date(url, shortmem=None):
     raise errors.FieldNotFound('Could not find the publish_date field')
 
 @provide_shortmem
+@parse_feed
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
-    file_id = BLIP_REGEX.match(url).groupdict()['file_id']
+    file_id = shortmem['feed_item']['blip_item_id']
     oembed_get_dict = {
             'url': 'http://blip.tv/file/%s' % file_id,
             'width': EMBED_WIDTH,
             'height': EMBED_HEIGHT}
 
-    oembed_response = None
+    oembed_response_orig = None
     for i in range(5):
         try:
-            oembed_response = urllib.urlopen(
+            oembed_response_orig = urllib.urlopen(
                 'http://blip.tv/oembed/?' + urllib.urlencode(
                     oembed_get_dict)).read()
             break
         except IOError:
             pass
 
-    if not oembed_response:
+    if not oembed_response_orig:
         return None
 
     # simplejson doesn't like the \' escape
-    oembed_response = oembed_response.replace(r"\'", "'")
+    oembed_response = oembed_response_orig.replace(r"\'", "'")
 
     # clean up the response, and check for a trailing ,
-    oembed_response = oembed_response.replace('\n', '').replace('\t', '')
+    oembed_response = oembed_response.replace('\t', '')
+
+    # Holy Jesus, sometimes author_url JSON lines do not have a
+    # semicolon at the end of the line.
+    oembed_response = re.sub(r'([^\\]")(\n)', r'\1,\2', oembed_response)
+
     if oembed_response.endswith(',}'):
         oembed_response = oembed_response[:-2] + '}'
 
@@ -203,7 +214,7 @@ def get_user_url(url, shortmem=None):
 
 
 BLIP_REGEX = re.compile(
-    r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/file/(?P<file_id>\d+)')
+    r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/')
 SUITE = {
     'regex': BLIP_REGEX,
     'funcs': {

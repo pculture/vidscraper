@@ -46,6 +46,9 @@ EMBED_WIDTH = 425
 EMBED_HEIGHT = 344
 
 def _blip_feedify(url):
+    if is_obviously_not_a_feed(url):
+        return ''
+
     # add 'skin=rss' to the query string
     parsed = urlparse.urlparse(url)
     query_string = parsed.query
@@ -54,10 +57,20 @@ def _blip_feedify(url):
         (parsed.scheme, parsed.netloc, parsed.path, parsed.params, query_string, parsed.fragment))
     return rss_url
 
+def is_obviously_not_a_feed(url):
+    if url.startswith('http://blip.tv/file/get/'):
+        return True
+    return False
+
 def parse_feed(scraper_func):
     def new_scraper_func(url, shortmem=None, *args, **kwargs):
         if not shortmem.get('feed_item'):
             rss_url = _blip_feedify(url)
+
+            if not rss_url:
+                # This indicates we can get no metadata
+                return None
+
             parsed = feedparser.parse(rss_url)
             if 'entries' not in parsed or not parsed.entries:
                 shortmem['feed_item'] = None

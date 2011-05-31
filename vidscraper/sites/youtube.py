@@ -52,6 +52,8 @@ def canonical_url(url):
     Return the canonical URL for a given YouTube URL.  This strips off any
     trailing &feature= nonsense.
     """
+    if '://youtu.be/' in url:
+        url = url.replace('://youtu.be/', '://www.youtube.com/watch?v=')
     if '&amp;' in url:
         url = url.replace('&amp;', '&')
     if '&feature=' in url:
@@ -69,7 +71,11 @@ def provide_api(func):
     """
     def wrapper(url, shortmem=None):
         if shortmem.get('parsed_entry') is None:
-            video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
+            parts = urlparse.urlsplit(url)
+            if parts.netloc == 'youtu.be': # short URL
+                video_id = parts.path[1:]
+            else:
+                video_id = cgi.parse_qs(parts.query)['v'][0]
             api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
             try:
                 api_request = urllib2.urlopen(api_url)
@@ -191,7 +197,7 @@ def is_embedable(url, shortmem=None):
     return 'yt_noembed' not in shortmem['parsed_entry']
 
 YOUTUBE_REGEX = re.compile(
-    r'https?://([^/]+\.)?youtube.com/(?:watch)?\?(\w+=\w+&)*v=')
+    r'https?://(([^/]+\.)?youtube.com/(?:watch)?\?(\w+=\w+&)*v=|youtu.be)')
 SUITE = {
     'regex': YOUTUBE_REGEX,
     'funcs': {

@@ -47,6 +47,26 @@ class YoutubeScrapingTestCase(unittest.TestCase):
             self.assertEquals(youtube.canonical_url(long_url),
                               BASE_URL)
 
+        # short URL
+        self.assertEquals(youtube.canonical_url(
+                'http://youtu.be/oHg5SJYRHA0'),
+                          BASE_URL)
+
+    def test_regex(self):
+        """
+        YOUTUBE_REGEX shoud match YouTube video URLs, and not other URLs.
+        """
+        for url, match in (
+            (BASE_URL, True),
+            (BASE_URL + '&feature=popular', True),
+            ('https://youtube.com/?feature=popular&v=foo', True),
+            ('http://youtu.be/foo', True),
+            ('http://www.youtube.com/', False),
+            ('http://youtube.com/foo', False),
+            ('http://www.google.com/?v=foo', False)):
+            self.assertEquals(bool(youtube.YOUTUBE_REGEX.match(url)),
+                              match, 'match(%s) != %s' % (url, match))
+
     def test_get_link(self):
         """
         get_link() should return a link to the webpage for the YouTube video.
@@ -134,6 +154,17 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         self.assertEquals(youtube.get_user_url(BASE_URL),
                           'http://www.youtube.com/user/cotter548')
 
+
+    def test_provide_api_short_url(self):
+        """
+        If a short URL is given (http://youtu.be/foo), provide API should still
+        parse the feed.
+        """
+        def _(url, shortmem):
+            self.assertTrue('parsed_entry' in shortmem)
+            return True
+        self.assertTrue(youtube.provide_api(_)(
+                'http://youtu.be/oHg5SJYRHA0', {}))
 
     def test_provide_api_invalid_url(self):
         """

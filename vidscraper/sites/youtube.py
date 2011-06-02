@@ -65,17 +65,23 @@ def canonical_url(url):
             url = url[:start]
     return url
 
+def get_video_id(url, shortmem=None):
+    if 'video_id' not in shortmem:
+        parts = urlparse.urlsplit(url)
+        if parts.netloc == 'youtu.be': # short URL
+            video_id = parts.path[1:]
+        else:
+            video_id = cgi.parse_qs(parts.query)['v'][0]
+        shortmem['video_id'] = video_id
+    return shortmem['video_id']
+            
 def provide_api(func):
     """
     A quick decorator to provide the scraped YouTube API data for the video.
     """
     def wrapper(url, shortmem=None):
         if shortmem.get('parsed_entry') is None:
-            parts = urlparse.urlsplit(url)
-            if parts.netloc == 'youtu.be': # short URL
-                video_id = parts.path[1:]
-            else:
-                video_id = cgi.parse_qs(parts.query)['v'][0]
+            video_id = get_video_id(url, shortmem)
             api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
             try:
                 api_request = urllib2.urlopen(api_url)
@@ -120,9 +126,8 @@ def scrape_description(url, shortmem=None):
 @provide_shortmem
 @returns_unicode
 def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
-    video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
-
-    flash_url = 'http://www.youtube.com/v/%s&hl=en&fs=1' % video_id
+    flash_url = 'http://www.youtube.com/v/%s&hl=en&fs=1' % (
+        get_video_id(url, shortmem))
 
     object_children = (
         E.PARAM(name="movie", value=flash_url),
@@ -148,8 +153,8 @@ def get_flash_enclosure_url(url, shortmem=None):
 @provide_shortmem
 @returns_unicode
 def get_thumbnail_url(url, shortmem=None):
-    video_id = cgi.parse_qs(urlparse.urlsplit(url)[3])['v'][0]
-    return 'http://img.youtube.com/vi/%s/hqdefault.jpg' % video_id
+    return 'http://img.youtube.com/vi/%s/hqdefault.jpg' % (
+        get_video_id(url, shortmem))
 
 
 @provide_shortmem

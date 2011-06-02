@@ -30,6 +30,7 @@ from vidscraper import errors
 from vidscraper.sites import youtube
 
 BASE_URL = "http://www.youtube.com/watch?v=oHg5SJYRHA0"
+BASE_URL_SHORT = "http://youtu.be/oHg5SJYRHA0"
 
 class YoutubeScrapingTestCase(unittest.TestCase):
 
@@ -48,8 +49,7 @@ class YoutubeScrapingTestCase(unittest.TestCase):
                               BASE_URL)
 
         # short URL
-        self.assertEquals(youtube.canonical_url(
-                'http://youtu.be/oHg5SJYRHA0'),
+        self.assertEquals(youtube.canonical_url(BASE_URL_SHORT),
                           BASE_URL)
 
     def test_regex(self):
@@ -60,7 +60,7 @@ class YoutubeScrapingTestCase(unittest.TestCase):
             (BASE_URL, True),
             (BASE_URL + '&feature=popular', True),
             ('https://youtube.com/?feature=popular&v=foo', True),
-            ('http://youtu.be/foo', True),
+            (BASE_URL_SHORT, True),
             ('http://www.youtube.com/', False),
             ('http://youtube.com/foo', False),
             ('http://www.google.com/?v=foo', False)):
@@ -72,12 +72,14 @@ class YoutubeScrapingTestCase(unittest.TestCase):
         get_link() should return a link to the webpage for the YouTube video.
         """
         self.assertEquals(youtube.get_link(BASE_URL), BASE_URL)
+        self.assertEquals(youtube.get_link(BASE_URL_SHORT), BASE_URL)
 
     def test_scrape_title(self):
         """
         scrape_title() should return the title of the YouTube video.
         """
         self.assertEquals(youtube.scrape_title(BASE_URL), "RickRoll'D")
+        self.assertEquals(youtube.scrape_title(BASE_URL_SHORT), "RickRoll'D")
 
     def test_scrape_description(self):
         """
@@ -85,6 +87,10 @@ class YoutubeScrapingTestCase(unittest.TestCase):
         video.
         """
         self.assertEquals(youtube.scrape_description(BASE_URL), """RickRoll'd
+
+OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
+        self.assertEquals(youtube.scrape_description(BASE_URL_SHORT),
+                          """RickRoll'd
 
 OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
 
@@ -101,13 +107,16 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
  allowscriptaccess="always" height="344" width="425" allowfullscreen="true"\
  type="application/x-shockwave-flash"></embed></object>"""
         self.assertEquals(youtube.get_embed(BASE_URL), embed_code)
-
+        self.assertEquals(youtube.get_embed(BASE_URL_SHORT), embed_code)
+        
     def test_get_flash_enclosure_url(self):
         """
         get_flash_enclosure_url() should return the canonical URL of the
         YouTube video page.
         """
         self.assertEquals(youtube.get_flash_enclosure_url(BASE_URL),
+                          BASE_URL)
+        self.assertEquals(youtube.get_flash_enclosure_url(BASE_URL_SHORT),
                           BASE_URL)
 
     def test_get_thumbnail_url(self):
@@ -118,6 +127,9 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         self.assertEquals(youtube.get_thumbnail_url(BASE_URL),
                           'http://img.youtube.com/vi/oHg5SJYRHA0/'
                           'hqdefault.jpg')
+        self.assertEquals(youtube.get_thumbnail_url(BASE_URL_SHORT),
+                          'http://img.youtube.com/vi/oHg5SJYRHA0/'
+                          'hqdefault.jpg')
 
     def test_scrape_published_date(self):
         """
@@ -126,12 +138,20 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         """
         self.assertEquals(youtube.scrape_published_date(BASE_URL),
                           datetime.datetime(2007, 5, 15, 7, 21, 50))
+        self.assertEquals(youtube.scrape_published_date(BASE_URL_SHORT),
+                          datetime.datetime(2007, 5, 15, 7, 21, 50))
 
     def test_get_tags(self):
         """
         get_tags() should return a list of the tags for the video.
         """
         self.assertEquals(set(youtube.get_tags(BASE_URL)),
+                          set("Cotter548 Shawn Cotter lol gamefaqs CE no brb "
+                              "afk lawl pwnt Rickroll Rickroll'd Rick Roll "
+                              "Music Duckroll Duck astley never gonna "
+                              "give you up let down run around and "
+                              "hurt".split()))
+        self.assertEquals(set(youtube.get_tags(BASE_URL_SHORT)),
                           set("Cotter548 Shawn Cotter lol gamefaqs CE no brb "
                               "afk lawl pwnt Rickroll Rickroll'd Rick Roll "
                               "Music Duckroll Duck astley never gonna "
@@ -145,6 +165,8 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         """
         self.assertEquals(youtube.get_user(BASE_URL),
                           'cotter548')
+        self.assertEquals(youtube.get_user(BASE_URL_SHORT),
+                          'cotter548')
 
     def test_get_user_url(self):
         """
@@ -152,6 +174,8 @@ OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
         the video.
         """
         self.assertEquals(youtube.get_user_url(BASE_URL),
+                          'http://www.youtube.com/user/cotter548')
+        self.assertEquals(youtube.get_user_url(BASE_URL_SHORT),
                           'http://www.youtube.com/user/cotter548')
 
 

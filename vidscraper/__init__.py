@@ -99,7 +99,12 @@ def auto_scrape(url, fields=None):
     """
     for suite in AUTOSCRAPE_SUITES:
         if suite['regex'].match(url):
-            return scrape_suite(url, suite, fields)
+            try:
+                return scrape_suite(url, suite, fields)
+            except IOError:
+                raise errors.ParsingError(
+                    "We failed to parse the page and got an IOError. " +
+                    "Likely this is because the video was deleted, honestly.")
 
     # If we get here that means that none of the regexes matched, so
     # throw an error

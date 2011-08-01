@@ -103,7 +103,8 @@ def _json_to_feedparser(json):
                            }}],
         'guidislink': False,
         'id': safe_decode(upload_date.strftime(
-                'tag:vimeo,%%Y-%%m-%%d:clip%s' % json['id'].encode('utf8'))),
+                'tag:vimeo,%%Y-%%m-%%d:clip%s' % (
+                    unicode(json['id']).encode('utf8')))),
         'link': safe_decode(json['url']),
         'links': [{'href': safe_decode(json['url']),
                    'rel': 'alternate',

@@ -63,10 +63,8 @@ class UStreamScrapingTestCase(unittest.TestCase):
         """
         get_embed() should return the HTML to embed the given uStream video.
         """
-        embed_code = """<embed flashvars="autoplay=false" width="320"\
- height="260" allowfullscreen="true" allowscriptaccess="always"\
- src="http://www.ustream.tv/flash/video/2273554"\
- type="application/x-shockwave-flash" />"""
+        embed_code = """<iframe src="http://www.ustream.tv/flash/video/\
+2273554" width="320" height="260" />"""
         self.assertEquals(ustream.get_embed(BASE_URL), embed_code)
 
     def test_get_flash_enclosure_url(self):
@@ -108,7 +106,7 @@ class UStreamScrapingTestCase(unittest.TestCase):
         uploaded the video.
         """
         self.assertEquals(ustream.get_user_url(BASE_URL),
-                          'http://www.ustream.tv/dukeuniversity')
+                          'http://www.ustream.tv/user/dukeuniversity')
 
     def test_scrape_removed_video(self):
         """

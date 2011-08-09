@@ -86,13 +86,10 @@ class YoutubeScrapingTestCase(unittest.TestCase):
         scrape_description() should return the description HTML of the YouTube
         video.
         """
-        self.assertEquals(youtube.scrape_description(BASE_URL), """RickRoll'd
-
-OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
+        description =  """http://www.facebook.com/rickroll548"""
+        self.assertEquals(youtube.scrape_description(BASE_URL), description)
         self.assertEquals(youtube.scrape_description(BASE_URL_SHORT),
-                          """RickRoll'd
-
-OMG OMG OMG OVER 20 MILLION RICKROLL'd!""")
+                          description)
 
     def test_get_embed(self):
         """

@@ -1,11 +1,15 @@
 import datetime
 import math
 import re
+import urllib
 
 import feedparser
 import simplejson
+import oauth2
 
-from vidscraper.util import open_url_while_lying_about_agent
+from vidscraper.sites import vimeo
+from vidscraper.util import (open_url_while_lying_about_agent,
+                             random_exponential_backoff)
 
 USERNAME_RE = re.compile(r'http://(www\.)?vimeo\.com/'
                          r'(?P<name>((channels|groups)/)?\w+)'
@@ -46,18 +50,50 @@ def bulk_import(parsed_feed):
         count = _cached_video_count[parsed_feed.feed.link]
     else:
         count = video_count(parsed_feed)
-    post_url = _post_url(username, match.group('type') or 'videos', 'page=%i')
     parsed_feed = feedparser.FeedParserDict(parsed_feed.copy())
     parsed_feed.entries = []
-    for i in range(1, int(math.ceil(count / 20.0)) + 1):
-        response = open_url_while_lying_about_agent(post_url % i)
-        if response.getcode() != 200:
+
+    consumer = oauth2.Consumer(vimeo.VIMEO_API_KEY, vimeo.VIMEO_API_SECRET)
+    client = oauth2.Client(consumer)
+    data = {
+        'format': 'json',
+        'method': 'vimeo.videos.getUploaded',
+        'per_page': 50,
+        'sort': 'newest',
+        'full_response': 'yes',
+        'user_id': username
+        }
+    if username.startswith('channels'):
+        del data['user_id']
+        data['method'] = 'vimeo.channels.getVideos'
+        data['channel_id'] = username.split('/', 1)[1]
+    elif username.startswith('groups'):
+        del data['user_id']
+        data['method'] = 'vimeo.groups.getVideos'
+        data['group_id'] = username.split('/', 1)[1]
+    elif match.group('type') == 'likes':
+        data['method'] = 'vimeo.videos.getLikes'
+    
+    for i in range(1, int(math.ceil(count / 50.0)) + 1):
+        data['page'] = i
+        backoff = random_exponential_backoff(2)
+        api_data = None
+        for j in range(5):
+            try:
+                api_raw_data = client.request('%s?%s' % (
+                        vimeo.VIMEO_API_URL,
+                        urllib.urlencode(data)))[1]
+                api_data = simplejson.loads(api_raw_data)
+                break
+            except Exception:
+                continue
+            else:
+                if 'videos' in api_data:
+                    break
+            backoff.next()
+        if api_data is None:
             break
-        data = response.read()
-        if not data:
-            break
-        json_data = simplejson.loads(data)
-        for video in json_data:
+        for video in api_data['videos']['video']:
             parsed_feed.entries.append(feedparser_dict(
                     _json_to_feedparser(video)))
 
@@ -86,47 +122,67 @@ def _json_to_feedparser(json):
     upload_date = datetime.datetime.strptime(
         json['upload_date'],
         '%Y-%m-%d %H:%M:%S')
-    tags = [{'label': u'Tags',
-             'scheme': None,
-             'term': safe_decode(json['tags'])}]
-    tags.extend({'label': None,
-                 'scheme': u'http://vimeo/tag:%s' % tag,
-                 'term': tag}
-                for tag in safe_decode(json['tags']).split(', '))
+    if 'tags' in json:
+        tags = [{'label': tag['normalized'],
+                 'scheme': tag['url'],
+                 'term': tag['_content']}
+                for tag in json['tags']['tag']]
+    else:
+        tags = []
+    id_ = json['id']
+    url = json['urls']['url'][0]['_content']
+    username = json['owner']['username']
+    user_url = json['owner']['profileurl']
+    thumbnail = None
+    thumbnail_size = (0, 0)
+    for d in json['thumbnails']['thumbnail']:
+        size = (int(d['width']), int(d['height']))
+        if size > thumbnail_size:
+            thumbnail, thumbnail_size = d['_content'], size
+    
     return {
-        'author': safe_decode(json['user_name']),
+        'author': safe_decode(username),
         'enclosures': [
-            {'href': u'http://vimeo.com/moogaloop.swf?clip_id=%s' % json['id'],
+            {'href': u'http://vimeo.com/moogaloop.swf?clip_id=%s' % id_,
              'type': u'application/x-shockwave-flash'},
-            {'thumbnail': {'width': u'200', 'height': u'150',
-                           'url': safe_decode(json['thumbnail_medium']),
+            {'thumbnail': {'width': unicode(thumbnail_size[0]),
+                           'height': unicode(thumbnail_size[1]),
+                           'url': safe_decode(thumbnail),
                            }}],
         'guidislink': False,
         'id': safe_decode(upload_date.strftime(
                 'tag:vimeo,%%Y-%%m-%%d:clip%s' % (
-                    unicode(json['id']).encode('utf8')))),
-        'link': safe_decode(json['url']),
-        'links': [{'href': safe_decode(json['url']),
+                    unicode(id_).encode('utf8')))),
+        'link': safe_decode(url),
+        'links': [{'href': safe_decode(url),
                    'rel': 'alternate',
                    'type': 'text/html'}],
         'media:thumbnail': u'',
-        'media_credit': safe_decode(json['user_name']),
+        'media_credit': safe_decode(username),
         'media_player': u'',
         'summary': (u'<p><a href="%(url)s" title="%(title)s">'
-                    u'<img src="%(thumbnail_medium)s" alt="%(title)s" /></a>'
-                    u'</p><p>%(description)s</p>' % json),
+                    u'<img src="%(thumbnail)s" alt="%(title)s" /></a>'
+                    u'</p><p>%(description)s</p>' % {
+                'title': json['title'],
+                'thumbnail': thumbnail,
+                'description': json['description'],
+                'url': url}),
         'summary_detail': {
-            'base': u'%s/videos/rss' % safe_decode(json['user_url']),
+            'base': u'%s/videos/rss' % safe_decode(user_url),
             'language': None,
             'type': 'text/html',
             'value': (u'<p><a href="%(url)s" title="%(title)s">'
-                      u'<img src="%(thumbnail_medium)s" alt="%(title)s" /></a>'
-                      u'</p><p>%(description)s</p>' % json),
+                      u'<img src="%(thumbnail)s" alt="%(title)s" /></a>'
+                      u'</p><p>%(description)s</p>' % {
+                    'title': json['title'],
+                    'thumbnail': thumbnail,
+                    'description': json['description'],
+                    'url': url}),
             },
         'tags': tags,
         'title': safe_decode(json['title']),
         'title_detail': {
-            'base': u'%s/videos/rss' % safe_decode(json['user_url']),
+            'base': u'%s/videos/rss' % safe_decode(user_url),
             'language': None,
             'type': 'text/plain',
             'value': safe_decode(json['title'])},

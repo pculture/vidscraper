@@ -23,14 +23,14 @@ def scrape_link(url, shortmem=None):
 @returns_unicode
 def scrape_title(url, shortmem=None):
     return shortmem['base_etree'].xpath(
-        "//*[@class='program_title']/text()")[0]
+        "//span[@id='program_title_text']/text()")[0]
 
 @provide_shortmem
 @parse_url
 @returns_unicode
 def scrape_description(url, shortmem=None):
     return shortmem['base_etree'].xpath(
-        "//meta[@name='description']/@content")[0]
+        "//dd[@class='description']/text()")[0].strip()
 
 
 @provide_shortmem

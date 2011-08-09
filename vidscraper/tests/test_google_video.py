@@ -46,22 +46,6 @@ class GoogleVideoScrapingTestCase(unittest.TestCase):
         self.assertEquals(google_video.scrape_description(BASE_URL),
                           "<p>Tom and Jerry. </p>")
 
-    def test_scrape_file_url(self):
-        """
-        scrape_file_url() should return a URL to download the given Google
-        Video video.
-        """
-        file_url = google_video.scrape_file_url(BASE_URL)
-        self.assertTrue('googlevideo.com/videoplayback' in file_url)
-        self.assertTrue('Tom+and+Jerry.+++Texas' in file_url)
-
-    def test_file_url_is_flaky(self):
-        """
-        file_url_is_flaky() should return True because the URL from
-        scrape_file_url() is not a permalink.
-        """
-        self.assertTrue(google_video.file_url_is_flaky(BASE_URL, {}))
-
     def test_scrape_embed_code(self):
         """
         scrape_embed_code() should return the HTML to embed the given Google

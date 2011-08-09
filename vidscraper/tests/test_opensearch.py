@@ -41,9 +41,8 @@ class OpenSearchBulkImportTestCase(unittest.TestCase):
         the OpenSearch-enabled feed.  If the feed is not an OpenSearch feed,
         return None.
         """
-        self.assertEquals(opensearch.video_count(SMALL_FEED_PARSED), 1)
-        self.assert_(58 <= opensearch.video_count(BIG_FEED_PARSED) <= 62,
-                     opensearch.video_count(BIG_FEED_PARSED))
+        self.assertEquals(opensearch.video_count(SMALL_FEED_PARSED), 3)
+        self.assertEquals(opensearch.video_count(BIG_FEED_PARSED), 80)
         self.assertEquals(opensearch.video_count(
                 feedparser.parse('http://miropcf.blip.tv/rss')), None)
 
@@ -53,8 +52,8 @@ class OpenSearchBulkImportTestCase(unittest.TestCase):
         all the entries from the feed.
         """
         feed = opensearch.bulk_import(BIG_FEED_PARSED)
-        self.assertEquals(len(feed.entries), 58)
-        self.assertEquals(feed.entries[0].title, '00270')
+        self.assertEquals(len(feed.entries), 80)
+        self.assertEquals(feed.entries[0].title, '00278.MTS')
         self.assertEquals(feed.entries[-1].title, '00124')
 
     def test_bulk_import_small(self):
@@ -64,6 +63,7 @@ class OpenSearchBulkImportTestCase(unittest.TestCase):
         pages.
         """
         feed = opensearch.bulk_import(SMALL_FEED_PARSED)
-        self.assertEquals(len(feed.entries), 1)
-        self.assertEquals(feed.entries[0].title,
-                          'SE Telephone Lg Video')
+        self.assertEquals(len(feed.entries), 3)
+        self.assertEquals(feed.entries[-1].title,
+                          'Darrell Maynard Interview, Southeast Telephone, '
+                          'Pike County, Kentucky')

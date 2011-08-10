@@ -44,7 +44,8 @@ class YoutubeScrapingTestCase(unittest.TestCase):
                           BASE_URL)
         for long_url in [BASE_URL + '&feature=popular',
                          BASE_URL + '&feature=channel',
-                         BASE_URL + '&feature=youtube_gdata']:
+                         BASE_URL + '&feature=youtube_gdata',
+                         BASE_URL + '&list=UL']:
             self.assertEquals(youtube.canonical_url(long_url),
                               BASE_URL)
 

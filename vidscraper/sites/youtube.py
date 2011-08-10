@@ -56,14 +56,9 @@ def canonical_url(url):
         url = url.replace('://youtu.be/', '://www.youtube.com/watch?v=')
     if '&amp;' in url:
         url = url.replace('&amp;', '&')
-    if '&feature=' in url:
-        start = url.find('&feature=')
-        end = url.find('&', start+1)
-        if end != -1:
-            return url[:start] + url[end:]
-        else:
-            url = url[:start]
-    return url
+    scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
+    return '%s://%s%s?v=%s' % (scheme, netloc, path,
+                               urlparse.parse_qs(query)['v'][0])
 
 def get_video_id(url, shortmem=None):
     if 'video_id' not in shortmem:

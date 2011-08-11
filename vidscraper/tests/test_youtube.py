@@ -182,6 +182,15 @@ allowfullscreen></iframe>"""
         self.assertEquals(youtube.get_user_url(BASE_URL_SHORT),
                           'http://www.youtube.com/user/cotter548')
 
+    def test_is_embedable(self):
+        """
+        is_embedable() should return True if the URL is embedable, False
+        otherwise.
+        """
+        self.assertTrue(youtube.is_embedable(BASE_URL))
+        self.assertFalse(youtube.is_embedable(
+                "http://www.youtube.com/watch?v=6TT19cB0NTM"))
+
 
     def test_provide_api_short_url(self):
         """

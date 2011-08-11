@@ -207,7 +207,8 @@ def get_user_url(url, shortmem=None):
 @provide_api
 def is_embedable(url, shortmem=None):
     root = shortmem['base_etree']
-    return bool(root.find('{http://gdata.youtube.com/schemas/2007}noembed'))
+    return root.find(
+        '{http://gdata.youtube.com/schemas/2007}noembed') is None
 
 YOUTUBE_REGEX = re.compile(
     r'https?://(([^/]+\.)?youtube.com/(?:watch)?\?(\w+=\w+&)*v=|youtu.be)')

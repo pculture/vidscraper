@@ -26,26 +26,27 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import cgi
+import datetime
 import re
 import urlparse
 import urllib2
 
-import feedparser
-
+from lxml import etree
 from lxml import builder
-from lxml.html import builder as E
-from lxml.html import tostring
 
-from vidscraper.decorators import (provide_shortmem,
-                                   returns_unicode, returns_struct_time)
+from vidscraper.decorators import provide_shortmem, returns_unicode
 from vidscraper.errors import BaseUrlLoadFailure, VideoDeleted
 
+
+NAMESPACES = {
+    'media': ''
+}
 
 EMaker = builder.ElementMaker()
 EMBED = EMaker.embed
 
-EMBED_WIDTH = 425
-EMBED_HEIGHT = 344
+EMBED_WIDTH = 480
+EMBED_HEIGHT = 390
 
 def canonical_url(url):
     """
@@ -75,24 +76,36 @@ def provide_api(func):
     A quick decorator to provide the scraped YouTube API data for the video.
     """
     def wrapper(url, shortmem=None):
-        if shortmem.get('parsed_entry') is None:
+        if shortmem.get('base_etree') is None:
             video_id = get_video_id(url, shortmem)
-            api_url = 'http://gdata.youtube.com/feeds/api/videos/' + video_id
+            api_url = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2' % (
+                video_id,)
             try:
                 api_request = urllib2.urlopen(api_url)
             except urllib2.HTTPError, e:
-                data = e.read()
-                if ((e.code == 403 and data == 'Private video') or
-                    (e.code == 404 and data == 'Video not found')):
-                    raise VideoDeleted(data)
+                if 400 <= e.code < 500:
+                    try:
+                        root = etree.parse(e)
+                    except Exception, e:
+                        raise BaseUrlLoadFailure(e)
+                    else:
+                        data = root.findtext(
+                            './/{http://schemas.google.com/g/2005}'
+                            'internalReason')
+                        if ((e.code == 403 and data == 'Private video') or
+                            (e.code == 404 and data == 'Video not found')):
+                            raise VideoDeleted(data)
+                else:
+                    data = e.read()
                 raise BaseUrlLoadFailure('status %s: %s' % (e.code,
                                                             data))
             else:
-                feed = feedparser.parse(api_request)
-                if len(feed.entries) > 0:
-                    shortmem['parsed_entry'] = feed.entries[0]
+                try:
+                    root = etree.parse(api_request)
+                except Exception, e:
+                    raise BaseUrlLoadFailure(e)
                 else:
-                    raise BaseUrlLoadFailure(feed.bozo_exception)
+                    shortmem['base_etree'] = root
 
         return func(url, shortmem)
     return wrapper
@@ -105,39 +118,32 @@ def get_link(url, shortmem=None):
 @provide_api
 @returns_unicode
 def scrape_title(url, shortmem=None):
-    return shortmem['parsed_entry'].title
+    root = shortmem['base_etree']
+    return root.findtext('{http://www.w3.org/2005/Atom}title')
 
 @provide_shortmem
 @provide_api
 @returns_unicode
 def scrape_description(url, shortmem=None):
-    entry = shortmem['parsed_entry']
-    if 'media_description' in entry and isinstance(
-        entry['media_description'], basestring):
-        return entry.media_description
-    elif 'description' in entry:
-        return entry.description
+    root = shortmem['base_etree']
+    return root.findtext('.//{http://search.yahoo.com/mrss/}description')
 
 @provide_shortmem
+@provide_api
 @returns_unicode
-def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT):
-    flash_url = 'http://www.youtube.com/v/%s&hl=en&fs=1' % (
-        get_video_id(url, shortmem))
+def get_embed(url, shortmem=None, width=None, height=None):
+    if (width is None and height is None):
+        height = 390
+        root = shortmem['base_etree']
+        if root.findtext(
+            './/{http://gdata.youtube.com/schemas/2007}aspectRatio'):
+            width = 640
+        else:
+            width = 480
 
-    object_children = (
-        E.PARAM(name="movie", value=flash_url),
-        E.PARAM(name="allowFullScreen", value="true"),
-        E.PARAM(name="allowscriptaccess", value="always"),
-        EMBED(src=flash_url,
-              type="application/x-shockwave-flash",
-              allowfullscreen="true",
-              allowscriptaccess="always",
-              width=str(EMBED_WIDTH), height=str(EMBED_HEIGHT)))
-    main_object = E.OBJECT(
-        width=str(EMBED_WIDTH), height=str(EMBED_HEIGHT), *object_children)
-
-    return tostring(main_object)
-
+    return ('<iframe width="%d" height="%d" src="'
+            'http://www.youtube.com/embed/%s" frameborder="0" allowfullscreen>'
+            '</iframe>') % (width, height, get_video_id(url, shortmem))
 
 @provide_shortmem
 @returns_unicode
@@ -154,47 +160,54 @@ def get_thumbnail_url(url, shortmem=None):
 
 @provide_shortmem
 @provide_api
-@returns_struct_time
 def scrape_published_date(url, shortmem=None):
-    if not shortmem['parsed_entry']:
+    root = shortmem['base_etree']
+    if not root:
         return
-    if 'published_parsed' in shortmem['parsed_entry']:
-        return shortmem['parsed_entry'].published_parsed
-    else:
-        return shortmem['parsed_entry'].get('updated_parsed', None)
-
+    print root.find('category')
+    published = root.findtext('{http://www.w3.org/2005/Atom}published')
+    if published:
+        return datetime.datetime.strptime(published[:19],
+                                          '%Y-%m-%dT%H:%M:%S')
+    updated = root.findtext('{http://www.w3.org/2005/Atom}updated')
+    if updated:
+        return datetime.datetime.strptime(updated[:19],
+                                          '%Y-%m-%dT%H:%M:%S')
 
 @provide_shortmem
 @provide_api
 def get_tags(url, shortmem=None):
-    if not shortmem['parsed_entry']:
-        return
-    return [(isinstance(tag['term'], unicode) and tag['term'])
-            or tag['term'].decode('utf8')
-            for tag in shortmem['parsed_entry'].tags
-            if tag.get('scheme', '') and tag.get('scheme', '').startswith(
+    root = shortmem['base_etree']
+    tags = root.findall('{http://www.w3.org/2005/Atom}category')
+    print [(tag.text, tag.attrib) for tag in tags]
+    return [(isinstance(tag.attrib['term'], unicode) and tag.attrib['term'])
+            or tag.attrib['term'].decode('utf8')
+            for tag in tags
+            if tag.attrib['term'] and tag.attrib.get('scheme', '').startswith(
             'http://gdata.youtube.com/schemas/2007/')]
 
 
 @provide_shortmem
 @provide_api
 def get_user(url, shortmem=None):
-    if not shortmem['parsed_entry']:
-        return ''
-    return shortmem['parsed_entry'].author
+    root = shortmem['base_etree']
+    return root.findtext('.//{http://www.w3.org/2005/Atom}author/'
+                         '{http://www.w3.org/2005/Atom}name')
 
 @provide_shortmem
 @provide_api
 def get_user_url(url, shortmem=None):
-    if not shortmem['parsed_entry']:
-        return ''
-    return 'http://www.youtube.com/user/%s' % (
-        shortmem['parsed_entry'].author,)
+    root = shortmem['base_etree']    
+    author = root.findtext('.//{http://www.w3.org/2005/Atom}author/'
+                           '{http://www.w3.org/2005/Atom}name')
+
+    return 'http://www.youtube.com/user/%s' % (author,)
 
 @provide_shortmem
 @provide_api
 def is_embedable(url, shortmem=None):
-    return 'yt_noembed' not in shortmem['parsed_entry']
+    root = shortmem['base_etree']
+    return bool(root.find('{http://gdata.youtube.com/schemas/2007}noembed'))
 
 YOUTUBE_REGEX = re.compile(
     r'https?://(([^/]+\.)?youtube.com/(?:watch)?\?(\w+=\w+&)*v=|youtu.be)')

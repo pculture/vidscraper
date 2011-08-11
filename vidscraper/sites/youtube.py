@@ -32,18 +32,9 @@ import urlparse
 import urllib2
 
 from lxml import etree
-from lxml import builder
 
 from vidscraper.decorators import provide_shortmem, returns_unicode
 from vidscraper.errors import BaseUrlLoadFailure, VideoDeleted
-
-
-NAMESPACES = {
-    'media': ''
-}
-
-EMaker = builder.ElementMaker()
-EMBED = EMaker.embed
 
 EMBED_WIDTH = 480
 EMBED_HEIGHT = 390
@@ -75,7 +66,7 @@ def provide_api(func):
     """
     A quick decorator to provide the scraped YouTube API data for the video.
     """
-    def wrapper(url, shortmem=None):
+    def wrapper(url, shortmem=None, *args, **kwargs):
         if shortmem.get('base_etree') is None:
             video_id = get_video_id(url, shortmem)
             api_url = 'http://gdata.youtube.com/feeds/api/videos/%s?v=2' % (
@@ -107,7 +98,7 @@ def provide_api(func):
                 else:
                     shortmem['base_etree'] = root
 
-        return func(url, shortmem)
+        return func(url, shortmem, *args, **kwargs)
     return wrapper
 
 @returns_unicode
@@ -131,15 +122,19 @@ def scrape_description(url, shortmem=None):
 @provide_shortmem
 @provide_api
 @returns_unicode
-def get_embed(url, shortmem=None, width=None, height=None):
+def get_embed(url, shortmem=None, width=None, height=None,
+              use_widescreen=False):
     if (width is None and height is None):
-        height = 390
-        root = shortmem['base_etree']
-        if root.findtext(
-            './/{http://gdata.youtube.com/schemas/2007}aspectRatio'):
-            width = 640
+        height = EMBED_HEIGHT
+        if use_widescreen:
+            root = shortmem['base_etree']
+            if root.findtext(
+                './/{http://gdata.youtube.com/schemas/2007}aspectRatio'):
+                width = 640
+            else:
+                width = 480
         else:
-            width = 480
+            width = EMBED_WIDTH
 
     return ('<iframe width="%d" height="%d" src="'
             'http://www.youtube.com/embed/%s" frameborder="0" allowfullscreen>'

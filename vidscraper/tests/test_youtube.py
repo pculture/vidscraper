@@ -110,7 +110,8 @@ allowfullscreen></iframe>"""
 src="http://www.youtube.com/embed/Xgpz7wTN_pw" frameborder="0" \
 allowfullscreen></iframe>"""
         self.assertEquals(
-            youtube.get_embed("http://www.youtube.com/watch?v=Xgpz7wTN_pw"),
+            youtube.get_embed("http://www.youtube.com/watch?v=Xgpz7wTN_pw",
+                              use_widescreen=True),
             embed_code)
 
     def test_get_flash_enclosure_url(self):

@@ -159,7 +159,6 @@ def scrape_published_date(url, shortmem=None):
     root = shortmem['base_etree']
     if not root:
         return
-    print root.find('category')
     published = root.findtext('{http://www.w3.org/2005/Atom}published')
     if published:
         return datetime.datetime.strptime(published[:19],
@@ -174,7 +173,6 @@ def scrape_published_date(url, shortmem=None):
 def get_tags(url, shortmem=None):
     root = shortmem['base_etree']
     tags = root.findall('{http://www.w3.org/2005/Atom}category')
-    print [(tag.text, tag.attrib) for tag in tags]
     return [(isinstance(tag.attrib['term'], unicode) and tag.attrib['term'])
             or tag.attrib['term'].decode('utf8')
             for tag in tags

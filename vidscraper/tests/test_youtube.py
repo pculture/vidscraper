@@ -96,23 +96,17 @@ class YoutubeScrapingTestCase(unittest.TestCase):
         """
         get_embed() should return the HTML to embed the given YouTube video.
         """
-        embed_code = """<iframe width="480" height="390" \
-src="http://www.youtube.com/embed/oHg5SJYRHA0" frameborder="0" \
-allowfullscreen></iframe>"""
+        embed_code = """<object width="425" height="344">\
+<param name="movie"\
+ value="http://www.youtube.com/v/oHg5SJYRHA0?f=videos&amp;app=youtube_gdata">\
+<param name="allowFullScreen" value="true">\
+<param name="allowscriptaccess" value="always">\
+<embed\
+ src="http://www.youtube.com/v/oHg5SJYRHA0?f=videos&amp;app=youtube_gdata"\
+ allowscriptaccess="always" height="344" width="425" allowfullscreen="true"\
+ type="application/x-shockwave-flash"></embed></object>"""
         self.assertEquals(youtube.get_embed(BASE_URL), embed_code)
         self.assertEquals(youtube.get_embed(BASE_URL_SHORT), embed_code)
-
-    def test_get_embed_widescreen(self):
-        """
-        get_embed() should return a wider iframe if the video is widescreen.
-        """
-        embed_code = """<iframe width="640" height="390" \
-src="http://www.youtube.com/embed/Xgpz7wTN_pw" frameborder="0" \
-allowfullscreen></iframe>"""
-        self.assertEquals(
-            youtube.get_embed("http://www.youtube.com/watch?v=Xgpz7wTN_pw",
-                              use_widescreen=True),
-            embed_code)
 
     def test_get_flash_enclosure_url(self):
         """

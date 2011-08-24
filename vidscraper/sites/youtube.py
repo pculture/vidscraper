@@ -32,12 +32,18 @@ import urlparse
 import urllib2
 
 from lxml import etree
+from lxml import builder
+from lxml.html import builder as E
+from lxml.html import tostring
 
 from vidscraper.decorators import provide_shortmem, returns_unicode
 from vidscraper.errors import BaseUrlLoadFailure, VideoDeleted
 
-EMBED_WIDTH = 480
-EMBED_HEIGHT = 390
+EMBED_WIDTH = 425
+EMBED_HEIGHT = 344
+
+EMaker = builder.ElementMaker()
+EMBED = EMaker.embed
 
 def canonical_url(url):
     """
@@ -122,23 +128,25 @@ def scrape_description(url, shortmem=None):
 @provide_shortmem
 @provide_api
 @returns_unicode
-def get_embed(url, shortmem=None, width=None, height=None,
+def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT,
               use_widescreen=False):
-    if (width is None and height is None):
-        height = EMBED_HEIGHT
-        if use_widescreen:
-            root = shortmem['base_etree']
-            if root.findtext(
-                './/{http://gdata.youtube.com/schemas/2007}aspectRatio'):
-                width = 640
-            else:
-                width = 480
-        else:
-            width = EMBED_WIDTH
+    root = shortmem['base_etree']
+    content = root.find('{http://www.w3.org/2005/Atom}content')
+    flash_url = content.attrib['src']
+    object_children = (
+        E.PARAM(name="movie", value=flash_url),
+        E.PARAM(name="allowFullScreen", value="true"),
+        E.PARAM(name="allowscriptaccess", value="always"),
+        EMBED(src=flash_url,
+              type="application/x-shockwave-flash",
+              allowfullscreen="true",
+              allowscriptaccess="always",
+              width=str(EMBED_WIDTH), height=str(EMBED_HEIGHT)))
+    main_object = E.OBJECT(
+        width=str(EMBED_WIDTH), height=str(EMBED_HEIGHT), *object_children)
 
-    return ('<iframe width="%d" height="%d" src="'
-            'http://www.youtube.com/embed/%s" frameborder="0" allowfullscreen>'
-            '</iframe>') % (width, height, get_video_id(url, shortmem))
+    return tostring(main_object)
+
 
 @provide_shortmem
 @returns_unicode

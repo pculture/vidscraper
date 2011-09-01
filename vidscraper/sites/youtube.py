@@ -132,7 +132,12 @@ def get_embed(url, shortmem=None, width=EMBED_WIDTH, height=EMBED_HEIGHT,
               use_widescreen=False):
     root = shortmem['base_etree']
     content = root.find('{http://www.w3.org/2005/Atom}content')
-    flash_url = content.attrib['src']
+    if content is None:
+        # item isn't really embedable, so we generate an old-style URL
+        flash_url = 'http://www.youtube.com/v/%s&hl=en&fs=1' % (
+            get_video_id(url, shortmem))
+    else:
+        flash_url = content.attrib['src']
     object_children = (
         E.PARAM(name="movie", value=flash_url),
         E.PARAM(name="allowFullScreen", value="true"),

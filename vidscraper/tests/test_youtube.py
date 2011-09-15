@@ -113,13 +113,12 @@ class YoutubeScrapingTestCase(unittest.TestCase):
         get_embed() should return some HTML even if the video isn't really
         embedable.
         """
-        embed_code = """<object width="425" height="344">\
-<param name="movie"\
- value="http://www.youtube.com/v/X5rHMVhbWA0&amp;hl=en&amp;fs=1">\
-<param name="allowFullScreen" value="true"><param name="allowscriptaccess"\
- value="always"><embed\
- src="http://www.youtube.com/v/X5rHMVhbWA0&amp;hl=en&amp;fs=1"\
- allowscriptaccess="always" height="344" width="425" allowfullscreen="true" \
+        embed_code = """<object width="425" height="344"><param name="movie" \
+value="http://www.youtube.com/v/X5rHMVhbWA0?f=videos&amp;app=youtube_gdata">\
+<param name="allowFullScreen" value="true"><param name="allowscriptaccess" \
+value="always"><embed \
+src="http://www.youtube.com/v/X5rHMVhbWA0?f=videos&amp;app=youtube_gdata" \
+allowscriptaccess="always" height="344" width="425" allowfullscreen="true" \
 type="application/x-shockwave-flash"></embed></object>"""
         self.assertEquals(
             youtube.get_embed("http://www.youtube.com/watch?v=X5rHMVhbWA0"),

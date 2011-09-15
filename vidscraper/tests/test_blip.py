@@ -73,10 +73,10 @@ New and improved, Miro 2.0!</span>""")
         """
         get_embed() should return the HTML to embed the given blip.tv video.
         """
-        embed_code = """<embed src="http://blip.tv/play/hMtu69JUAg" \
-type="application/x-shockwave-flash" width="555" height="400" \
-wmode="transparent" allowscriptaccess="always" allowfullscreen="true" >\
-</embed>"""
+        embed_code = """<iframe src="http://blip.tv/play/hMtu69JUAg.html" \
+width="555" height="400" frameborder="0" allowfullscreen></iframe><embed \
+type="application/x-shockwave-flash" src="http://a.blip.tv/api.swf#hMtu69JUAg" \
+style="display:none"></embed>"""
         self.assertEquals(blip.get_embed(BASE_URL), embed_code)
 
     def test_get_thumbnail_url(self):

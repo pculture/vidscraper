@@ -63,7 +63,7 @@ def is_accepted_filename(filename):
     """
     # TODO: Replace this with a simple ``in`` check
     filename = filename.lower()
-    for ext in VIDEO_EXTENSIONS:
+    for ext in ACCEPTED_EXTENSIONS:
         if filename.endswith(ext):
             return True
     return False

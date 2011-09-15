@@ -42,12 +42,15 @@ def lxml_inner_html(elt):
     except UnicodeError:
         return u''
 
+
+# TODO: Rename this to sanitize? Should this really be done with an xml cleaner?
 def clean_description_html(html):
     if not html:
         return html
     return DESCRIPTION_CLEANER.clean_html(html)
 
 
+# TODO: Is this still required?
 class LiarOpener(urllib.FancyURLopener):
     """
     Some APIs (*cough* vimeo *cough*) don't allow urllib's user agent

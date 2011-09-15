@@ -3,7 +3,7 @@ import urllib
 
 import feedparser
 
-from vidscraper.bulk_import import util
+from vidscraper.bulk_import.utils import join_feeds
 
 # add the OpenSearch namespace to FeedParser
 # http://code.google.com/p/feedparser/issues/detail?id=55
@@ -61,5 +61,5 @@ def bulk_import_url_list(parsed_feed):
 def bulk_import(parsed_feed):
     url_list = bulk_import_url_list(parsed_feed)
     feeds = [feedparser.parse(url) for url in url_list]
-    return util.join_feeds(feeds)
+    return join_feeds(feeds)
 

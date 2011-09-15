@@ -28,7 +28,7 @@ import urllib
 
 import feedparser
 
-from vidscraper.metasearch import util as metasearch_util
+from vidscraper.metasearch.utils import search_string_from_terms
 from vidscraper.sites import blip as blip_scraper
 
 #'http://www.blip.tv/rss?q=(string)
@@ -70,7 +70,7 @@ def get_entries(include_terms, exclude_terms=None,
     # and has fewer parameters, so we use that.
     #
     # -- Asheesh 2010-12-14.
-    search_string = metasearch_util.search_string_from_terms(
+    search_string = search_string_from_terms(
         include_terms, exclude_terms)
 
     get_params = {

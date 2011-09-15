@@ -28,7 +28,7 @@ import re
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
 from vidscraper import errors
-from vidscraper import util
+from vidscraper.utils.http import clean_description_html, lxml_inner_html
 
 
 @provide_shortmem
@@ -49,7 +49,7 @@ def scrape_description(url, shortmem=None):
     try:
         details = shortmem['base_etree'].xpath(
             "//span[@id='video-description']")[0]
-        return util.clean_description_html(util.lxml_inner_html(details))
+        return clean_description_html(lxml_inner_html(details))
     except IndexError:
         raise errors.FieldNotFound('Could not find the description field')
 

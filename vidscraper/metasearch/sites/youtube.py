@@ -30,7 +30,7 @@ import feedparser
 
 from vidscraper.sites import youtube as youtube_scraper
 from vidscraper.metasearch import defaults
-from vidscraper.metasearch import util as metasearch_util
+from vidscraper.metasearch.utils import search_string_from_terms
 
 #'http://gdata.youtube.com/feeds/api/videos?vq=%s&amp;alt=rss'
 YOUTUBE_QUERY_BASE = 'http://gdata.youtube.com/feeds/api/videos'
@@ -52,7 +52,7 @@ def parse_youtube_entry(entry):
 def get_entries(include_terms, exclude_terms=None,
                 order_by='relevant', **kwargs):
 
-    search_string = metasearch_util.search_string_from_terms(
+    search_string = search_string_from_terms(
         include_terms, exclude_terms)
 
     # Note here that we can use more than 50

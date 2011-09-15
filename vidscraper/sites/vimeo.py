@@ -36,7 +36,8 @@ import oauth2
 import simplejson
 
 from vidscraper.decorators import provide_shortmem, parse_url, returns_unicode
-from vidscraper import util
+from vidscraper.utils.http import clean_description_html, \
+                                    random_exponential_backoff
 
 VIMEO_API_KEY = None # set these elsewhere
 VIMEO_API_SECRET = None
@@ -60,7 +61,7 @@ def parse_api(scraper_func, shortmem=None):
                         'video_id': video_id}))
             consumer = oauth2.Consumer(VIMEO_API_KEY, VIMEO_API_SECRET)
             client = oauth2.Client(consumer)
-            backoff = util.random_exponential_backoff(2)
+            backoff = random_exponential_backoff(2)
             for i in range(5):
                 try:
                     api_raw_data = client.request(url)[1]
@@ -84,11 +85,12 @@ def parse_api(scraper_func, shortmem=None):
 def scrape_title(url, shortmem=None):
     return shortmem['api_data']['title']
 
+
 @provide_shortmem
 @parse_api
 @returns_unicode
 def scrape_description(url, shortmem=None):
-    return util.clean_description_html(shortmem['api_data']['description'])
+    return clean_description_html(shortmem['api_data']['description'])
 
 
 @provide_shortmem

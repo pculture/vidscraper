@@ -30,7 +30,7 @@ import simplejson
 import urllib
 
 from vidscraper.metasearch import defaults
-from vidscraper.metasearch import util as metasearch_util
+from vidscraper.metasearch.utils import search_string_from_terms
 from vidscraper.sites import vimeo as vimeo_scraper
 
 def parse_entry(entry):
@@ -53,7 +53,7 @@ def parse_entry(entry):
 
 def get_entries(include_terms, exclude_terms=None,
                 order_by=None, **kwargs):
-    search_string = metasearch_util.search_string_from_terms(
+    search_string = search_string_from_terms(
         include_terms, exclude_terms)
 
     get_params = {

@@ -36,7 +36,9 @@ from lxml import builder
 
 from vidscraper.decorators import (provide_shortmem, returns_unicode,
                                    returns_struct_time)
-from vidscraper import errors, util, miroguide_util
+from vidscraper import errors
+from vidscraper.utils.feedparser import get_first_accepted_enclosure
+from vidscraper.utils.http import clean_description_html
 
 
 EMaker = builder.ElementMaker()
@@ -131,7 +133,7 @@ def scrape_description(url, shortmem=None):
         description = _fp_get(shortmem, 'puredescription')
 
     if description:
-        return util.clean_description_html(description)
+        return clean_description_html(description)
     else:
         return u''
 
@@ -141,10 +143,10 @@ def scrape_description(url, shortmem=None):
 @returns_unicode
 def scrape_file_url(url, shortmem=None):
     try:
-        video_enclosure = miroguide_util.get_first_video_enclosure(
+        enclosure = get_first_accepted_enclosure(
             shortmem['feed_item'])
-        if video_enclosure is not None:
-            return video_enclosure.get('url')
+        if enclosure is not None:
+            return enclosure.get('url')
     except KeyError:
         raise errors.FieldNotFound('Could not find the feed_item field')
 

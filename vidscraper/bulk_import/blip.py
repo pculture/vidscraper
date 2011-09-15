@@ -3,7 +3,7 @@ import re
 
 import feedparser
 
-from vidscraper.bulk_import import util
+from vidscraper.bulk_import.utils import join_feeds
 
 VIDEO_COUNT_RE = re.compile('totalPages: (\d+)')
 
@@ -43,4 +43,4 @@ def bulk_import(parsed_feed):
     if parsed_feed.feed.link in _cached_video_count:
         del _cached_video_count[parsed_feed.feed.link]
 
-    return util.join_feeds(feeds)
+    return join_feeds(feeds)

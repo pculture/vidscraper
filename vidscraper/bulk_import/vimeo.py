@@ -8,7 +8,7 @@ import simplejson
 import oauth2
 
 from vidscraper.sites import vimeo
-from vidscraper.util import (open_url_while_lying_about_agent,
+from vidscraper.utils.http import (open_url_while_lying_about_agent,
                              random_exponential_backoff)
 
 USERNAME_RE = re.compile(r'http://(www\.)?vimeo\.com/'

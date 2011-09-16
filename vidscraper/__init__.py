@@ -35,7 +35,8 @@ AUTOSCRAPE_SUITES = [
 
 
 def scrape_suite(url, suite, fields=None):
-    """Scrapes a specified url using the recipe for the specified
+    """
+    Scrapes a specified url using the recipe for the specified
     suite.  Returns a dict of data which can be constricted by the
     fields argument.
 
@@ -90,9 +91,28 @@ def is_scrapable(url):
     return False
 
 def auto_scrape(url, fields=None):
-    """Scrapes the given url for the specified fields and returns them.
+    """
+    Most use cases will simply require the auto_scrape function.  Usage is
+    incredibly easy::
 
-    :returns: dict of scraped data
+        >>> from vidscraper import auto_scrape
+        >>> video = auto_scrape(my_url)
+
+    That's it!  Couldn't be easier.  auto_scrape will determine the right
+    :doc:`scraping suite <suites>` to use for ``my_url`` and will use that suite
+    to return a :class:`.ScrapedVideo` instance that represents the data it
+    knows how to figure out for that site. (Unsupported fields will be
+    ``None``.) If no suites are found which support the url,
+    :exc:`.CantIdentifyUrl` will be raised.
+
+    If you only need certain fields (say you only need the "file_url" and the
+    "title" fields), you can potentially save some unnecessary work by passing
+    in a list of fields as a second argument. In some cases, this may even
+    reduce the number of HTTP requests required.
+
+        >>> video = auto_scrape(url, fields=['file_url', 'title'])
+
+    :returns: :class:`.ScrapedVideo` instance.
 
     :raises errors.CantIdentifyUrl: if this is not a url that can be
         scraped

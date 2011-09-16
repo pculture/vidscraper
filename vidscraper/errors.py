@@ -23,31 +23,30 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#TODO: Rename this to VidscraperError
 class Error(Exception):
-    """Base error for this library
-    """
+    """Base error for :mod:`vidscraper`."""
     pass
 
 class BaseUrlLoadFailure(Error):
-    """Error if you can't even load the base url
-    """
+    """Raised if you can't even load the base url."""
     pass
 
 class ParsingError(Error):
-    """An error if parsing the document with lxml fails
-    """
+    """Raised if parsing a document with lxml fails."""
     pass
 
 class FieldNotFound(Error):
-    """An error if the specific field is not found
-    """
+    """Raised if a specific field is not found."""
     pass
 
 class CantIdentifyUrl(Error):
-    """Can't identify the url
+    """
+    Raised if a url can't be handled by any known :doc:`suite <suites>`, or if a
+    :class:`.ScrapedVideo` is initialized with an incorrect suite.
+
     """
 
 class VideoDeleted(Error):
-    """If the remote server deletes the video
-    """
+    """Raised if the remote server has deleted the video being scraped."""
     pass

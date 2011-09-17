@@ -28,21 +28,39 @@ from vidscraper.errors import CantIdentifyUrl
 
 
 class SuiteRegistry(object):
+    """
+    A registry of suites. Suites may be registered, unregistered, and iterated
+    over.
+
+    """
+
     def __init__(self):
         self._suites = []
         self._suite_dict = {}
 
+    @property
+    def suites(self):
+        """Returns a tuple of registered suites."""
+        return tuple(self._suites)
+
     def register(self, suite):
+        """Registers a suite if it is not already registered."""
         if suite not in self._suite_dict:
             self._suite_dict[suite] = suite()
             self._suites.append(self._suite_dict[suite])
 
     def unregister(self, suite):
+        """Unregisters a suite if it is registered."""
         if suite in self._suite_set:
             self._suites.remove(self._suite_dict[suite])
             del self._suite_dict[suite]
 
     def suite_for_url(self, url):
+        """
+        Returns the first registered suite which can handle the url or raises
+        :exc:`.CantIdentifyUrl` if no such suite is found.
+
+        """
         for suite in self._suites:
             try:
                 if suite.handles_url(url):
@@ -52,6 +70,8 @@ class SuiteRegistry(object):
         raise CantIdentifyUrl
 
 
+#: An instance of :class:`.SuiteRegistry` which is used by :mod:`vidscraper` to
+#: track registered suites.
 registry = SuiteRegistry()
 
 
@@ -154,18 +174,24 @@ class ScrapedVideo(object):
 
 
 class BaseSuite(object):
+    """
+    This is a base class for suites, demonstrating the API which is expected
+    when interacting with suites. It is not suitable for actual use; some vital
+    methods must be defined on a suite-by-suite basis.
+
+    """
     #: A compiled regular expression which will be matched against urls to check
     #: if they are considered handled by this suite.
     regex = None
 
-    #: A set of :class:`ScrapedVideo` fields that this suite can supply through
+    #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
     #: an oembed API. Must be supplied by subclasses for accurate optimization.
     oembed_fields = set()
-    #: A set of :class:`ScrapedVideo` fields that this suite can supply through
+    #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
     #: a site-specific API. Must be supplied by subclasses for accurate
     #: optimization.
     api_fields = set()
-    #: A set of :class:`ScrapedVideo` fields that this suite can supply through
+    #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
     #: a site-specific scrape. Must be supplied by subclasses for accurate
     #: optimization.
     scrape_fields = set()
@@ -174,7 +200,7 @@ class BaseSuite(object):
         """
         Returns ``True`` if this suite can handle the ``url`` and ``False``
         otherwise. By default, this method will check whether the url matches
-        :attr:`regex` or raise a :exc:`NotImplementedError` if that is not
+        :attr:`.regex` or raise a :exc:`NotImplementedError` if that is not
         possible.
 
         """
@@ -287,18 +313,18 @@ class BaseSuite(object):
 
     def parse_feed_entry(self, feed_entry):
         """
-        Given a feed entry (as returned by :meth:`get_feed_entries`), creates
-        and returns a :class:`ScrapedVideo` instance that has data from the feed
-        entry pre-stored on it. Must be implemented by subclasses.
+        Given a feed entry (as returned by :meth:`.get_feed_entries`), creates
+        and returns a :class:`.ScrapedVideo` instance that has data from the
+        feed entry pre-stored on it. Must be implemented by subclasses.
 
         """
         raise NotImplementedError
 
     def parse_feed(self, feed_url):
         """
-        Returns a list of :class:`ScrapedVideo` instances which have been
-        prepopulated with feed data. This is accomplished by parsing the entries
-        returned by :meth:`get_feed_entries` with :meth:`parse_feed_entry`.
+        Returns a list of :class:`.ScrapedVideo` instances which have been
+        prepopulated with feed data. Internally calls :meth:`.parse_feed_entry`
+        on each entry from :meth:`.get_feed_entries`.
 
         """
         return [self.parse_feed_entry(entry)
@@ -316,8 +342,8 @@ class BaseSuite(object):
 
     def parse_search_result(self, result):
         """
-        Given a search result (as returned by :meth:`get_search_results`),
-        creates and returns a :class:`ScrapedVideo` instance that has data from
+        Given a search result (as returned by :meth:`.get_search_results`),
+        creates and returns a :class:`.ScrapedVideo` instance that has data from
         the search result pre-stored on it. Must be implemented by subclasses.
 
         """
@@ -327,9 +353,9 @@ class BaseSuite(object):
                order_by='relevant', **kwargs):
         """
         Runs a search for the given parameters and returns a list of
-        :class:`ScrapedVideo` instances which have been prepopulated with data
-        from the search. Internally calls :meth:`parse_search_result` on each
-        result from :meth:`get_search_results`.
+        :class:`.ScrapedVideo` instances which have been prepopulated with data
+        from the search. Internally calls :meth:`.parse_search_result` on each
+        result from :meth:`.get_search_results`.
 
         """
         return [self.parse_search_result(result) for result in

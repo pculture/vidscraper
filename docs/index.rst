@@ -44,6 +44,7 @@ one-off scraping.
 Requirements
 ++++++++++++
 
+* json (python2.6) or simplejson
 * lxml
 * oauth2
 * feedparser

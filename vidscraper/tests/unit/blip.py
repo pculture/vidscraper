@@ -28,14 +28,13 @@ import os
 import unittest
 import urlparse
 
+from vidscraper.suites import ScrapedVideo
 from vidscraper.suites.blip import BlipSuite
 
 
-class BlipTvApiTestCase(unittest.TestCase):
+class BlipTestCase(unittest.TestCase):
     def setUp(self):
         self.suite = BlipSuite()
-        self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
-        self.video = self.suite.get_video(url=self.base_url)
 
     @property
     def data_file_dir(self):
@@ -45,10 +44,42 @@ class BlipTvApiTestCase(unittest.TestCase):
             self._data_file_dir = os.path.join(test_dir, 'data')
         return self._data_file_dir
 
+    def _check_disqus_data(self, data):
+        """Check that data for a specific post is parsed as expected."""
+        self.assertEqual(data['link'], "http://blip.tv/file/4135225")
+        self.assertEqual(data['title'],
+                        "Scaling the World's Largest Django Application")
+        self.assertEqual(data['description'],
+                        "<p>Disqus, one of the largest Django applications in "
+                        "the world, will explain how they deal with scaling "
+                        "complexities in a small startup.</p>")
+        self.assertEqual(data['file_url'], "http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv")
+        self.assertEqual(data['embed_code'],
+                        '<embed src="http://blip.tv/play/AYH9xikC" '
+                        'type="application/x-shockwave-flash" width="480" '
+                        'height="390" wmode="transparent" '
+                        'allowscriptaccess="always" allowfullscreen="true" >'
+                        '</embed>')
+        self.assertEqual(data['publish_datetime'],
+                         datetime.datetime(2010, 9, 17, 22, 31, 14))
+        self.assertEqual(data['thumbnail_url'],
+                        "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png")
+        self.assertEqual(data['tags'],
+                        [u'shmpe', u'djangocon', u'2010'])
+        self.assertEqual(data['user'], 'djangocon')
+        self.assertEqual(data['user_url'], 'http://djangocon.blip.tv/')
+
+
+class BlipApiTestCase(BlipTestCase):
+    def setUp(self):
+        BlipTestCase.setUp(self)
+        self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
+        self.video = self.suite.get_video(url=self.base_url)
+
     def _test_video_api_url(self, video):
         api_url = self.suite.get_api_url(video)
         parsed_url = urlparse.urlparse(api_url)
-        self.assertEqual(parsed_url[2], "/rss/ogg/4167881")
+        self.assertEqual(parsed_url[2], "/rss/4167881")
 
     def test_get_api_url(self):
         self._test_video_api_url(self.video)
@@ -59,29 +90,51 @@ class BlipTvApiTestCase(unittest.TestCase):
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'blip', 'api.rss'))
-        data = self.suite.parse_api_response(api_file.read())
+        data = self.suite.parse_api_response(api_file)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.api_fields)
+        self._check_disqus_data(data)
 
-        # Check the received data against the expected data.
-        self.assertEqual(data['title'],
-                        "Scaling the World's Largest Django Application")
-        self.assertEqual(data['description'],
-                        "<p>Disqus, one of the largest Django applications in "
-                        "the world, will explain how they deal with scaling "
-                        "complexities in a small startup.</p>")
-        self.assertEqual(data['file_url'], "http://blip.tv/file/4135225")
-        self.assertEqual(data['embed'],
-                        '<embed src="http://blip.tv/play/AYH9xikC" '
-                        'type="application/x-shockwave-flash" width="480" '
-                        'height="390" wmode="transparent" '
-                        'allowscriptaccess="always" allowfullscreen="true" >'
-                        '</embed>')
-        self.assertEqual(data['publish_date'],
-                         datetime.datetime(2010, 9, 17, 22, 31, 14))
-        self.assertEqual(data['thumbnail_url'],
-                        "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png")
-        self.assertEqual(data['tags'],
-                        [u'shmpe', u'djangocon', u'2010'])
-        self.assertEqual(data['user'], 'djangocon')
-        self.assertEqual(data['user_url'], 'http://djangocon.blip.tv/')
+
+class BlipFeedTestCase(BlipTestCase):
+    def setUp(self):
+        BlipTestCase.setUp(self)
+        self.feed_data = open(
+            os.path.join(self.data_file_dir, 'blip', 'feed.rss')
+        ).read()
+
+    def test_get_feed_entries(self):
+        entries = self.suite.get_feed_entries(self.feed_data)
+        self.assertTrue(len(entries) > 0)
+
+    def test_parse_entry(self):
+        entries = self.suite.get_feed_entries(self.feed_data)
+        video = self.suite.parse_feed_entry(entries[1])
+        self.assertTrue(isinstance(video, ScrapedVideo))
+        data = dict(((field, getattr(video, field)) for field in video.fields))
+        self._check_disqus_data(data)
+
+    def test_parse_feed(self):
+        videos = self.suite.parse_feed(self.feed_data)
+        self.assertTrue(len(videos) > 0)
+        for video in videos:
+            self.assertTrue(isinstance(video, ScrapedVideo))
+
+
+class BlipSearchTestCase(BlipTestCase):
+    def setUp(self):
+        BlipTestCase.setUp(self)
+        self.feed_data = open(
+            os.path.join(self.data_file_dir, 'blip', 'search.rss')
+        ).read()
+
+    def test_parse_search_feed(self):
+        entries = self.suite.get_feed_entries(self.feed_data)
+        self.assertTrue(len(entries) > 0)
+
+    def test_parse_result(self):
+        entries = self.suite.get_feed_entries(self.feed_data)
+        video = self.suite.parse_search_result(entries[1])
+        self.assertTrue(isinstance(video, ScrapedVideo))
+        data = dict(((field, getattr(video, field)) for field in video.fields))
+        self._check_disqus_data(data)

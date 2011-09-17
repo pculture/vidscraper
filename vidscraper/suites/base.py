@@ -26,6 +26,7 @@
 import urllib2
 
 from vidscraper.errors import CantIdentifyUrl
+from vidscraper.utils.search import search_string_from_terms
 
 
 class SuiteRegistry(object):
@@ -96,6 +97,9 @@ class ScrapedVideo(object):
         'file_url_is_flaky', 'flash_enclosure_url', 'is_embeddable',
         'embed_code', 'thumbnail_url', 'user', 'user_url', 'tags', 'link'
     )
+    #: The canonical link to the video. This may not be the same as the url
+    #: used to initialize the video.
+    link = None
     #: The video's title.
     title = None
     #: A text or html description of the video.
@@ -119,9 +123,6 @@ class ScrapedVideo(object):
     user_url = None
     #: A list of tag names associated with the video.
     tags = None
-
-    # NOTE: In the old scrape suites, there was also a ``link`` field; however,
-    # this is subsumed by the video's ``url``
 
     # These were pretty suite-specific and should perhaps be treated as such?
     #: Whether the video is embeddable? (Youtube)
@@ -338,7 +339,7 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def parse_feed_entry(self, feed_entry):
+    def parse_feed_entry(self, entry, fields=None):
         """
         Given a feed entry (as returned by :meth:`.get_feed_entries`), creates
         and returns a :class:`.ScrapedVideo` instance that has data from the
@@ -347,14 +348,14 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def parse_feed(self, feed_url):
+    def parse_feed(self, feed_url, fields=None):
         """
         Returns a list of :class:`.ScrapedVideo` instances which have been
         prepopulated with feed data. Internally calls :meth:`.parse_feed_entry`
         on each entry from :meth:`.get_feed_entries`.
 
         """
-        return [self.parse_feed_entry(entry)
+        return [self.parse_feed_entry(entry, fields)
                 for entry in self.get_feed_entries(feed_url)]
 
     def get_search_results(self, include_terms, exclude_terms=None,
@@ -367,7 +368,7 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def parse_search_result(self, result):
+    def parse_search_result(self, result, fields=None):
         """
         Given a search result (as returned by :meth:`.get_search_results`),
         creates and returns a :class:`.ScrapedVideo` instance that has data from
@@ -376,8 +377,8 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def search(self, url, include_terms, exclude_terms=None,
-               order_by='relevant', **kwargs):
+    def search(self, include_terms, exclude_terms=None,
+               order_by='relevant', fields=None, **kwargs):
         """
         Runs a search for the given parameters and returns a list of
         :class:`.ScrapedVideo` instances which have been prepopulated with data
@@ -385,6 +386,7 @@ class BaseSuite(object):
         result from :meth:`.get_search_results`.
 
         """
-        return [self.parse_search_result(result) for result in
-                self.get_search_results(include_terms,
-                    exclude_terms=exclude_terms, order_by=order_by, **kwargs)]
+        search_string = search_string_from_terms(include_terms, exclude_terms)
+        return [self.parse_search_result(result, fields) for result in
+                self.get_search_results(include_terms, search_string,
+                                        order_by=order_by, **kwargs)]

@@ -37,25 +37,29 @@ from vidscraper.utils.http import clean_description_html
 
 class BlipSuite(BaseSuite):
     regex = re.compile(r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/')
+    query_url = "http://blip.tv/rss"
 
-    api_fields = set(['title', 'description', 'file_url', 'embed',
-            'thumbnail_url', 'tags', 'publish_date', 'user', 'user_url'])
+    api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
+            'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url'])
 
-    def _parse_rss_entry(self, entry):
+    def _actually_parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a blip rss feed into
-        a dictionary suitable for return from a response parser.
+        a dictionary mapping :class:`.ScrapedVideo` fields to values.
 
         """
+        enclosure = get_first_accepted_enclosure(entry)
+
         description = entry['blip_puredescription']
         datestamp = datetime.strptime(entry['blip_datestamp'],
                                       "%Y-%m-%dT%H:%M:%SZ")
         data = {
+            'link': entry['link'],
             'title': entry['title'],
             'description': clean_description_html(description),
-            'file_url': entry['link'],
-            'embed': entry['media_player']['content'],
-            'publish_date': datestamp,
+            'file_url': enclosure['url'],
+            'embed_code': entry['media_player']['content'],
+            'publish_datetime': datestamp,
             'thumbnail_url': get_entry_thumbnail_url(entry),
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None][1:],
@@ -67,10 +71,30 @@ class BlipSuite(BaseSuite):
     def get_api_url(self, video):
         parsed_url = urlparse.urlparse(video.url)
         post_id = parsed_url[2].rsplit('-', 1)[1]
-        new_parsed_url = parsed_url[:2] + ("/rss/ogg/%s" % post_id,
+        new_parsed_url = parsed_url[:2] + ("/rss/%s" % post_id,
                                             None, None, None)
         return urlparse.urlunparse(new_parsed_url)
 
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
-        return self._parse_rss_entry(parsed.entries[0])
+        return self._actually_parse_feed_entry(parsed.entries[0])
+
+    def get_feed_entries(self, feed_url):
+        parsed = feedparser.parse(feed_url)
+        return parsed.entries
+
+    def parse_feed_entry(self, entry, fields=None):
+        data = self._actually_parse_feed_entry(entry)
+        video = self.get_video(data['file_url'], fields)
+        for field, value in data.iteritems():
+            if field in video.fields:
+                setattr(video, field, value)
+        return video
+
+    def get_search_results(self, search_string, order_by='relevant', **kwargs):
+        get_params = {'q': search_string}
+        url = u"http://blip.tv/rss?%s" % urllib.urlencode(get_params)
+        return self.get_feed_entries(url)
+
+    def parse_search_result(self, result, fields=None):
+        return self.parse_feed_entry(result, fields)

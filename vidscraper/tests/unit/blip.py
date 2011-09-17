@@ -26,6 +26,7 @@
 import datetime
 import os
 import unittest
+import urllib
 import urlparse
 
 from vidscraper.suites import ScrapedVideo
@@ -90,10 +91,51 @@ class BlipApiTestCase(BlipTestCase):
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'blip', 'api.rss'))
-        data = self.suite.parse_api_response(api_file)
+        data = self.suite.parse_api_response(api_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.api_fields)
         self._check_disqus_data(data)
+
+
+class BlipOembedTestCase(BlipTestCase):
+    def setUp(self):
+        BlipTestCase.setUp(self)
+        self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
+        self.video = self.suite.get_video(url=self.base_url)
+
+    def test_get_oembed_url(self):
+        escaped_url = urllib.quote_plus(self.video.url)
+        expected = "http://blip.tv/oembed/?url=%s" % escaped_url
+        oembed_url = self.suite.get_oembed_url(self.video)
+        self.assertEqual(oembed_url, expected)
+
+    def test_parse_api_response(self):
+        oembed_file = open(os.path.join(
+                            self.data_file_dir, 'blip', 'oembed.json'))
+        data = self.suite.parse_oembed_response(oembed_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(set(data), self.suite.oembed_fields)
+        self._check_disqus_data(data)
+
+    def _check_disqus_data(self, data):
+        """
+        OEmbed doesn't return as much data - and what it does return is ever so
+        slightly different.
+
+        """
+        self.assertEqual(data['title'],
+                        "Scaling the World's Largest Django Application")
+        self.assertEqual(data['embed_code'],
+                        '<iframe src="http://blip.tv/play/AYH9xikC.html" '
+                        'width="640" height="510" frameborder="0" '
+                        'allowfullscreen></iframe><embed '
+                        'type="application/x-shockwave-flash" '
+                        'src="http://a.blip.tv/api.swf#AYH9xikC" '
+                        'style="display:none"></embed>')
+        self.assertEqual(data['thumbnail_url'],
+                        "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png")
+        self.assertEqual(data['user'], 'djangocon')
+        self.assertEqual(data['user_url'], 'http://blip.tv/djangocon')
 
 
 class BlipFeedTestCase(BlipTestCase):

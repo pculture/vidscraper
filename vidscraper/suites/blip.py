@@ -29,6 +29,7 @@ import urllib
 import urlparse
 
 import feedparser
+from vidscraper.compat import json
 from vidscraper.suites.base import BaseSuite
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
                                         get_first_accepted_enclosure
@@ -37,10 +38,12 @@ from vidscraper.utils.http import clean_description_html
 
 class BlipSuite(BaseSuite):
     regex = re.compile(r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/')
-    query_url = "http://blip.tv/rss"
 
     api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
             'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url'])
+
+    oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
+            'title'])
 
     def _actually_parse_feed_entry(self, entry):
         """
@@ -79,6 +82,19 @@ class BlipSuite(BaseSuite):
         parsed = feedparser.parse(response_text)
         return self._actually_parse_feed_entry(parsed.entries[0])
 
+    def get_oembed_url(self, video):
+        return u"http://blip.tv/oembed/?url=%s" % urllib.quote_plus(video.url)
+
+    def parse_oembed_response(self, response_text):
+        parsed = json.loads(response_text)
+        return {
+            'user': parsed['author_name'],
+            'user_url': parsed['author_url'],
+            'embed_code': parsed['html'],
+            'thumbnail_url': parsed['thumbnail_url'],
+            'title': parsed['title']
+        }
+
     def get_feed_entries(self, feed_url):
         parsed = feedparser.parse(feed_url)
         return parsed.entries
@@ -92,6 +108,7 @@ class BlipSuite(BaseSuite):
         return video
 
     def get_search_results(self, search_string, order_by='relevant', **kwargs):
+        # TODO: Add support for ordering.
         get_params = {'q': search_string}
         url = u"http://blip.tv/rss?%s" % urllib.urlencode(get_params)
         return self.get_feed_entries(url)

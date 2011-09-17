@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import urllib2
 
 from vidscraper.errors import CantIdentifyUrl
 
@@ -213,29 +214,53 @@ class BaseSuite(object):
         """Returns a video using this suite."""
         return ScrapedVideo(url, suite=self, fields=fields)
 
-    def get_oembed_data(self, video):
+    def get_oembed_url(self, video):
         """
-        Makes an oembed request for the ``video`` and returns a dictionary
-        mapping video field names to values. May be implemented by subclasses if
-        an oembed API is available.
+        Returns the url for fetching oembed data. May be implemented by
+        subclasses if an oembed API is available.
 
         """
         raise NotImplementedError
 
-    def get_api_data(self, video):
+    def parse_oembed_response(self, response_text):
         """
-        Makes an api request for the ``video`` and returns a dictionary
-        mapping video field names to values. May be implemented by subclasses if
-        an API is available.
+        Parses oembed response text into a dictionary mapping
+        :class:`ScrapedVideo` field names to values. May be implemented by
+        subclasses if an oembed API is available.
 
         """
         raise NotImplementedError
 
-    def get_scrape_data(self, video):
+    def get_api_url(self, video):
         """
-        Runs a scrape to collect data for the ``video`` and returns a dictionary
-        mapping video field names to values. May be implemented by subclasses if
-        a page scrape should be supported.
+        Returns the url for fetching API data. May be implemented by
+        subclasses if an API is available.
+
+        """
+        raise NotImplementedError
+
+    def parse_api_response(self, response_text):
+        """
+        Parses API response text into a dictionary mapping
+        :class:`ScrapedVideo` field names to values. May be implemented by
+        subclasses if an API is available.
+
+        """
+        raise NotImplementedError
+
+    def get_scrape_url(self, video):
+        """
+        Returns the url for fetching scrape data. May be implemented by
+        subclasses if a page scrape should be supported.
+
+        """
+        raise NotImplementedError
+
+    def parse_scrape_response(self, response_text):
+        """
+        Parses scrape response text into a dictionary mapping
+        :class:`ScrapedVideo` field names to values. May be implemented by
+        subclasses if a page scrape should be supported.
 
         """
         raise NotImplementedError
@@ -260,7 +285,9 @@ class BaseSuite(object):
 
         """
         for method in methods:
-            data = getattr(self, "get_%s_data" % method)(video)
+            url = getattr(self, "get_%s_url" % method)(video)
+            response_text = urllib2.urlopen(url, timeout=5)
+            data = getattr(self, "parse_%s_response" % method)(response_text)
             for field, value in data.iteritems():
                 if (field in video.fields and
                             getattr(video, field) is None):

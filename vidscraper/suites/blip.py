@@ -1,0 +1,76 @@
+# Copyright 2009 - Participatory Culture Foundation
+# 
+# This file is part of vidscraper.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from datetime import datetime
+import re
+import urllib
+import urlparse
+
+import feedparser
+from vidscraper.suites.base import BaseSuite
+from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
+                                        get_first_accepted_enclosure
+from vidscraper.utils.http import clean_description_html
+
+
+class BlipSuite(BaseSuite):
+    regex = re.compile(r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/')
+
+    api_fields = set(['title', 'description', 'file_url', 'embed',
+            'thumbnail_url', 'tags', 'publish_date', 'user', 'user_url'])
+
+    def _parse_rss_entry(self, entry):
+        """
+        Reusable method to parse a feedparser entry from a blip rss feed into
+        a dictionary suitable for return from a response parser.
+
+        """
+        description = entry['blip_puredescription']
+        datestamp = datetime.strptime(entry['blip_datestamp'],
+                                      "%Y-%m-%dT%H:%M:%SZ")
+        data = {
+            'title': entry['title'],
+            'description': clean_description_html(description),
+            'file_url': entry['link'],
+            'embed': entry['media_player']['content'],
+            'publish_date': datestamp,
+            'thumbnail_url': get_entry_thumbnail_url(entry),
+            'tags': [tag['term'] for tag in entry['tags']
+                     if tag['scheme'] is None][1:],
+            'user': entry['blip_safeusername'],
+            'user_url': entry['blip_showpage']
+        }
+        return data
+
+    def get_api_url(self, video):
+        parsed_url = urlparse.urlparse(video.url)
+        post_id = parsed_url[2].rsplit('-', 1)[1]
+        new_parsed_url = parsed_url[:2] + ("/rss/ogg/%s" % post_id,
+                                            None, None, None)
+        return urlparse.urlunparse(new_parsed_url)
+
+    def parse_api_response(self, response_text):
+        parsed = feedparser.parse(response_text)
+        return self._parse_rss_entry(parsed.entries[0])

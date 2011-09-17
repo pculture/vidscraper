@@ -23,17 +23,14 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Suites
-======
+Suite API
+=========
 
 Vidscraper defines a simple API for "Suites", classes which provide the
 functionality necessary for scraping video information from a specific video
 service.
 
-.. autodata:: vidscraper.suites.base.registry
+.. autodata:: vidscraper.suites.registry
 
-.. autoclass:: vidscraper.suites.base.ScrapedVideo
-    :members:
-
-.. autoclass:: vidscraper.suites.base.BaseSuite
+.. autoclass:: vidscraper.suites.BaseSuite
     :members:

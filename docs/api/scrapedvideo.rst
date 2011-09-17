@@ -1,8 +1,3 @@
-.. Vidscraper documentation master file, created by
-   sphinx-quickstart on Thu Sep 15 21:08:41 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 .. Copyright 2009 - Participatory Culture Foundation
 
    This file is part of vidscraper.
@@ -28,43 +23,8 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Welcome to Vidscraper's documentation!
-======================================
+ScrapedVideo API
+================
 
-Vidscraper is a clean, simple library for a couple of rather messy
-issues:
-
-- Retrieving the source video from a "flash-only" website
-- Finding out contextual data about a pasted url: title/description/etc
-
-Vidscraper provides a unified api for an issue that requires a lot of
-one-off scraping.
-
-
-Requirements
-++++++++++++
-
-* lxml
-* oauth2
-* feedparser
-* nose (for tests)
-
-
-Contents
-++++++++
-
-.. toctree::
-   :maxdepth: 2
-
-   basic_scraping
-   exceptions
-   api/suites
-   api/scrapedvideo
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+.. autoclass:: vidscraper.suites.ScrapedVideo
+    :members:

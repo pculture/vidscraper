@@ -99,9 +99,9 @@ def auto_scrape(url, fields=None):
         >>> video = auto_scrape(my_url)
 
     That's it!  Couldn't be easier.  auto_scrape will determine the right
-    :doc:`scraping suite <suites>` to use for ``my_url`` and will use that suite
-    to return a :class:`.ScrapedVideo` instance that represents the data it
-    knows how to figure out for that site. (Unsupported fields will be
+    :doc:`scraping suite </api/suites>` to use for ``my_url`` and will use that
+    suite to return a :class:`.ScrapedVideo` instance that represents the data
+    it knows how to figure out for that site. (Unsupported fields will be
     ``None``.) If no suites are found which support the url,
     :exc:`.CantIdentifyUrl` will be raised.
 

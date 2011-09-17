@@ -23,7 +23,28 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Basic Scraping
-==============
+Getting Started
+===============
 
-.. autofunction:: vidscraper.auto_scrape
+Scraping video pages
+++++++++++++++++++++
+
+Most use cases will simply require the auto_scrape function.  Usage is
+incredibly easy::
+
+	from vidscraper import auto_scrape
+	video = auto_scrape(my_url)
+
+That's it!  Couldn't be easier.  auto_scrape will determine the right
+:doc:`scraping suite </api/suites>` to use for ``my_url`` and will use that
+suite to return a :class:`.ScrapedVideo` instance that represents the data
+associated with the video at that url. If no suites are found which support the
+url, :exc:`.CantIdentifyUrl` will be raised.
+
+If you only need certain fields (say you only need the "file_url" and the
+"title" fields), you can potentially save some unnecessary work by passing
+in a list of fields as a second argument::
+
+	video = auto_scrape(url, fields=['file_url', 'title'])
+
+In some cases, this may even reduce the number of HTTP requests required.

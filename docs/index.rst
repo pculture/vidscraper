@@ -56,7 +56,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   basic_scraping
+   topics/getting-started
    exceptions
    api/suites
    api/scrapedvideo

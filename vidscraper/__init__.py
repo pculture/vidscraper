@@ -92,30 +92,13 @@ def is_scrapable(url):
 
 def auto_scrape(url, fields=None):
     """
-    Most use cases will simply require the auto_scrape function.  Usage is
-    incredibly easy::
-
-        >>> from vidscraper import auto_scrape
-        >>> video = auto_scrape(my_url)
-
-    That's it!  Couldn't be easier.  auto_scrape will determine the right
-    :doc:`scraping suite </api/suites>` to use for ``my_url`` and will use that
-    suite to return a :class:`.ScrapedVideo` instance that represents the data
-    it knows how to figure out for that site. (Unsupported fields will be
-    ``None``.) If no suites are found which support the url,
-    :exc:`.CantIdentifyUrl` will be raised.
-
-    If you only need certain fields (say you only need the "file_url" and the
-    "title" fields), you can potentially save some unnecessary work by passing
-    in a list of fields as a second argument. In some cases, this may even
-    reduce the number of HTTP requests required.
-
-        >>> video = auto_scrape(url, fields=['file_url', 'title'])
+    Automatically determines which suite to use and scrapes ``url`` with that
+    suite.
 
     :returns: :class:`.ScrapedVideo` instance.
 
     :raises errors.CantIdentifyUrl: if this is not a url that can be
-        scraped
+        scraped.
     """
     for suite in AUTOSCRAPE_SUITES:
         if suite['regex'].match(url):

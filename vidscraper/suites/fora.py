@@ -29,6 +29,7 @@ import urllib
 import urlparse
 
 from BeautifulSoup import BeautifulSoup, SoupStrainer
+
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import make_embed_code
 

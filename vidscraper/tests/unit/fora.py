@@ -27,7 +27,6 @@ import datetime
 import os
 import unittest
 
-from vidscraper.suites import ScrapedVideo
 from vidscraper.suites.fora import ForaSuite
 
 

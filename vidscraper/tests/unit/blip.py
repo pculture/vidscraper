@@ -42,7 +42,7 @@ class BlipTestCase(unittest.TestCase):
         if not hasattr(self, '_data_file_dir'):
             test_dir = os.path.abspath(os.path.dirname(
                                                 os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data')
+            self._data_file_dir = os.path.join(test_dir, 'data', 'blip')
         return self._data_file_dir
 
     def _check_disqus_data(self, data):
@@ -90,7 +90,7 @@ class BlipApiTestCase(BlipTestCase):
         self._test_video_api_url(video)
 
     def test_parse_api_response(self):
-        api_file = open(os.path.join(self.data_file_dir, 'blip', 'api.rss'))
+        api_file = open(os.path.join(self.data_file_dir, 'api.rss'))
         data = self.suite.parse_api_response(api_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.api_fields)
@@ -111,7 +111,7 @@ class BlipOembedTestCase(BlipTestCase):
 
     def test_parse_api_response(self):
         oembed_file = open(os.path.join(
-                            self.data_file_dir, 'blip', 'oembed.json'))
+                            self.data_file_dir, 'oembed.json'))
         data = self.suite.parse_oembed_response(oembed_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.oembed_fields)
@@ -142,7 +142,7 @@ class BlipFeedTestCase(BlipTestCase):
     def setUp(self):
         BlipTestCase.setUp(self)
         self.feed_data = open(
-            os.path.join(self.data_file_dir, 'blip', 'feed.rss')
+            os.path.join(self.data_file_dir, 'feed.rss')
         ).read()
 
     def test_get_feed_entries(self):
@@ -167,7 +167,7 @@ class BlipSearchTestCase(BlipTestCase):
     def setUp(self):
         BlipTestCase.setUp(self)
         self.feed_data = open(
-            os.path.join(self.data_file_dir, 'blip', 'search.rss')
+            os.path.join(self.data_file_dir, 'search.rss')
         ).read()
 
     def test_parse_search_feed(self):

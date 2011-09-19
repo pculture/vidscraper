@@ -30,7 +30,7 @@ import urlparse
 
 import feedparser
 from vidscraper.compat import json
-from vidscraper.suites.base import BaseSuite
+from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
                                         get_first_accepted_enclosure
 from vidscraper.utils.http import clean_description_html
@@ -115,3 +115,4 @@ class BlipSuite(BaseSuite):
 
     def parse_search_result(self, result, fields=None):
         return self.parse_feed_entry(result, fields)
+registry.register(BlipSuite)

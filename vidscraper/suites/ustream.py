@@ -35,6 +35,8 @@ class UstreamSuite(BaseSuite):
     # TODO: Ustream has feeds and search functionality - add support for that!
     regex = re.compile('https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)')
 
+    oembed_endpoint = "http://www.ustream.tv/oembed/"
+
     _api_fields = set(['link', 'title', 'description', 'flash_enclosure_url',
                     'embed_code', 'thumbnail_url', 'publish_date', 'tags',
                     'user', 'user_url'])

@@ -27,36 +27,31 @@ import datetime
 import os
 import unittest
 
-from vidscraper.suites.ustream import UstreamSuite
+from vidscraper.suites.vimeo import VimeoSuite
 
 
-class UstreamTestCase(unittest.TestCase):
+class VimeoTestCase(unittest.TestCase):
     def setUp(self):
-        self.suite = UstreamSuite()
+        self.suite = VimeoSuite()
 
     @property
     def data_file_dir(self):
         if not hasattr(self, '_data_file_dir'):
             test_dir = os.path.abspath(os.path.dirname(
                                                 os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'ustream')
+            self._data_file_dir = os.path.join(test_dir, 'data', 'vimeo')
         return self._data_file_dir
 
 
-class UstreamApiTestCase(UstreamTestCase):
+class VimeoApiTestCase(VimeoTestCase):
     def setUp(self):
-        UstreamTestCase.setUp(self)
-        self.base_url = "http://www.ustream.tv/recorded/16417223"
+        VimeoTestCase.setUp(self)
+        self.base_url = "http://vimeo.com/2"
         self.video = self.suite.get_video(self.base_url)
-        self.suite._old_key = self.suite._api_key
-        self.suite._api_key = "TEST_KEY"
-
-    def tearDown(self):
-        self.suite._api_key = self.suite._old_key
 
     def test_get_oembed_url(self):
         url = self.suite.get_oembed_url(self.video)
-        self.assertEqual(url, "http://www.ustream.tv/oembed/?url=http%3A%2F%2Fwww.ustream.tv%2Frecorded%2F16417223")
+        self.assertEqual(url, "http://vimeo.com/api/oembed.json?url=http%3A%2F%2Fvimeo.com%2F2")
 
     def test_parse_oembed_response(self):
         oembed_file = open(os.path.join(self.data_file_dir, 'oembed.json'))
@@ -64,20 +59,13 @@ class UstreamApiTestCase(UstreamTestCase):
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.oembed_fields)
         expected_data = {
-            'embed_code': u'<object classid="clsid:d27cdb6e-ae6d-11cf-96b8'
-            '-444553540000" width="480" height="296" id="utv814986" '
-            'name="utv_n_604069"><param name="flashvars" '
-            'value="loc=%2F&amp;autoplay=false&amp;vid=16417223&amp;'
-            'locale=en_US" /><param name="allowfullscreen" value="true" />'
-            '<param name="allowscriptaccess" value="always" /><param '
-            'name="src" value="http://www.ustream.tv/flash/viewer.swf" />'
-            '<embed flashvars="loc=%2F&amp;autoplay=false&amp;vid=16417223&amp;'
-            'locale=en_US" width="480" height="296" allowfullscreen="true" '
-            'allowscriptaccess="always" id="utv814986" name="utv_n_604069" '
-            'src="http://www.ustream.tv/flash/viewer.swf" '
-            'type="application/x-shockwave-flash" /></object>',
-            'user_url': u'http://www.ustream.tv/user/ObamaForAmerica', 'thumbnail_url': u'http://static-cdn1.ustream.tv/images/uphoto_file/5/6/5/5/56554/th/smalls2_120_56554_obama_ustream.jpg', 'user': u'ObamaForAmerica',
-            'title': u'President Obama Speaks Live From His Birthday Event'
+            'embed_code': u'<iframe src="http://player.vimeo.com/video/2" '
+                           'width="320" height="240" frameborder="0" '
+                           'webkitAllowFullScreen allowFullScreen></iframe>',
+            'user_url': u'http://vimeo.com/jakob',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
+            'user': u'Jake Lodwick',
+            'title': u'Good morning, universe'
         }
         for key in expected_data:
             self.assertTrue(key in data)
@@ -85,8 +73,7 @@ class UstreamApiTestCase(UstreamTestCase):
 
     def test_get_api_url(self):
         api_url = self.suite.get_api_url(self.video)
-        self.assertEqual(api_url,
-            'http://api.ustream.tv/json/video/16417223/getInfo/?key=TEST_KEY')
+        self.assertEqual(api_url, 'http://vimeo.com/api/v2/video/2.json')
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'api.json'))
@@ -94,17 +81,15 @@ class UstreamApiTestCase(UstreamTestCase):
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.api_fields)
         expected_data = {
-            'embed_code': u"<iframe src='http://www.ustream.tv/flash/video/"
-                           "16417223' width='320' height='260' />",
-            'link': u'http://www.ustream.tv/recorded/16417223',
-            'description': u'President Obama Speaks Live From His Birthday Event',
-            'flash_enclosure_url': u'http://www.ustream.tv/flash/video/16417223',
-            'title': u'President Obama Speaks Live From His Birthday Event',
-            'publish_date': datetime.datetime(2011, 8, 3, 17, 16, 55),
-            'tags': [u'Barack', u'Live', u'Obama', u'Ustream', u'on'],
-            'thumbnail_url': u'http://static-cdn2.ustream.tv/videopic/0/1/16/16417/16417223/1_203240_16417223_320x240_b_1:2.jpg',
-            'user_url': u'http://www.ustream.tv/user/ObamaForAmerica',
-            'user': u'ObamaForAmerica'
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
+            'link': u'http://vimeo.com/2',
+            'description': u'I shot this myself!',
+            'title': u'Good morning, universe',
+            'publish_date': datetime.datetime(2005, 2, 16, 23, 9, 19),
+            'user_url': u'http://vimeo.com/jakob',
+            'tags': [u'morning', u'bed', u'slow', u'my bedroom', u'creepy',
+                     u'smile', u'fart'],
+            'user': u'Jake Lodwick'
         }
         for key in expected_data:
             self.assertTrue(key in data)

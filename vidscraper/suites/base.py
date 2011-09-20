@@ -23,8 +23,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import urllib
 import urllib2
 
+from vidscraper.compat import json
 from vidscraper.errors import CantIdentifyUrl
 from vidscraper.utils.search import search_string_from_terms
 
@@ -186,9 +188,22 @@ class BaseSuite(object):
     #: if they are considered handled by this suite.
     regex = None
 
-    #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
-    #: an oembed API. Must be supplied by subclasses for accurate optimization.
-    oembed_fields = set()
+    #: A URL which is an endpoint for an oembed API.
+    oembed_endpoint = None
+
+    @property
+    def oembed_fields(self):
+        """
+        A set of :class:`.ScrapedVideo` fields that this suite can supply
+        through an oembed API. By default, this will be empty if
+        :attr:`.oembed_endpoint` is ``None`` and a base set of commonly
+        available fields otherwise.
+
+        """
+        if self.oembed_endpoint is None:
+            return set()
+        return set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
+
     #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
     #: a site-specific API. Must be supplied by subclasses for accurate
     #: optimization.
@@ -217,20 +232,33 @@ class BaseSuite(object):
 
     def get_oembed_url(self, video):
         """
-        Returns the url for fetching oembed data. May be implemented by
-        subclasses if an oembed API is available.
+        Returns the url for fetching oembed data. By default, generates an
+        oembed request url based on :attr:`.oembed_endpoint` or raises
+        :exc:`NotImplementedError` if that is not defined.
 
         """
-        raise NotImplementedError
+        endpoint = self.oembed_endpoint
+        if endpoint is None:
+            raise NotImplementedError
+        return u'%s?url=%s' % (endpoint, urllib.quote_plus(video.url))
 
     def parse_oembed_response(self, response_text):
         """
         Parses oembed response text into a dictionary mapping
-        :class:`ScrapedVideo` field names to values. May be implemented by
-        subclasses if an oembed API is available.
+        :class:`ScrapedVideo` field names to values. By default, this assumes
+        that the commonly-available fields ``title``, ``author_name``,
+        ``author_url``, ``thumbnail_url``, and ``html`` are available.
 
         """
-        raise NotImplementedError
+        parsed = json.loads(response_text)
+        data = {
+            'title': parsed['title'],
+            'user': parsed['author_name'],
+            'user_url': parsed['author_url'],
+            'thumbnail_url': parsed['thumbnail_url'],
+            'embed_code': parsed['html']
+        }
+        return data
 
     def get_api_url(self, video):
         """

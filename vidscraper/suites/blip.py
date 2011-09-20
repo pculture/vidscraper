@@ -29,7 +29,7 @@ import urllib
 import urlparse
 
 import feedparser
-from vidscraper.compat import json
+
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
                                         get_first_accepted_enclosure
@@ -42,6 +42,7 @@ class BlipSuite(BaseSuite):
     api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
             'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url'])
 
+    oembed_endpoint = u"http://blip.tv/oembed/"
     oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
             'title'])
 
@@ -81,19 +82,6 @@ class BlipSuite(BaseSuite):
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
         return self._actually_parse_feed_entry(parsed.entries[0])
-
-    def get_oembed_url(self, video):
-        return u"http://blip.tv/oembed/?url=%s" % urllib.quote_plus(video.url)
-
-    def parse_oembed_response(self, response_text):
-        parsed = json.loads(response_text)
-        return {
-            'user': parsed['author_name'],
-            'user_url': parsed['author_url'],
-            'embed_code': parsed['html'],
-            'thumbnail_url': parsed['thumbnail_url'],
-            'title': parsed['title']
-        }
 
     def get_feed_entries(self, feed_url):
         parsed = feedparser.parse(feed_url)

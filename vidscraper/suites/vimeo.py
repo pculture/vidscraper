@@ -41,7 +41,7 @@ class VimeoSuite(BaseSuite):
     feed_regex = r'https?://([^/]+\.)?vimeo.com/'
     _tag_re = re.compile(r'>([\w ]+)</a>')
 
-    api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url', 'flash_enclosure_url'])
+    api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url', 'flash_enclosure_url', 'embed_code'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def get_api_url(self, video):
@@ -52,6 +52,9 @@ class VimeoSuite(BaseSuite):
         parsed = json.loads(response_text)[0]
         flash_enclosure_url = 'http://vimeo.com/moogaloop.swf?clip_id=%s' % (
                               parsed['id'])
+        embed_code = u"""<iframe src="http://player.vimeo.com/video/%s" \
+width="320" height="240" frameborder="0" webkitAllowFullScreen \
+allowFullScreen></iframe>""" % parsed['id']
         data = {
             'title': parsed['title'],
             'link': parsed['url'],
@@ -62,7 +65,8 @@ class VimeoSuite(BaseSuite):
             'publish_date': datetime.strptime(parsed['upload_date'],
                                              '%Y-%m-%d %H:%M:%S'),
             'tags': parsed['tags'].split(', '),
-            'flash_enclosure_url': flash_enclosure_url
+            'flash_enclosure_url': flash_enclosure_url,
+            'embed_code': embed_code
         }
         return data
 

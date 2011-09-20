@@ -92,6 +92,9 @@ class VimeoApiTestCase(VimeoTestCase):
                      u'smile', u'fart'],
             'user': u'Jake Lodwick',
             'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
+            'embed_code': u'<iframe src="http://player.vimeo.com/video/2" '
+                           'width="320" height="240" frameborder="0" '
+                           'webkitAllowFullScreen allowFullScreen></iframe>',
         }
         for key in expected_data:
             self.assertTrue(key in data)

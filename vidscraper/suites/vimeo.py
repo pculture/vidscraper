@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
-import re
 import urllib
 
 from vidscraper.compat import json
@@ -37,13 +36,14 @@ class VimeoSuite(BaseSuite):
     API key is required for this level of access.
 
     """
-    regex = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
+    video_regex = r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)'
+    feed_regex = r'https?://([^/]+\.)?vimeo.com/'
 
     api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def get_api_url(self, video):
-        video_id = self.regex.match(video.url).group('video_id')
+        video_id = self.video_regex.match(video.url).group('video_id')
         return u"http://vimeo.com/api/v2/video/%s.json" % video_id
 
     def parse_api_response(self, response_text):

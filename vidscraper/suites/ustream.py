@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import re
 
 from vidscraper.compat import json
 from vidscraper.suites import BaseSuite, registry
@@ -33,7 +32,7 @@ from vidscraper.suites import BaseSuite, registry
 class UstreamSuite(BaseSuite):
     """Suite for fetching data on ustream videos."""
     # TODO: Ustream has feeds and search functionality - add support for that!
-    regex = re.compile('https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)')
+    video_regex = 'https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)'
 
     oembed_endpoint = "http://www.ustream.tv/oembed/"
 
@@ -52,7 +51,7 @@ class UstreamSuite(BaseSuite):
         self._api_key = key
 
     def get_api_url(self, video):
-        video_id = self.regex.match(video.url).group('id')
+        video_id = self.video_regex.match(video.url).group('id')
         if self._api_key is None:
             raise ValueError("API key must be set for Ustream API requests.")
         return 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (

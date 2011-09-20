@@ -35,7 +35,7 @@ ID_REGEX = re.compile(r'video-title|video-description|embed-video-code')
 
 class GoogleSuite(BaseSuite):
     """Suite for scraping video pages from videos.google.com"""
-    regex = re.compile(r'^https?://video.google.com/videoplay')
+    video_regex = r'^https?://video.google.com/videoplay'
     scrape_fields = set(['title', 'description', 'embed_code'])
 
     def get_scrape_url(self, video):

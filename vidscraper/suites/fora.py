@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import re
 import urllib
 import urlparse
 
@@ -48,7 +47,7 @@ def _strain_filter(name, attrs):
 
 class ForaSuite(BaseSuite):
     """Suite for fora.tv. As of 19-09-2011 fora does not offer any public API, only video pages and rss feeds."""
-    regex = re.compile('https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+')
+    video_regex = 'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+'
     scrape_fields = set(['link', 'title', 'description', 'flash_enclosure_url', 'embed_code', 'thumbnail_url', 'publish_date', 'user', 'user_url'])
 
     def get_scrape_url(self, video):

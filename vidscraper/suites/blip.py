@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
-import re
 import urllib
 import urlparse
 
@@ -37,7 +36,8 @@ from vidscraper.utils.http import clean_description_html
 
 
 class BlipSuite(BaseSuite):
-    regex = re.compile(r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/')
+    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/'
+    feed_regex = video_regex
 
     api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
             'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url'])
@@ -82,10 +82,6 @@ class BlipSuite(BaseSuite):
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
         return self._actually_parse_feed_entry(parsed.entries[0])
-
-    def get_feed_entries(self, feed_url):
-        parsed = feedparser.parse(feed_url)
-        return parsed.entries
 
     def parse_feed_entry(self, entry, fields=None):
         data = self._actually_parse_feed_entry(entry)

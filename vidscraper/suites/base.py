@@ -23,8 +23,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import re
 import urllib
 import urllib2
+
+import feedparser
 
 from vidscraper.compat import json
 from vidscraper.errors import CantIdentifyUrl
@@ -59,15 +62,29 @@ class SuiteRegistry(object):
             self._suites.remove(self._suite_dict[suite])
             del self._suite_dict[suite]
 
-    def suite_for_url(self, url):
+    def suite_for_video_url(self, url):
         """
-        Returns the first registered suite which can handle the url or raises
-        :exc:`.CantIdentifyUrl` if no such suite is found.
+        Returns the first registered suite which can handle the ``url`` as a
+        video or raises :exc:`.CantIdentifyUrl` if no such suite is found.
 
         """
         for suite in self._suites:
             try:
-                if suite.handles_url(url):
+                if suite.handles_video_url(url):
+                    return suite
+            except NotImplementedError:
+                pass
+        raise CantIdentifyUrl
+
+    def suite_for_feed_url(self, url):
+        """
+        Returns the first registered suite which can handle the ``url`` as a
+        feed or raises :exc:`.CantIdentifyUrl` if no such suite is found.
+
+        """
+        for suite in self._suites:
+            try:
+                if suite.handles_feed_url(url):
                     return suite
             except NotImplementedError:
                 pass
@@ -142,8 +159,8 @@ class ScrapedVideo(object):
 
     def __init__(self, url, suite=None, fields=None):
         if suite is None:
-            suite = registry.suite_for_url(url)
-        elif not suite.handles_url(url):
+            suite = registry.suite_for_video_url(url)
+        elif not suite.handles_video_url(url):
             raise CantIdentifyUrl
         if fields is None:
             self.fields = list(self._all_fields)
@@ -184,9 +201,13 @@ class BaseSuite(object):
     methods must be defined on a suite-by-suite basis.
 
     """
-    #: A compiled regular expression which will be matched against urls to check
-    #: if they are considered handled by this suite.
-    regex = None
+    #: A string or precompiled regular expression which will be matched against
+    #: video urls to check if they can be handled by this suite.
+    video_regex = None
+
+    #: A string or precompiled regular expression which will be matched against
+    #: feed urls to check if they can be handled by this suite.
+    feed_regex = None
 
     #: A URL which is an endpoint for an oembed API.
     oembed_endpoint = None
@@ -213,16 +234,35 @@ class BaseSuite(object):
     #: optimization.
     scrape_fields = set()
 
-    def handles_url(self, url):
+    def __init__(self):
+        if isinstance(self.video_regex, basestring):
+            self.video_regex = re.compile(self.video_regex)
+        if isinstance(self.feed_regex, basestring):
+            self.feed_regex = re.compile(self.feed_regex)
+
+    def handles_video_url(self, url):
         """
-        Returns ``True`` if this suite can handle the ``url`` and ``False``
-        otherwise. By default, this method will check whether the url matches
-        :attr:`.regex` or raise a :exc:`NotImplementedError` if that is not
-        possible.
+        Returns ``True`` if this suite can handle the ``url`` as a video and
+        ``False`` otherwise. By default, this method will check whether the url
+        matches :attr:`.video_regex` or raise a :exc:`NotImplementedError` if
+        that is not possible.
 
         """
         try:
-            return bool(self.regex.match(url))
+            return bool(self.video_regex.match(url))
+        except AttributeError:
+            raise NotImplementedError
+
+    def handles_feed_url(self, url):
+        """
+        Returns ``True`` if this suite can handle the ``url`` as a feed and
+        ``False`` otherwise. By default, this method will check whether the url
+        matches :attr:`.feed_regex` or raise a :exc:`NotImplementedError` if
+        that is not possible.
+
+        """
+        try:
+            return bool(self.video_regex.match(url))
         except AttributeError:
             raise NotImplementedError
 
@@ -361,11 +401,13 @@ class BaseSuite(object):
 
     def get_feed_entries(self, feed_url):
         """
-        Returns an iterable of feed entries for the feed at ``feed_url``. Must
-        be implemented by subclasses.
+        Returns an iterable of feed entries for the feed at ``feed_url``. By
+        default, this uses feedparser to parse the ``feed_url`` and returns
+        the parsed feed's entries.
 
         """
-        raise NotImplementedError
+        parsed = feedparser.parse(feed_url)
+        return parsed.entries
 
     def parse_feed_entry(self, entry, fields=None):
         """

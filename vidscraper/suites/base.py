@@ -169,11 +169,10 @@ class ScrapedVideo(object):
         self.url = url
         self._suite = suite
         
-        # These private attributes are used by scrape suites to determine if
-        # the given method of data fetching has already been tried.
-        self._oembed = False
-        self._api = False
-        self._scrape = False
+        # This private attribute is set to ``True`` when data is loaded into the
+        # video by a scrape suite. It is *not* set when data is pre-loaded from
+        # a feed or a search.
+        self._loaded = False
 
     @property
     def missing_fields(self):
@@ -191,7 +190,12 @@ class ScrapedVideo(object):
 
     def load(self):
         """Uses the video's :attr:`suite` to fetch the fields for the video."""
-        return self.suite.load_video_data(self)
+        if not self._loaded:
+            self.suite.load_video_data(self)
+            self._loaded = True
+
+    def is_loaded(self):
+        return self._loaded
 
 
 class BaseSuite(object):
@@ -342,9 +346,8 @@ class BaseSuite(object):
 
         """
         field_set = set()
-        if not any([getattr(video, "_%s" % m) for m in methods]):
-            for method in methods:
-                field_set |= getattr(self, "%s_fields")
+        for method in methods:
+            field_set |= getattr(self, "%s_fields")
         return len(missing_fields - field_set)
 
     def _run_methods(self, video, methods):
@@ -355,13 +358,12 @@ class BaseSuite(object):
         """
         for method in methods:
             url = getattr(self, "get_%s_url" % method)(video)
-            response_text = urllib2.urlopen(url, timeout=5)
+            response_text = urllib2.urlopen(url, timeout=5).read()
             data = getattr(self, "parse_%s_response" % method)(response_text)
             for field, value in data.iteritems():
                 if (field in video.fields and
                             getattr(video, field) is None):
                     setattr(video, field, value)
-            setattr(video, "_%s" % method, True)
 
     def load_video_data(self, video):
         """
@@ -369,8 +371,6 @@ class BaseSuite(object):
         for the ``video``. The data is immediately stored on the video instance.
 
         """
-        if video._oembed and video._api and video._scrape:
-            return
         missing_fields = set(video.missing_fields)
         if not missing_fields:
             return
@@ -433,7 +433,8 @@ class BaseSuite(object):
         """
         Returns an iterable of search results for the ``include_terms``,
         ``exclude_terms``, ``order_by``, and other ``kwargs``. Must be
-        implemented by subclasses.
+        implemented by subclasses. Should raise :exc:`NotImplementedError` if
+        for some reason the search cannot be executed.
 
         """
         raise NotImplementedError
@@ -454,6 +455,9 @@ class BaseSuite(object):
         :class:`.ScrapedVideo` instances which have been prepopulated with data
         from the search. Internally calls :meth:`.parse_search_result` on each
         result from :meth:`.get_search_results`.
+
+        ``order_by`` may be either "relevant" or "latest". Other values will be
+        ignored.
 
         """
         search_string = search_string_from_terms(include_terms, exclude_terms)

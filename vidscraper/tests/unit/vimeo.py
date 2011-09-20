@@ -159,3 +159,34 @@ class VimeoFeedTestCase(VimeoTestCase):
         for key in expected_data:
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
+
+
+class VimeoSearchTestCase(VimeoTestCase):
+    def setUp(self):
+        VimeoTestCase.setUp(self)
+        search_file = open(os.path.join(self.data_file_dir, 'search.json'))
+        self.results = self.suite._search_results_from_response(
+                                                        search_file.read())
+
+    def test_parse_search_result_1(self):
+        video = self.suite.parse_search_result(self.results[0])
+        self.assertTrue(isinstance(video, ScrapedVideo))
+        data = dict(((field, getattr(video, field)) for field in video.fields))
+        expected_data = {
+            'title': u'Dancing Pigeons - Ritalin',
+            'link': 'http://vimeo.com/13639493',
+            'description': u"""Directed by Tomas Mankovsky\n\nCast/ Performers (in order of appearance)\n\t\t\nOld Man -                           Keith Francis\nFlame Man - \t                     Adam Speers\nIce Man -\t                             Phil Zimmerman\n\t\nProducer\t  -                           Patrick Craig\n\t\nCasting Director -               \t     Sophie North\n\t\nEditor\t    -                         Julian Tranquille\n\t\nPost Production Supervisor\t -    Justin Brukman\n\t\n1st AD\t                          -   Chris Kelly\n1st AD\t                           -  Ben Fogg\nProduction Manager\t            - Adam Shaw\n\t\nDirector Of Photography\t     - Adam Frisch\nFocus Puller\t                     - Jeremy Fusco\nPhantom Technician\t            -  John Hadfield\nCamera Assistant\t            - Roland Philip\n7D Camera Assistant\t            - Chris Nunn\nGaffer\t                            - Tony Miller\nSpark\t                            - Jim Okeffe\nSpark\t                            - Chris Georgeous\nSpark\t                            - Jason Fletcher\nGenny Op\t                            - Kevin Cooli\nGenny Op\t                            - Lee Parfit\n\t\nArt Director\t                    - Arthur De Borman\nArt Director                            - Sam Ludgate\n\t\nSpecial Effects\t         -            Artem\nSpecial Effects Supervisor\t-     Simon Tayler\nSpecial Effects Technicians\t -    Toby Stewart\nSpecial Effects Technicians\t  -   Jonathan Bickerdike\nSpecial Effects Technicians\t   -  Matt Loader\n\t\nHair & Make Up\t                  -   Izzy Broad\nStylist\t                          -   Tess Loe\nStylist Assistant\t                   -  Daisy Babbington \n\t\nFire Cover\t                           -  1st Defense\nMedical Cover\t                   -  Location Medical\nAnimals\t                            - A-Z Animals - Gerry Cott\n\t\nPhotography\t                    - Marcus Palmqvist\nPhotography Assistant\t            - Belinda Foord\n\t\nProduction Assistant\t           -  Rob Leonard\nRunner\t                            - Sophia Marks\nRunner\t                            - Lola Marks\nRunner\t                            - Anna Fogg\n\t\nSpecial Thanks To\t             \n\nCut and Run\n\t                                     Take 2 Films\n\t                                     MPC\n\t                                     Green Door Films\n\t                                     Panalux\n\t                                     Black Country Parks\n\t                                     San Remo Caf\xe9\n\nCommissioned by Diesel:U:Music""",
+            'thumbnail_url': 'http://b.vimeocdn.com/ts/786/198/78619855_200.jpg',
+            'user': 'Blink',
+            'user_url': 'http://vimeo.com/user4230856',
+            'publish_datetime': datetime.datetime(2010, 07, 26, 4, 29, 33),
+            'tags': ['Dancing Pigeons', 'Ritalin', 'Tomas Mankovsky', 'Blink',
+                     'Music Video', 'flamethrower', 'fire extinguisher'],
+            'flash_enclosure_url': 'http://vimeo.com/moogaloop.swf?clip_id=13639493',
+            'embed_code': """<iframe src="http://player.vimeo.com/video/\
+13639493" width="320" height="240" frameborder="0" webkitAllowFullScreen \
+allowFullScreen></iframe>"""
+        }
+        for key in expected_data:
+            self.assertTrue(key in data)
+            self.assertEqual(data[key], expected_data[key])

@@ -27,6 +27,11 @@ from datetime import datetime
 import re
 import urllib
 
+try:
+    import oauth2
+except ImportError:
+    oauth2 = None
+
 from vidscraper.compat import json
 from vidscraper.suites import BaseSuite, registry
 
@@ -44,17 +49,21 @@ class VimeoSuite(BaseSuite):
     api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url', 'flash_enclosure_url', 'embed_code'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
+    def _embed_code_from_id(self, video_id):
+        return """<iframe src="http://player.vimeo.com/video/%s" \
+width="320" height="240" frameborder="0" webkitAllowFullScreen \
+allowFullScreen></iframe>""" % video_id
+
+    def _flash_enclosure_url_from_id(self, video_id):
+        return 'http://vimeo.com/moogaloop.swf?clip_id=%s' % video_id
+
     def get_api_url(self, video):
         video_id = self.video_regex.match(video.url).group('video_id')
         return u"http://vimeo.com/api/v2/video/%s.json" % video_id
 
     def parse_api_response(self, response_text):
         parsed = json.loads(response_text)[0]
-        flash_enclosure_url = 'http://vimeo.com/moogaloop.swf?clip_id=%s' % (
-                              parsed['id'])
-        embed_code = u"""<iframe src="http://player.vimeo.com/video/%s" \
-width="320" height="240" frameborder="0" webkitAllowFullScreen \
-allowFullScreen></iframe>""" % parsed['id']
+        video_id = parsed['id']
         data = {
             'title': parsed['title'],
             'link': parsed['url'],
@@ -65,8 +74,8 @@ allowFullScreen></iframe>""" % parsed['id']
             'publish_date': datetime.strptime(parsed['upload_date'],
                                              '%Y-%m-%d %H:%M:%S'),
             'tags': parsed['tags'].split(', '),
-            'flash_enclosure_url': flash_enclosure_url,
-            'embed_code': embed_code
+            'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
+            'embed_code': self._embed_code_from_id(video_id)
         }
         return data
 
@@ -85,7 +94,62 @@ allowFullScreen></iframe>""" % parsed['id']
             'flash_enclosure_url': entry['media_player']['url'],
             'tags': tags,
         }
-        print data['thumbnail_url']
+        video = self.get_video(data['link'], fields)
+        for field, value in data.iteritems():
+            if field in video.fields:
+                setattr(video, field, value)
+        return video
+
+    def get_search_results(self, search_string, order_by='relevant', **kwargs):
+        if oauth2 is None:
+            raise NotImplementedError("OAuth2 library must be installed.")
+        api_key = kwargs.get('vimeo_api_key')
+        api_secret = kwargs.get('vimeo_api_secret')
+        if api_key is None or api_secret is None:
+            raise NotImplementedError("API Key and Secret missing.")
+        params = {
+            'format': 'json',
+            'full_response': '1',
+            'method': 'vimeo.videos.search',
+            'query': search_string,
+        }
+        if api_key:
+            params['api_key'] = api_key
+        if order_by == 'relevant':
+            params['sort'] = 'relevant'
+        elif order_by == 'latest':
+            params['sort'] = 'newest'
+        url = "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
+        consumer = oauth2.Consumer(api_key, api_secret)
+        client = oauth2.Client(consumer)
+        request = client.request(url)
+        response_text = request[1]
+        return self._search_results_from_response(response_text)
+
+    def _search_results_from_response(self, response_text):
+        parsed = json.loads(response_text)
+        return parsed['videos']['video']
+
+    def parse_search_result(self, result, fields=None):
+        # TODO: results have an embed_privacy key. What is this? Should
+        # vidscraper return that information? Doesn't youtube have something
+        # similar?
+        video_id = result['id']
+        data = {
+            'title': result['title'],
+            'link': [u['_content'] for u in result['urls']['url']
+                    if u['type'] == 'video'][0],
+            'description': result['description'],
+            'thumbnail_url': result['thumbnails']['thumbnail'][1]['_content'],
+            'user': result['owner']['realname'],
+            'user_url': result['owner']['profileurl'],
+            'publish_datetime': datetime.strptime(result['upload_date'],
+                                             '%Y-%m-%d %H:%M:%S'),
+            'tags': [t['_content']
+                            for t in result.get('tags', {}).get('tag', [])],
+            'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
+            'embed_code': self._embed_code_from_id(video_id)
+        }
         video = self.get_video(data['link'], fields)
         for field, value in data.iteritems():
             if field in video.fields:

@@ -27,6 +27,7 @@ import datetime
 import os
 import unittest
 
+from vidscraper.suites.base import ScrapedVideo
 from vidscraper.suites.vimeo import VimeoSuite
 
 
@@ -89,7 +90,68 @@ class VimeoApiTestCase(VimeoTestCase):
             'user_url': u'http://vimeo.com/jakob',
             'tags': [u'morning', u'bed', u'slow', u'my bedroom', u'creepy',
                      u'smile', u'fart'],
-            'user': u'Jake Lodwick'
+            'user': u'Jake Lodwick',
+            'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
+        }
+        for key in expected_data:
+            self.assertTrue(key in data)
+            self.assertEqual(data[key], expected_data[key])
+
+
+class VimeoFeedTestCase(VimeoTestCase):
+    def setUp(self):
+        VimeoTestCase.setUp(self)
+        feed_file = open(os.path.join(self.data_file_dir, 'feed.rss'))
+        self.entries = self.suite.get_feed_entries(feed_file.read())
+
+    def test_parse_feed_entry_0(self):
+        video = self.suite.parse_feed_entry(self.entries[0])
+        self.assertTrue(isinstance(video, ScrapedVideo))
+        data = dict(((field, getattr(video, field)) for field in video.fields))
+        expected_data = {
+            'title': 'Grandfather recollects end of WWII',
+            'publish_datetime': datetime.datetime(2011, 6, 6, 10, 45, 32),
+            'link': 'http://vimeo.com/24714980',
+            'description': '<p><a href="http://vimeo.com/24714980"><img alt="" '
+                           'src="http://b.vimeocdn.com/ts/162/178/'
+                           '162178490_200.jpg" /></a></p><p></p><p>'
+                           '<strong>Cast:</strong> <a href="//jakob">Jake '
+                           'Lodwick</a></p>',
+            'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=24714980",
+            'user': "Jake Lodwick",
+            'user_url': "http://vimeo.com/jakob",
+            "tags": [],
+            'thumbnail_url': 'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
+        }
+        for key in expected_data:
+            self.assertTrue(key in data)
+            self.assertEqual(data[key], expected_data[key])
+
+    def test_parse_feed_entry_1(self):
+        video = self.suite.parse_feed_entry(self.entries[1])
+        self.assertTrue(isinstance(video, ScrapedVideo))
+        data = dict(((field, getattr(video, field)) for field in video.fields))
+        expected_data = {
+            'link': "http://vimeo.com/23833511",
+            'title': "Santa vs. The Easter Bunny",
+            'description': u'<p><a href="http://vimeo.com/23833511"><img '
+                            'alt="" src="http://b.vimeocdn.com/ts/155/495/'
+                            '155495891_200.jpg" /></a></p><p>A pre-Jackass '
+                            'prank and one of my first edited-on-a-computer '
+                            'videos.<br />\n<br />\nShot on December 23rd, '
+                            '1999 as Towson Town Center, Maryland, USA.<br />\n'
+                            '<br />\nJake Lodwick as Santa<br />\nMatt Cockey '
+                            'as The Easter Bunny<br />\n<br />\nShot by Ryan '
+                            'Welch, Tim Donahue, and Will Cockey.<br />\n'
+                            'Escape driver: Wilson Taliaferro.</p><p><strong>'
+                            'Cast:</strong> <a href="//jakob">Jake '
+                            'Lodwick</a></p>',
+            'publish_datetime': datetime.datetime(2011, 5, 17, 0, 1, 30),
+            'user': "Jake Lodwick",
+            'user_url': "http://vimeo.com/jakob",
+            'thumbnail_url': "http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
+            'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=23833511",
+            'tags': ['archives', 'santa', 'easter bunny'],
         }
         for key in expected_data:
             self.assertTrue(key in data)

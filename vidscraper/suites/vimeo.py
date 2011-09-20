@@ -24,6 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
+import re
 import urllib
 
 from vidscraper.compat import json
@@ -38,8 +39,9 @@ class VimeoSuite(BaseSuite):
     """
     video_regex = r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)'
     feed_regex = r'https?://([^/]+\.)?vimeo.com/'
+    _tag_re = re.compile(r'>([\w ]+)</a>')
 
-    api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url'])
+    api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url', 'flash_enclosure_url'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def get_api_url(self, video):
@@ -48,6 +50,8 @@ class VimeoSuite(BaseSuite):
 
     def parse_api_response(self, response_text):
         parsed = json.loads(response_text)[0]
+        flash_enclosure_url = 'http://vimeo.com/moogaloop.swf?clip_id=%s' % (
+                              parsed['id'])
         data = {
             'title': parsed['title'],
             'link': parsed['url'],
@@ -57,7 +61,30 @@ class VimeoSuite(BaseSuite):
             'user_url': parsed['user_url'],
             'publish_date': datetime.strptime(parsed['upload_date'],
                                              '%Y-%m-%d %H:%M:%S'),
-            'tags': parsed['tags'].split(', ')
+            'tags': parsed['tags'].split(', '),
+            'flash_enclosure_url': flash_enclosure_url
         }
         return data
+
+    def parse_feed_entry(self, entry, fields=None):
+        description = entry['summary']
+        description, tag_str = description.split("<p><strong>Tags:</strong>")
+        tags = [match.group(1) for match in self._tag_re.finditer(tag_str)]
+        data = {
+            'link': entry['link'],
+            'title': entry['title'],
+            'description': description,
+            'publish_datetime': datetime(*entry['updated_parsed'][:6]),
+            'user': entry['author'],
+            'user_url': entry['media_credit']['scheme'],
+            'thumbnail_url': entry['media_thumbnail'][0]['url'],
+            'flash_enclosure_url': entry['media_player']['url'],
+            'tags': tags,
+        }
+        print data['thumbnail_url']
+        video = self.get_video(data['link'], fields)
+        for field, value in data.iteritems():
+            if field in video.fields:
+                setattr(video, field, value)
+        return video
 registry.register(VimeoSuite)

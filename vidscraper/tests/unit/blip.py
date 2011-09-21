@@ -109,7 +109,7 @@ class BlipOembedTestCase(BlipTestCase):
         oembed_url = self.suite.get_oembed_url(self.video)
         self.assertEqual(oembed_url, expected)
 
-    def test_parse_api_response(self):
+    def test_parse_oembed_response(self):
         oembed_file = open(os.path.join(
                             self.data_file_dir, 'oembed.json'))
         data = self.suite.parse_oembed_response(oembed_file.read())

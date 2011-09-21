@@ -85,6 +85,7 @@ class BlipSuite(BaseSuite):
 
     def parse_feed_entry(self, entry, fields=None):
         data = self._actually_parse_feed_entry(entry)
+        # TODO: Is the file_url actually the correct link? Can't be, can it?
         video = self.get_video(data['file_url'], fields)
         for field, value in data.iteritems():
             if field in video.fields:

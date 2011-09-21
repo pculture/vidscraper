@@ -274,6 +274,16 @@ class BaseSuite(object):
         """Returns a video using this suite."""
         return ScrapedVideo(url, suite=self, fields=fields)
 
+    def apply_video_data(self, video, data):
+        """
+        Stores values from a ``data`` dictionary on the corresponding attributes
+        of a :class:`ScrapedVideo` instance.
+
+        """
+        for field, value in data.iteritems():
+            if (field in video.fields and getattr(video, field) is None):
+                setattr(video, field, value)
+
     def get_oembed_url(self, video):
         """
         Returns the url for fetching oembed data. By default, generates an
@@ -360,10 +370,7 @@ class BaseSuite(object):
             url = getattr(self, "get_%s_url" % method)(video)
             response_text = urllib2.urlopen(url, timeout=5).read()
             data = getattr(self, "parse_%s_response" % method)(response_text)
-            for field, value in data.iteritems():
-                if (field in video.fields and
-                            getattr(video, field) is None):
-                    setattr(video, field, value)
+            self.apply_video_data(video, data)
 
     def load_video_data(self, video):
         """
@@ -399,68 +406,163 @@ class BaseSuite(object):
                 self._run_methods(video, remaining_dict[i][0])
                 return
 
-    def get_feed_entries(self, feed_url):
+    def get_feed_response(self, feed_url):
         """
-        Returns an iterable of feed entries for the feed at ``feed_url``. By
-        default, this uses feedparser to parse the ``feed_url`` and returns
-        the parsed feed's entries.
+        Returns a parsed response for this feed. By default, this uses
+        :mod:`feedparser` to get a response for the ``feed_url`` and returns the
+        resulting structure.
 
         """
-        parsed = feedparser.parse(feed_url)
-        return parsed.entries
+        return feedparser.parse(feed_url)
 
-    def parse_feed_entry(self, entry, fields=None):
+    def get_feed_entries(self, feed_response):
+        """
+        Returns an iterable of feed entries for a ``feed_response`` as returned
+        from :meth:`get_feed_response`. By default, this assumes that the
+        response is a :mod:`feedparser` structure and tries to return its
+        entries.
+
+        """
+        return feed_response.entries
+
+    def parse_feed_entry(self, entry):
         """
         Given a feed entry (as returned by :meth:`.get_feed_entries`), creates
-        and returns a :class:`.ScrapedVideo` instance that has data from the
-        feed entry pre-stored on it. Must be implemented by subclasses.
+        and returns a dictionary containing data from the feed entry, suitable
+        for application via :meth:`apply_video_data`. Must be implemented by
+        subclasses.
 
         """
         raise NotImplementedError
 
-    def parse_feed(self, feed_url, fields=None):
+    def get_next_feed_page_url(self, feed_response):
         """
-        Returns a list of :class:`.ScrapedVideo` instances which have been
-        prepopulated with feed data. Internally calls :meth:`.parse_feed_entry`
-        on each entry from :meth:`.get_feed_entries`.
+        Based on a ``feed_response``, generates and returns a url for the next
+        page of the feed, or returns ``None`` if that is not possible. By
+        default, simply returns ``None``. Subclasses must override this method
+        to have a meaningful feed crawl.
 
         """
-        return [self.parse_feed_entry(entry, fields)
-                for entry in self.get_feed_entries(feed_url)]
+        return None
 
-    def get_search_results(self, include_terms, exclude_terms=None,
-                           order_by='relevant', **kwargs):
+    def get_feed(self, feed_url, fields=None, crawl=False):
         """
-        Returns an iterable of search results for the ``include_terms``,
-        ``exclude_terms``, ``order_by``, and other ``kwargs``. Must be
-        implemented by subclasses. Should raise :exc:`NotImplementedError` if
-        for some reason the search cannot be executed.
+        Returns a generator which yields :class:`.ScrapedVideo` instances that
+        have been prepopulated with feed data. Internally calls
+        :meth:`.get_feed_response` and :meth:`.get_feed_entries`, then calls
+        :meth:`.parse_feed_entry` on each entry found. If ``crawl`` is ``True``
+        (not the default) then subsequent pages of the feed will be looked for
+        with :meth:`.get_next_feed_page_url`. If any are found, they will also
+        be loaded and parsed.
+
+        .. warning:: Crawl will continue until it has loaded all pages or until
+                     a page comes back empty. This can take a significant amount
+                     of time.
+
+        """
+        next_url = feed_url
+        while next_url:
+            feed_response = self.get_feed_response(next_url)
+            entries = self.get_feed_entries(feed_response)
+            for entry in entries:
+                data = self.parse_feed_entry(entry)
+                video = self.get_video(data['link'], fields)
+                self.apply_video_data(video, data)
+                yield video
+            if not crawl or not entries:
+                next_url = None
+            else:
+                next_url = self.get_next_feed_page_url(feed_response)
+        raise StopIteration
+
+    def get_search_url(self, search_string, order_by=None, **kwargs):
+        """
+        Returns a url which this suite can use to fetch search results for the
+        given string. Must be implemented by subclasses.
 
         """
         raise NotImplementedError
 
-    def parse_search_result(self, result, fields=None):
+    def get_search_response(self, search_url, **kwargs):
+        """
+        Returns a parsed response for the given ``search_url``. By default,
+        assumes that the url references a feed and passes the work off to
+        :meth:`.get_feed_response`.
+
+        """
+        return self.get_feed_response(search_url)
+
+    def get_search_results(self, search_response):
+        """
+        Returns an iterable of search results for a ``search_response`` as
+        returned by :meth:`.get_search_response`. By default, assumes that the
+        ``search_response`` is a :mod:`feedparser` structure and passes the work
+        off to :meth:`.get_feed_entries`.
+
+        """
+        return self.get_feed_entries(search_response)
+
+    def parse_search_result(self, result):
         """
         Given a search result (as returned by :meth:`.get_search_results`),
-        creates and returns a :class:`.ScrapedVideo` instance that has data from
-        the search result pre-stored on it. Must be implemented by subclasses.
+        returns a dictionary containing data from the search result, suitable
+        for application via :meth:`apply_video_data`. By default, assumes that
+        the ``result`` is a :mod:`feedparser` entry and passes the work off to
+        :meth:`.parse_feed_entry`.
 
         """
-        raise NotImplementedError
+        return self.parse_feed_entry(result)
+
+    def get_next_search_page_url(self, search_response):
+        """
+        Based on a ``search_response``, generates and returns a url for the next
+        page of the search, or returns ``None`` if that is not possible. By
+        default, simply returns ``None``. Subclasses must override this method
+        to have a meaningful feed crawl.
+
+        """
+        return None
 
     def search(self, include_terms, exclude_terms=None,
-               order_by='relevant', fields=None, **kwargs):
+               order_by=None, fields=None, crawl=False, **kwargs):
         """
-        Runs a search for the given parameters and returns a list of
-        :class:`.ScrapedVideo` instances which have been prepopulated with data
-        from the search. Internally calls :meth:`.parse_search_result` on each
-        result from :meth:`.get_search_results`.
+        Runs a search for the given parameters and returns a generator which
+        yields :class:`.ScrapedVideo` instances that have been prepopulated with
+        data from the search. Internally calls :meth:`.get_search_url`,
+        :meth:`.get_search_response`, and :meth:`.get_search_results`, then
+        calls :meth:`.parse_search_result` on each result found. If ``crawl`` is
+        ``True`` (not the default) then subsequent pages of search results will
+        be looked for with :meth:`.get_next_search_page_url`. If any are found,
+        they will also be loaded and parsed.
 
         ``order_by`` may be either "relevant" or "latest". Other values will be
-        ignored.
+        ignored. If a value is passed in, suites which do not support that value
+        should return an empty result set.
+
+        Any additional ``kwargs`` will be passed into the calls to
+        :meth:`.get_search_url`, :meth:`.get_search_response`, and
+        :meth:`get_next_search_page_url`. This can be used, for example, to
+        provide authentication support for a specific suite without interfering
+        with the operation of other suites.
+
+        .. warning:: Crawl will continue until it has loaded all pages or until
+                     a page comes back empty. This can take a significant amount
+                     of time.
 
         """
         search_string = search_string_from_terms(include_terms, exclude_terms)
-        return [self.parse_search_result(result, fields) for result in
-                self.get_search_results(include_terms, search_string,
-                                        order_by=order_by, **kwargs)]
+        search_url = self.get_search_url(search_string, order_by, **kwargs)
+
+        while search_url:
+            search_response = self.get_search_response(search_url, **kwargs)
+            results = self.get_search_results(search_response)
+            for result in results:
+                data = self.parse_search_result(results)
+                video = self.get_video(data['link'], fields)
+                self.apply_video_data(video, data)
+                yield video
+            if not crawl or not results:
+                search_url = None
+            else:
+                search_url = self.get_next_search_page_url(search_response, **kwargs)
+        raise StopIteration

@@ -27,7 +27,9 @@ import datetime
 import os
 import unittest
 
-from vidscraper.suites.base import ScrapedVideo
+import feedparser
+
+from vidscraper.compat import json
 from vidscraper.suites.vimeo import VimeoSuite
 
 
@@ -105,12 +107,12 @@ class VimeoFeedTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
         feed_file = open(os.path.join(self.data_file_dir, 'feed.rss'))
-        self.entries = self.suite.get_feed_entries(feed_file.read())
+        response = feedparser.parse(feed_file.read())
+        self.entries = self.suite.get_feed_entries(response)
 
     def test_parse_feed_entry_0(self):
-        video = self.suite.parse_feed_entry(self.entries[0])
-        self.assertTrue(isinstance(video, ScrapedVideo))
-        data = dict(((field, getattr(video, field)) for field in video.fields))
+        data = self.suite.parse_feed_entry(self.entries[0])
+        self.assertTrue(isinstance(data, dict))
         expected_data = {
             'title': 'Grandfather recollects end of WWII',
             'publish_datetime': datetime.datetime(2011, 6, 6, 10, 45, 32),
@@ -131,9 +133,8 @@ class VimeoFeedTestCase(VimeoTestCase):
             self.assertEqual(data[key], expected_data[key])
 
     def test_parse_feed_entry_1(self):
-        video = self.suite.parse_feed_entry(self.entries[1])
-        self.assertTrue(isinstance(video, ScrapedVideo))
-        data = dict(((field, getattr(video, field)) for field in video.fields))
+        data = self.suite.parse_feed_entry(self.entries[1])
+        self.assertTrue(isinstance(data, dict))
         expected_data = {
             'link': "http://vimeo.com/23833511",
             'title': "Santa vs. The Easter Bunny",
@@ -165,13 +166,12 @@ class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.json'))
-        self.results = self.suite._search_results_from_response(
-                                                        search_file.read())
+        response = json.loads(search_file.read())
+        self.results = self.suite.get_search_results(response)
 
     def test_parse_search_result_1(self):
-        video = self.suite.parse_search_result(self.results[0])
-        self.assertTrue(isinstance(video, ScrapedVideo))
-        data = dict(((field, getattr(video, field)) for field in video.fields))
+        data = self.suite.parse_search_result(self.results[0])
+        self.assertTrue(isinstance(data, dict))
         expected_data = {
             'title': u'Dancing Pigeons - Ritalin',
             'link': 'http://vimeo.com/13639493',

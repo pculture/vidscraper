@@ -46,7 +46,7 @@ class BlipSuite(BaseSuite):
     oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
             'title'])
 
-    def _actually_parse_feed_entry(self, entry):
+    def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a blip rss feed into
         a dictionary mapping :class:`.ScrapedVideo` fields to values.
@@ -81,23 +81,5 @@ class BlipSuite(BaseSuite):
 
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
-        return self._actually_parse_feed_entry(parsed.entries[0])
-
-    def parse_feed_entry(self, entry, fields=None):
-        data = self._actually_parse_feed_entry(entry)
-        # TODO: Is the file_url actually the correct link? Can't be, can it?
-        video = self.get_video(data['file_url'], fields)
-        for field, value in data.iteritems():
-            if field in video.fields:
-                setattr(video, field, value)
-        return video
-
-    def get_search_results(self, search_string, order_by='relevant', **kwargs):
-        # TODO: Add support for ordering.
-        get_params = {'q': search_string}
-        url = u"http://blip.tv/rss?%s" % urllib.urlencode(get_params)
-        return self.get_feed_entries(url)
-
-    def parse_search_result(self, result, fields=None):
-        return self.parse_feed_entry(result, fields)
+        return self.parse_feed_entry(parsed.entries[0])
 registry.register(BlipSuite)

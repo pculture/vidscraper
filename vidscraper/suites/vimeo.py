@@ -79,7 +79,7 @@ allowFullScreen></iframe>""" % video_id
         }
         return data
 
-    def parse_feed_entry(self, entry, fields=None):
+    def parse_feed_entry(self, entry):
         description = entry['summary']
         description, tag_str = description.split("<p><strong>Tags:</strong>")
         tags = [match.group(1) for match in self._tag_re.finditer(tag_str)]
@@ -94,19 +94,12 @@ allowFullScreen></iframe>""" % video_id
             'flash_enclosure_url': entry['media_player']['url'],
             'tags': tags,
         }
-        video = self.get_video(data['link'], fields)
-        for field, value in data.iteritems():
-            if field in video.fields:
-                setattr(video, field, value)
-        return video
+        return data
 
-    def get_search_results(self, search_string, order_by='relevant', **kwargs):
-        if oauth2 is None:
-            raise NotImplementedError("OAuth2 library must be installed.")
+    def get_search_url(self, search_string, order_by=None, **kwargs):
         api_key = kwargs.get('vimeo_api_key')
-        api_secret = kwargs.get('vimeo_api_secret')
-        if api_key is None or api_secret is None:
-            raise NotImplementedError("API Key and Secret missing.")
+        if api_key is None:
+            raise NotImplementedError("API Key is missing.")
         params = {
             'format': 'json',
             'full_response': '1',
@@ -119,18 +112,24 @@ allowFullScreen></iframe>""" % video_id
             params['sort'] = 'relevant'
         elif order_by == 'latest':
             params['sort'] = 'newest'
-        url = "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
+        return "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
+
+    def get_search_response(self, search_url, **kwargs):
+        if oauth2 is None:
+            raise NotImplementedError("OAuth2 library must be installed.")
+        api_key = kwargs.get('vimeo_api_key')
+        api_secret = kwargs.get('vimeo_api_secret')
+        if api_key is None or api_secret is None:
+            raise NotImplementedError("API Key and Secret missing.")
         consumer = oauth2.Consumer(api_key, api_secret)
         client = oauth2.Client(consumer)
         request = client.request(url)
-        response_text = request[1]
-        return self._search_results_from_response(response_text)
+        return json.loads(request[1])
 
-    def _search_results_from_response(self, response_text):
-        parsed = json.loads(response_text)
-        return parsed['videos']['video']
+    def get_search_results(self, search_response):
+        return search_response['videos']['video']
 
-    def parse_search_result(self, result, fields=None):
+    def parse_search_result(self, result):
         # TODO: results have an embed_privacy key. What is this? Should
         # vidscraper return that information? Doesn't youtube have something
         # similar?
@@ -150,9 +149,5 @@ allowFullScreen></iframe>""" % video_id
             'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
             'embed_code': self._embed_code_from_id(video_id)
         }
-        video = self.get_video(data['link'], fields)
-        for field, value in data.iteritems():
-            if field in video.fields:
-                setattr(video, field, value)
-        return video
+        return data
 registry.register(VimeoSuite)

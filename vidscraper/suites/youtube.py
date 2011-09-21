@@ -44,7 +44,7 @@ class YouTubeSuite(BaseSuite):
                       'thumbnail_url', 'publish_datetime', 'tags',
                       'flash_enclosure_url', 'user', 'user_url'])
 
-    def _actually_parse_feed_entry(self, entry):
+    def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a youtube rss feed.
         Returns a dictionary mapping :class:`.ScrapedVideo` fields to values.
@@ -71,27 +71,16 @@ class YouTubeSuite(BaseSuite):
 
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
-        return self._actually_parse_feed_entry(parsed.entries[0])
+        return self.parse_feed_entry(parsed.entries[0])
 
-    def get_search_results(self, search_string, order_by='relevant', **kwargs):
+    def get_search_url(self, search_string, order_by=None, **kwargs):
         params = {
             'vq': search_string,
-            #'alt': 'rss' # Default is atom. Does that work?
         }
         if order_by == 'relevant':
             params['orderby'] = 'relevance'
         elif order_by == 'latest':
             params['orderby'] = 'published'
-        url = 'http://gdata.youtube.com/feeds/api/videos?%s' % urllib.urlencode(
-                                                                params)
-        parsed = feedparser.parse_feed(url)
-        return parsed.entries
-
-    def parse_search_result(self, result, fields=None):
-        data = self._actually_parse_feed_entry(result)
-        video = self.get_video(data['link'], fields)
-        for field, value in data.iteritems():
-            if field in video.fields:
-                setattr(video, field, value)
-        return video
+        return 'http://gdata.youtube.com/feeds/api/videos?%s' % (
+                                    urllib.urlencode(params))
 registry.register(YouTubeSuite)

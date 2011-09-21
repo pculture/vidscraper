@@ -32,7 +32,6 @@ import urllib
 import feedparser
 
 from vidscraper.errors import CantIdentifyUrl
-from vidscraper.suites import ScrapedVideo
 from vidscraper.suites.youtube import YouTubeSuite
 
 
@@ -155,13 +154,13 @@ class YouTubeSearchTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.atom'))
-        self.results = feedparser.parse(search_file.read()).entries
+        response = feedparser.parse(search_file.read())
+        self.results = self.suite.get_search_results(response)
 
     def test_parse_search_result(self):
         self.maxDiff = None
-        video = self.suite.parse_search_result(self.results[0])
-        self.assertTrue(isinstance(video, ScrapedVideo))
-        data = dict(((field, getattr(video, field)) for field in video.fields))
+        data = self.suite.parse_search_result(self.results[0])
+        self.assertTrue(isinstance(data, dict))
         data['tags'] = set(data['tags'])
         expected_data = CARAMELL_DANSEN_ATOM_DATA.copy()
         expected_data['description'] = CARAMELL_DANSEN_SEARCH_DESCRIPTION

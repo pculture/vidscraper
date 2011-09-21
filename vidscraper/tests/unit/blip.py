@@ -146,19 +146,20 @@ class BlipFeedTestCase(BlipTestCase):
         ).read()
 
     def test_get_feed_entries(self):
-        entries = self.suite.get_feed_entries(self.feed_data)
+        response = self.suite.get_feed_response(self.feed_data)
+        entries = self.suite.get_feed_entries(response)
         self.assertTrue(len(entries) > 0)
 
     def test_parse_entry(self):
-        entries = self.suite.get_feed_entries(self.feed_data)
-        video = self.suite.parse_feed_entry(entries[1])
-        self.assertTrue(isinstance(video, ScrapedVideo))
-        data = dict(((field, getattr(video, field)) for field in video.fields))
+        response = self.suite.get_feed_response(self.feed_data)
+        entries = self.suite.get_feed_entries(response)
+        data = self.suite.parse_feed_entry(entries[1])
+        self.assertTrue(isinstance(data, dict))
         self._check_disqus_data(data)
 
     def test_parse_feed(self):
-        videos = self.suite.parse_feed(self.feed_data)
-        self.assertTrue(len(videos) > 0)
+        videos = self.suite.get_feed(self.feed_data)
+        self.assertTrue(len(list(videos)) > 0)
         for video in videos:
             self.assertTrue(isinstance(video, ScrapedVideo))
 
@@ -171,12 +172,13 @@ class BlipSearchTestCase(BlipTestCase):
         ).read()
 
     def test_parse_search_feed(self):
-        entries = self.suite.get_feed_entries(self.feed_data)
-        self.assertTrue(len(entries) > 0)
+        response = self.suite.get_search_response(self.feed_data)
+        results = self.suite.get_search_results(response)
+        self.assertTrue(len(results) > 0)
 
     def test_parse_result(self):
-        entries = self.suite.get_feed_entries(self.feed_data)
-        video = self.suite.parse_search_result(entries[1])
-        self.assertTrue(isinstance(video, ScrapedVideo))
-        data = dict(((field, getattr(video, field)) for field in video.fields))
+        response = self.suite.get_search_response(self.feed_data)
+        results = self.suite.get_search_results(response)
+        data = self.suite.parse_search_result(results[1])
+        self.assertTrue(isinstance(data, dict))
         self._check_disqus_data(data)

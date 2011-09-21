@@ -25,6 +25,7 @@
 
 
 import datetime
+import urllib
 
 import feedparser
 
@@ -55,7 +56,7 @@ class YouTubeSuite(BaseSuite):
             'title': entry['title'],
             'description': entry['summary'],
             'thumbnail_url': get_entry_thumbnail_url(entry),
-            'publish_datetime': datetime.datetime(*entry['updated_parsed'][:6]),
+            'publish_datetime': datetime.datetime(*entry['published_parsed'][:6]),
             'tags': [t['term'] for t in entry['tags']
                     if not t['term'].startswith('http')],
             'flash_enclosure_url': entry['media_content'][0]['url'],
@@ -71,3 +72,26 @@ class YouTubeSuite(BaseSuite):
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
         return self._actually_parse_feed_entry(parsed.entries[0])
+
+    def get_search_results(self, search_string, order_by='relevant', **kwargs):
+        params = {
+            'vq': search_string,
+            #'alt': 'rss' # Default is atom. Does that work?
+        }
+        if order_by == 'relevant':
+            params['orderby'] = 'relevance'
+        elif order_by == 'latest':
+            params['orderby'] = 'published'
+        url = 'http://gdata.youtube.com/feeds/api/videos?%s' % urllib.urlencode(
+                                                                params)
+        parsed = feedparser.parse_feed(url)
+        return parsed.entries
+
+    def parse_search_result(self, result, fields=None):
+        data = self._actually_parse_feed_entry(result)
+        video = self.get_video(data['link'], fields)
+        for field, value in data.iteritems():
+            if field in video.fields:
+                setattr(video, field, value)
+        return video
+registry.register(YouTubeSuite)

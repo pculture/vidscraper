@@ -43,7 +43,7 @@ CARAMELL_DANSEN_ATOM_DATA = {
     'thumbnail_url': u'http://i.ytimg.com/vi/J_DV9b0x7v4/0.jpg',
     'user': u'DrunkenVuko',
     'user_url': u'http://www.youtube.com/user/DrunkenVuko',
-    'flash_enclosure_url': u'http://www.youtube.com/v/J_DV9b0x7v4?f=videos&app=youtube_gdata',
+    'flash_enclosure_url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4&feature=youtube_gdata_player',
     'tags': set([
         u"caramell",
         u"dance",

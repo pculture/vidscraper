@@ -76,9 +76,9 @@ class BlipSuite(BaseSuite):
         parsed = urlparse.urlparse(last_url)
         params = urlparse.parse_qs(parsed.query)
         try:
-            page = int(params.get('page', ['0'])[0])
+            page = int(params.get('page', ['1'])[0])
         except ValueError:
-            page = 0
+            page = 1
         params['page'] = unicode(page + 1)
         return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None)),
                           urllib.urlencode(params, True))

@@ -348,18 +348,6 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def _count_remaining_fields(self, video, missing_fields, methods):
-        """
-        Given a video, a set of missing fields and an iterable of methods to
-        try, returns the number of fields which would still be missing if those
-        methods were run.
-
-        """
-        field_set = set()
-        for method in methods:
-            field_set |= getattr(self, "%s_fields")
-        return len(missing_fields - field_set)
-
     def _run_methods(self, video, methods):
         """
         Runs the selected methods, applies the returned data, and marks on the
@@ -385,15 +373,23 @@ class BaseSuite(object):
         # Check if the missing fields can be supplied by a single method, a
         # combination of two methods, or all three methods.
         remaining_dict = {}
-        for methods in [['ombed'], ['api'], ['scrape'],
+        for methods in [['oembed'], ['api'], ['scrape'],
                 ['oembed', 'api'], ['oembed', 'scrape'], ['api', 'scrape'],
                 ['oembed', 'api', 'scrape']]:
-            remaining = self._count_remaining_fields(video, missing_fields,
-                                                     methods)
+            field_set = set()
+            for method in methods:
+                field_set |= getattr(self, "%s_fields" % method)
+            remaining = len(missing_fields - field_set)
+
+            # If a method fills all the missing fields, take it immediately.
             if not remaining:
                 self._run_methods(video, methods)
                 return
-            remaining_dict.setdefault(remaining, []).append(methods)
+
+            # Otherwise only consider the method if it would reduce the number
+            # of remaining fields at all.
+            if remaining < len(missing_fields):
+                remaining_dict.setdefault(remaining, []).append(methods)
 
         # If we get here, it means that it is impossible to supply all the
         # requested fields. So we try to get as close as possible with as few
@@ -559,7 +555,7 @@ class BaseSuite(object):
             search_response = self.get_search_response(search_url, **kwargs)
             results = self.get_search_results(search_response)
             for result in results:
-                data = self.parse_search_result(results)
+                data = self.parse_search_result(result)
                 video = self.get_video(data['link'], fields)
                 self.apply_video_data(video, data)
                 yield video

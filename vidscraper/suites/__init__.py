@@ -25,3 +25,6 @@
 
 
 from vidscraper.suites.base import registry, ScrapedVideo, BaseSuite
+
+# Force loading of these files so that the default suites get registered.
+from vidscraper.suites import blip, fora, google, ustream, vimeo, youtube

@@ -169,7 +169,7 @@ class BlipFeedTestCase(BlipTestCase):
         self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=6')
         base_url = 'http://blip.tv/nothing/here/'
         new_url = self.suite.get_next_feed_page_url(base_url, None)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=1')
+        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=2')
 
 
 class BlipSearchTestCase(BlipTestCase):

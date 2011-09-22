@@ -45,9 +45,12 @@ Requirements
 ++++++++++++
 
 * json (python2.6) or simplejson
-* lxml
-* oauth2
+* BeautifulSoup 3.0.8 or 3.2
 * feedparser
+
+Optional
+--------
+* oauth2 (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
 * nose (for tests)
 
 

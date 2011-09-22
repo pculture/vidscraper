@@ -1,4 +1,3 @@
-# Miro - an RSS based video player application
 # Copyright 2009 - Participatory Culture Foundation
 # 
 # This file is part of vidscraper.
@@ -24,4 +23,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-DEFAULT_MAX_RESULTS=50
+import unittest
+
+from vidscraper import auto_scrape, auto_search, auto_feed
+
+
+class AutoFunctionalTestCase(unittest.TestCase):
+    def test_auto_scrape(self):
+        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        self.assertEqual(video.title, u'CaramellDansen (Full Version + Lyrics)')
+
+    def test_auto_search(self):
+        result_lists = auto_search(['parrot'], exclude_terms=['dead']).values()
+        results = []
+        for result_list in result_lists:
+            results.extend(result_list)
+        self.assertGreater(len(results), 0)

@@ -60,7 +60,7 @@ class YouTubeSuite(BaseSuite):
             'publish_datetime': datetime.datetime(*entry['published_parsed'][:6]),
             'tags': [t['term'] for t in entry['tags']
                     if not t['term'].startswith('http')],
-            'flash_enclosure_url': entry['media_content'][0]['url'],
+            'flash_enclosure_url': entry['media_player']['url'],
             'user': user,
             'user_url': u'http://www.youtube.com/user/%s' % user,
         }

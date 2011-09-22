@@ -28,8 +28,6 @@ import os
 import unittest
 import urlparse
 
-import feedparser
-
 from vidscraper.compat import json
 from vidscraper.suites.vimeo import VimeoSuite
 
@@ -89,7 +87,7 @@ class VimeoApiTestCase(VimeoTestCase):
             'link': u'http://vimeo.com/2',
             'description': u'I shot this myself!',
             'title': u'Good morning, universe',
-            'publish_date': datetime.datetime(2005, 2, 16, 23, 9, 19),
+            'publish_datetime': datetime.datetime(2005, 2, 16, 23, 9, 19),
             'user_url': u'http://vimeo.com/jakob',
             'tags': [u'morning', u'bed', u'slow', u'my bedroom', u'creepy',
                      u'smile', u'fart'],
@@ -99,68 +97,59 @@ class VimeoApiTestCase(VimeoTestCase):
                            'width="320" height="240" frameborder="0" '
                            'webkitAllowFullScreen allowFullScreen></iframe>',
         }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
+        self.assertEqual(data, expected_data)
 
 
 class VimeoFeedTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
-        feed_file = open(os.path.join(self.data_file_dir, 'feed.rss'))
-        response = feedparser.parse(feed_file.read())
+        feed_file = open(os.path.join(self.data_file_dir, 'feed.json'))
+        response = json.loads(feed_file.read())
         self.entries = self.suite.get_feed_entries(response)
 
     def test_parse_feed_entry_0(self):
         data = self.suite.parse_feed_entry(self.entries[0])
         self.assertTrue(isinstance(data, dict))
         expected_data = {
-            'title': 'Grandfather recollects end of WWII',
-            'publish_datetime': datetime.datetime(2011, 6, 6, 10, 45, 32),
-            'link': 'http://vimeo.com/24714980',
-            'description': '<p><a href="http://vimeo.com/24714980"><img alt="" '
-                           'src="http://b.vimeocdn.com/ts/162/178/'
-                           '162178490_200.jpg" /></a></p><p></p><p>'
-                           '<strong>Cast:</strong> <a href="//jakob">Jake '
-                           'Lodwick</a></p>',
-            'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=24714980",
-            'user': "Jake Lodwick",
-            'user_url': "http://vimeo.com/jakob",
+            'title': u'Grandfather recollects end of WWII',
+            'embed_code': u'<iframe src="http://player.vimeo.com/video/'
+                          u'24714980" width="320" height="240" frameborder="0" '
+                          u'webkitAllowFullScreen allowFullScreen></iframe>',
+            'publish_datetime': datetime.datetime(2011, 6, 6, 6, 45, 32),
+            'link': u'http://vimeo.com/24714980',
+            'description': '',
+            'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=24714980",
+            'user': u"Jake Lodwick",
+            'user_url': u"http://vimeo.com/jakob",
             "tags": [],
-            'thumbnail_url': 'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
         }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
+        self.assertEqual(data, expected_data)
 
     def test_parse_feed_entry_1(self):
         data = self.suite.parse_feed_entry(self.entries[1])
         self.assertTrue(isinstance(data, dict))
         expected_data = {
-            'link': "http://vimeo.com/23833511",
-            'title': "Santa vs. The Easter Bunny",
-            'description': u'<p><a href="http://vimeo.com/23833511"><img '
-                            'alt="" src="http://b.vimeocdn.com/ts/155/495/'
-                            '155495891_200.jpg" /></a></p><p>A pre-Jackass '
-                            'prank and one of my first edited-on-a-computer '
-                            'videos.<br />\n<br />\nShot on December 23rd, '
-                            '1999 as Towson Town Center, Maryland, USA.<br />\n'
-                            '<br />\nJake Lodwick as Santa<br />\nMatt Cockey '
-                            'as The Easter Bunny<br />\n<br />\nShot by Ryan '
-                            'Welch, Tim Donahue, and Will Cockey.<br />\n'
-                            'Escape driver: Wilson Taliaferro.</p><p><strong>'
-                            'Cast:</strong> <a href="//jakob">Jake '
-                            'Lodwick</a></p>',
-            'publish_datetime': datetime.datetime(2011, 5, 17, 0, 1, 30),
-            'user': "Jake Lodwick",
-            'user_url': "http://vimeo.com/jakob",
-            'thumbnail_url': "http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
-            'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=23833511",
-            'tags': ['archives', 'santa', 'easter bunny'],
+            'link': u"http://vimeo.com/23833511",
+            'title': u"Santa vs. The Easter Bunny",
+            'description': u'A pre-Jackass prank and one of my first '
+                            'edited-on-a-computer videos.<br />\n<br />\nShot '
+                            'on December 23rd, 1999 as Towson Town Center, '
+                            'Maryland, USA.<br />\n<br />\nJake Lodwick as '
+                            'Santa<br />\nMatt Cockey as The Easter Bunny'
+                            '<br />\n<br />\nShot by Ryan Welch, Tim Donahue, '
+                            'and Will Cockey.<br />\nEscape driver: Wilson '
+                            'Taliaferro.',
+            'publish_datetime': datetime.datetime(2011, 5, 16, 20, 1, 30),
+            'user': u"Jake Lodwick",
+            'user_url': u"http://vimeo.com/jakob",
+            'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
+            'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
+            'tags': [u'archives', u'santa', u'easter bunny'],
+            'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
         }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
+        self.maxDiff = None
+        self.assertEqual(data, expected_data)
 
 
 class VimeoSearchTestCase(VimeoTestCase):

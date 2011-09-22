@@ -26,6 +26,7 @@
 from datetime import datetime
 import re
 import urllib
+import urllib2
 import urlparse
 
 try:
@@ -44,19 +45,24 @@ class VimeoSuite(BaseSuite):
 
     """
     video_regex = r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)'
-    feed_regex = r'https?://([^/]+\.)?vimeo.com/'
+    feed_regex = (r'http://(?:www\.)?vimeo\.com/'
+                  r'(?:(?P<collection>channel|group)s/)?'
+                  r'(?P<name>\w+)'
+                  r'(?:/(?P<type>videos|likes))?')
     _tag_re = re.compile(r'>([\w ]+)</a>')
 
-    api_fields = set(['link', 'title', 'description', 'tags', 'publish_date', 'thumbnail_url', 'user', 'user_url', 'flash_enclosure_url', 'embed_code'])
+    api_fields = set(['link', 'title', 'description', 'tags',
+                      'publish_datetime', 'thumbnail_url', 'user', 'user_url',
+                      'flash_enclosure_url', 'embed_code'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def _embed_code_from_id(self, video_id):
-        return """<iframe src="http://player.vimeo.com/video/%s" \
+        return u"""<iframe src="http://player.vimeo.com/video/%s" \
 width="320" height="240" frameborder="0" webkitAllowFullScreen \
 allowFullScreen></iframe>""" % video_id
 
     def _flash_enclosure_url_from_id(self, video_id):
-        return 'http://vimeo.com/moogaloop.swf?clip_id=%s' % video_id
+        return u'http://vimeo.com/moogaloop.swf?clip_id=%s' % video_id
 
     def get_api_url(self, video):
         video_id = self.video_regex.match(video.url).group('video_id')
@@ -64,38 +70,67 @@ allowFullScreen></iframe>""" % video_id
 
     def parse_api_response(self, response_text):
         parsed = json.loads(response_text)[0]
-        video_id = parsed['id']
+        return self._data_from_api_video(parsed)
+
+    def _data_from_api_video(self, video):
+        """
+        Takes a video dictionary from a vimeo API response and returns a
+        dictionary mapping field names to values.
+
+        """
+        video_id = video['id']
         data = {
-            'title': parsed['title'],
-            'link': parsed['url'],
-            'description': parsed['description'],
-            'thumbnail_url': parsed['thumbnail_medium'],
-            'user': parsed['user_name'],
-            'user_url': parsed['user_url'],
-            'publish_date': datetime.strptime(parsed['upload_date'],
+            'title': video['title'],
+            'link': video['url'],
+            'description': video['description'],
+            'thumbnail_url': video['thumbnail_medium'],
+            'user': video['user_name'],
+            'user_url': video['user_url'],
+            'publish_datetime': datetime.strptime(video['upload_date'],
                                              '%Y-%m-%d %H:%M:%S'),
-            'tags': parsed['tags'].split(', '),
+            'tags': [tag for tag in video['tags'].split(', ') if tag],
             'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
             'embed_code': self._embed_code_from_id(video_id)
         }
         return data
 
+    def get_feed(self, feed_url, fields=None, crawl=False):
+        """
+        Rewrites a feed url into an api request url so that crawl can work, and
+        because more information can be retrieved from the api.
+
+        """
+        groups = self.feed_regex.match(feed_url).groupdict()
+        if groups['collection'] is not None:
+            path = "/".join((groups['collection'], groups['name']))
+        else:
+            path = groups['name']
+        real_url = 'http://vimeo.com/api/v2/%s/%s.json' % (path, groups['type'])
+        return super(VimeoSuite, self).get_feed(real_url, fields, crawl)
+
+    def get_feed_response(self, feed_url):
+        response_text = urllib2.urlopen(feed_url, timeout=5).read()
+        return json.loads(response_text)
+
+    def get_feed_entries(self, feed_response):
+        return feed_response
+
     def parse_feed_entry(self, entry):
-        description = entry['summary']
-        description, tag_str = description.split("<p><strong>Tags:</strong>")
-        tags = [match.group(1) for match in self._tag_re.finditer(tag_str)]
-        data = {
-            'link': entry['link'],
-            'title': entry['title'],
-            'description': description,
-            'publish_datetime': datetime(*entry['updated_parsed'][:6]),
-            'user': entry['author'],
-            'user_url': entry['media_credit']['scheme'],
-            'thumbnail_url': entry['media_thumbnail'][0]['url'],
-            'flash_enclosure_url': entry['media_player']['url'],
-            'tags': tags,
-        }
-        return data
+        return self._data_from_api_video(entry)
+
+    def get_next_feed_page_url(self, last_url, feed_response):
+        # TODO: Vimeo only lets the first 3 pages of 20 results each be fetched
+        # with the simple API. If an api key and secret are passed in, this
+        # should use the advanced API instead. (Also, it should be possible to
+        # pass those in.
+        parsed = urlparse.urlparse(last_url)
+        params = urlparse.parse_qs(parsed.query)
+        try:
+            page = int(params.get('page', ['1'])[0])
+        except ValueError:
+            page = 1
+        params['page'] = unicode(page + 1)
+        return "%s?%s" % (''.join(parsed[:4]), urllib.urlencode(params, True))
 
     def get_search_url(self, search_string, order_by=None, extra_params=None,
                        **kwargs):

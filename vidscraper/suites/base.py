@@ -435,12 +435,12 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def get_next_feed_page_url(self, feed_response):
+    def get_next_feed_page_url(self, last_url, feed_response):
         """
-        Based on a ``feed_response``, generates and returns a url for the next
-        page of the feed, or returns ``None`` if that is not possible. By
-        default, simply returns ``None``. Subclasses must override this method
-        to have a meaningful feed crawl.
+        Based on a ``feed_response`` and the ``last_url`` used for this feed,
+        generates and returns a url for the next page of the feed, or returns
+        ``None`` if that is not possible. By default, simply returns ``None``.
+        Subclasses must override this method to have a meaningful feed crawl.
 
         """
         return None
@@ -472,7 +472,7 @@ class BaseSuite(object):
             if not crawl or not entries:
                 next_url = None
             else:
-                next_url = self.get_next_feed_page_url(feed_response)
+                next_url = self.get_next_feed_page_url(next_url, feed_response)
         raise StopIteration
 
     def get_search_url(self, search_string, order_by=None, **kwargs):

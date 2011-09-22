@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+	xmlns:creativeCommons="http://backend.userland.com/creativeCommonsRssModule"
+	xmlns:media="http://search.yahoo.com/mrss/"
+	xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+	xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+	xmlns:blip="http://blip.tv/dtd/blip/1.0"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+    xmlns:amp="http://www.adobe.com/amp/1.0"
+	xmlns:dcterms="http://purl.org/dc/terms"
+	xmlns:gm="http://www.google.com/schemas/gm/1.1"
+	xmlns:mediaad="http://blip.tv/dtd/mediaad/1.0"
+>
+<channel>
+<title>DjangoCon</title>
+<link></link>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<description>Recent Posts - blip.tv - blip.tv</description>
+
+
+<itunes:block>no</itunes:block>
+
+<language>en</language>
+<generator>http://blip.tv</generator>
+<lastBuildDate>Fri, 17 Sep 2010 22:31:14 +0000</lastBuildDate>
+<pubDate>Fri, 17 Sep 2010 22:31:14 +0000</pubDate>
+
+
+
+<item>
+  <guid isPermaLink="false">66A6F7E4-F888-11DE-B230-6815ED752C46</guid>
+  <link>http://blip.tv/file/3041279</link>
+  <title>Scaling Django Web Applications</title>
+  <blip:user>robertlofthouse</blip:user>
+  <blip:userid>423301</blip:userid>
+  <blip:safeusername>djangocon</blip:safeusername>
+  <blip:showpath>djangocon</blip:showpath>
+  <blip:show>DjangoCon</blip:show>
+  <blip:showpage>http://djangocon.blip.tv/</blip:showpage>
+  <blip:picture>http://blip.tv/skin/blipnew/placeholder_user.gif</blip:picture>
+  <blip:posts_id>3060922</blip:posts_id>
+  <blip:item_id>3041279</blip:item_id>
+  <blip:item_type>file</blip:item_type>
+  <blip:contentRating>TV-UN</blip:contentRating>
+  <blip:rating>0.0</blip:rating>
+  <blip:datestamp>2010-01-03T16:52:38Z</blip:datestamp>
+  <blip:language>English</blip:language>
+  <blip:adChannel>Tech</blip:adChannel>
+  <blip:recommendations>0</blip:recommendations>
+  <blip:recommendable>0</blip:recommendable>
+  <blip:core>0</blip:core>
+  <blip:channel_name>Tech and Gadgets</blip:channel_name>
+  <blip:adminRating>2</blip:adminRating>
+  <blip:runtime>2873</blip:runtime>
+  <blip:embedLookup>AYG66h4C</blip:embedLookup>
+  <blip:embedUrl type="application/x-shockwave-flash">http://blip.tv/play/AYG66h4C</blip:embedUrl>
+  <wfw:commentRss>http://blip.tv/comments/?attached_to=post3060922&amp;skin=rss</wfw:commentRss>
+  <blip:thumbnail_src>Robertlofthouse-ScalingDjangoWebApplications755.png</blip:thumbnail_src>
+  <blip:puredescription><![CDATA[]]></blip:puredescription>
+  <blip:smallThumbnail>http://a.images.blip.tv/Robertlofthouse-ScalingDjangoWebApplications755-582.jpg</blip:smallThumbnail>
+  <blip:license>Creative Commons Attribution-NonCommercial-ShareAlike 3.0</blip:license>
+  <description><![CDATA[
+
+<embed src="http://blip.tv/play/AYG66h4C" type="application/x-shockwave-flash" width="480" height="350" wmode="transparent" allowscriptaccess="always" allowfullscreen="true" ></embed>
+<br />
+
+
+
+]]></description>
+  <comments>http://blip.tv/file/3041279</comments>
+  <category>Default Category</category>
+  <category>python</category>
+  <category>django</category>
+  <category>djangocon</category>
+  <pubDate>Sun, 03 Jan 2010 16:52:38 +0000</pubDate>
+  <enclosure length="372471928" type="video/flv" url="http://blip.tv/file/get/Robertlofthouse-ScalingDjangoWebApplications964.flv"/>
+  <itunes:keywords>python, django, djangocon</itunes:keywords>
+  <itunes:image>http://a.images.blip.tv/Robertlofthouse-ScalingDjangoWebApplications755.png</itunes:image>
+  <media:keywords>python, django, djangocon</media:keywords>
+  <media:group>
+    <media:content blip:acodec="mp3" blip:role="Source" blip:vcodec="ffflv" expression="full" fileSize="372471928" height="480" isDefault="true" type="video/x-flv" url="http://blip.tv/file/get/Robertlofthouse-ScalingDjangoWebApplications964.flv" width="720"></media:content>
+    <media:content blip:acodec="ffvorbis" blip:role="Master" blip:vcodec="theora" expression="full" fileSize="243520642" height="480" isDefault="false" type="video/ogg" url="http://blip.tv/file/get/Robertlofthouse-ScalingDjangoWebApplications681.ogv" width="720"></media:content>
+  </media:group>
+  <media:player url="http://blip.tv/file/3041279"><![CDATA[<embed src="http://blip.tv/play/AYG66h4C" type="application/x-shockwave-flash" width="480" height="350" wmode="transparent" allowscriptaccess="always" allowfullscreen="true" ></embed>]]></media:player>
+  <media:title>Scaling Django Web Applications</media:title>
+  <media:thumbnail url="http://a.images.blip.tv/Robertlofthouse-ScalingDjangoWebApplications755.png"/>
+  <creativeCommons:license>http://creativecommons.org/licenses/by-nc-sa/3.0/</creativeCommons:license>
+</item>
+
+
+
+
+<item>
+  <guid isPermaLink="false">4809E60A-C2AB-11DF-BBAC-A6337D0214E0</guid>
+  <link>http://blip.tv/file/4135225</link>
+  <title>Scaling the World's Largest Django Application</title>
+  <blip:user>robertlofthouse</blip:user>
+  <blip:userid>423301</blip:userid>
+  <blip:safeusername>djangocon</blip:safeusername>
+  <blip:showpath>djangocon</blip:showpath>
+  <blip:show>DjangoCon</blip:show>
+  <blip:showpage>http://djangocon.blip.tv/</blip:showpage>
+  <blip:picture>http://blip.tv/skin/blipnew/placeholder_user.gif</blip:picture>
+  <blip:posts_id>4154053</blip:posts_id>
+  <blip:item_id>4135225</blip:item_id>
+  <blip:item_type>file</blip:item_type>
+  <blip:contentRating>TV-UN</blip:contentRating>
+  <blip:rating>0.0</blip:rating>
+  <blip:datestamp>2010-09-17T22:31:14Z</blip:datestamp>
+  <blip:language>English</blip:language>
+  <blip:adChannel>Tech</blip:adChannel>
+  <blip:recommendations>0</blip:recommendations>
+  <blip:recommendable>0</blip:recommendable>
+  <blip:core>0</blip:core>
+  <blip:channel_name>Tech and Gadgets</blip:channel_name>
+  <blip:adminRating>2</blip:adminRating>
+  <blip:runtime>2657</blip:runtime>
+  <blip:embedLookup>AYH9xikC</blip:embedLookup>
+  <blip:embedUrl type="application/x-shockwave-flash">http://blip.tv/play/AYH9xikC</blip:embedUrl>
+  <wfw:commentRss>http://blip.tv/comments/?attached_to=post4154053&amp;skin=rss</wfw:commentRss>
+  <blip:thumbnail_src>Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png</blip:thumbnail_src>
+  <blip:puredescription><![CDATA[Disqus, one of the largest Django applications in the world, will explain how they deal with scaling complexities in a small startup.]]></blip:puredescription>
+  <blip:smallThumbnail>http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538-879.jpg</blip:smallThumbnail>
+  <blip:license>Creative Commons Attribution-NonCommercial-ShareAlike 3.0</blip:license>
+  <description><![CDATA[
+
+<embed src="http://blip.tv/play/AYH9xikC" type="application/x-shockwave-flash" width="480" height="390" wmode="transparent" allowscriptaccess="always" allowfullscreen="true" ></embed>
+<br />
+
+Disqus, one of the largest Django applications in the world, will explain how they deal with scaling complexities in a small startup.
+
+]]></description>
+  <comments>http://blip.tv/file/4135225</comments>
+  <category>Technology</category>
+  <category>shmpe</category>
+  <category>djangocon</category>
+  <category>2010</category>
+  <pubDate>Fri, 17 Sep 2010 22:31:14 +0000</pubDate>
+  <enclosure length="73533796" type="video/ogg" url="http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv"/>
+  <itunes:keywords>shmpe, djangocon, 2010</itunes:keywords>
+  <itunes:image>http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png</itunes:image>
+  <media:keywords>shmpe, djangocon, 2010</media:keywords>
+  <media:group>
+    <media:content blip:acodec="ffvorbis" blip:role="Source" blip:vcodec="theora" expression="full" fileSize="73533796" height="480" isDefault="true" type="video/ogg" url="http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv" width="640"></media:content>
+    <media:content blip:acodec="ffadcpmswf" blip:role="Web" blip:vcodec="ffflv" expression="full" fileSize="418241604" height="480" isDefault="false" type="video/x-flv" url="http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication883.flv" width="640"></media:content>
+  </media:group>
+  <media:player url="http://blip.tv/file/4135225"><![CDATA[<embed src="http://blip.tv/play/AYH9xikC" type="application/x-shockwave-flash" width="480" height="390" wmode="transparent" allowscriptaccess="always" allowfullscreen="true" ></embed>]]></media:player>
+  <media:title>Scaling the World's Largest Django Application</media:title>
+  <media:thumbnail url="http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png"/>
+  <creativeCommons:license>http://creativecommons.org/licenses/by-nc-sa/3.0/</creativeCommons:license>
+</item>
+
+
+
+
+
+
+</channel>
+</rss>

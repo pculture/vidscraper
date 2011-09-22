@@ -28,6 +28,7 @@ import re
 import os
 import unittest
 import urllib
+import urlparse
 
 import feedparser
 
@@ -171,3 +172,21 @@ class YouTubeSearchTestCase(YouTubeTestCase):
         for key in expected_data:
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
+
+    def test_next_search_page_url(self):
+        response = {
+            'opensearch_startindex': '1',
+            'opensearch_itemsperpage': '50',
+            'opensearch_totalresults': '10',
+        }
+        new_url = self.suite.get_next_search_page_url("caramell dansen",
+                                                      response)
+        self.assertTrue(new_url is None)
+        response['opensearch_totalresults'] = '100'
+        new_url = self.suite.get_next_search_page_url("caramell dansen",
+                                                      response)
+        self.assertFalse(new_url is None)
+        parsed = urlparse.urlparse(new_url)
+        params = urlparse.parse_qs(parsed.query)
+        self.assertEqual(params['start_index'][0], '51')
+        self.assertEqual(params['max_results'][0], '50')

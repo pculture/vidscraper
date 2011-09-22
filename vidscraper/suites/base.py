@@ -513,12 +513,14 @@ class BaseSuite(object):
         """
         return self.parse_feed_entry(result)
 
-    def get_next_search_page_url(self, search_response):
+    def get_next_search_page_url(self, search_response, search_string,
+                                 order_by=None, **kwargs):
         """
-        Based on a ``search_response``, generates and returns a url for the next
-        page of the search, or returns ``None`` if that is not possible. By
-        default, simply returns ``None``. Subclasses must override this method
-        to have a meaningful feed crawl.
+        Based on the ``search_response`` and the other :meth:`.get_search_url`
+        arguments, generates and returns a url for the next page of the search,
+        or returns ``None`` if that is not possible. By default, simply returns
+        ``None``. Subclasses must override this method to have a meaningful
+        search crawl.
 
         """
         return None
@@ -564,5 +566,6 @@ class BaseSuite(object):
             if not crawl or not results:
                 search_url = None
             else:
-                search_url = self.get_next_search_page_url(search_response, **kwargs)
+                search_url = self.get_next_search_page_url(search_response,
+                                            search_string, order_by, **kwargs)
         raise StopIteration

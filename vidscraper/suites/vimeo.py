@@ -26,6 +26,7 @@
 from datetime import datetime
 import re
 import urllib
+import urlparse
 
 try:
     import oauth2
@@ -96,7 +97,8 @@ allowFullScreen></iframe>""" % video_id
         }
         return data
 
-    def get_search_url(self, search_string, order_by=None, **kwargs):
+    def get_search_url(self, search_string, order_by=None, extra_params=None,
+                       **kwargs):
         api_key = kwargs.get('vimeo_api_key')
         if api_key is None:
             raise NotImplementedError("API Key is missing.")
@@ -112,7 +114,21 @@ allowFullScreen></iframe>""" % video_id
             params['sort'] = 'relevant'
         elif order_by == 'latest':
             params['sort'] = 'newest'
+        if extra_params is not None:
+            params.update(extra_params)
         return "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
+
+    def get_next_search_page_url(self, search_response, search_string,
+                                 order_by=None, **kwargs):
+        print search_response
+        total = int(search_response['total'])
+        page = int(search_response['page'])
+        per_page = int(search_response['per_page'])
+        if page * per_page > total:
+            return None
+        extra_params = {'page': page + 1}
+        return self.get_search_url(search_string, order_by,
+                                   extra_params=extra_params, **kwargs)
 
     def get_search_response(self, search_url, **kwargs):
         if oauth2 is None:

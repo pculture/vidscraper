@@ -26,6 +26,7 @@
 
 import datetime
 import urllib
+import urlparse
 
 import feedparser
 
@@ -73,14 +74,34 @@ class YouTubeSuite(BaseSuite):
         parsed = feedparser.parse(response_text)
         return self.parse_feed_entry(parsed.entries[0])
 
-    def get_search_url(self, search_string, order_by=None, **kwargs):
+    def get_search_url(self, search_string, order_by=None, extra_params=None,
+                       **kwargs):
         params = {
             'vq': search_string,
         }
+        if extra_params is not None:
+            params.update(extra_params)
         if order_by == 'relevant':
             params['orderby'] = 'relevance'
         elif order_by == 'latest':
             params['orderby'] = 'published'
         return 'http://gdata.youtube.com/feeds/api/videos?%s' % (
                                     urllib.urlencode(params))
+
+    def get_next_search_page_url(self, search_string, search_response,
+                                 order_by=None, **kwargs):
+        start_index = search_response.get('opensearch_startindex', None)
+        per_page = search_response.get('opensearch_itemsperpage', None)
+        total_results = search_response.get('opensearch_totalresults', None)
+        if start_index is None or per_page is None or total_results is None:
+            return None
+        new_start = int(start_index) + int(per_page)
+        if new_start > int(total_results):
+            return None
+        extra_params = {
+            'start_index': new_start,
+            'max_results': per_page
+        }
+        return self.get_search_url(search_string, order_by,
+                                   extra_params=extra_params, **kwargs)
 registry.register(YouTubeSuite)

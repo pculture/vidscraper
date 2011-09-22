@@ -26,6 +26,7 @@
 import datetime
 import os
 import unittest
+import urlparse
 
 import feedparser
 
@@ -190,3 +191,17 @@ allowFullScreen></iframe>"""
         for key in expected_data:
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
+
+    def test_next_page_url(self):
+        kwargs = {'vimeo_api_key': 'BLANK'}
+        response = {'total': '10', 'page': '1', 'per_page': '50'}
+        new_url = self.suite.get_next_search_page_url(response, "blink",
+                                                      **kwargs)
+        self.assertTrue(new_url is None)
+        response['total'] = '100'
+        new_url = self.suite.get_next_search_page_url(response, "blink",
+                                                      **kwargs)
+        self.assertFalse(new_url is None)
+        parsed = urlparse.urlparse(new_url)
+        params = urlparse.parse_qs(parsed.query)
+        self.assertEqual(int(params['page'][0]), 2)

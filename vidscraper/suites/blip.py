@@ -72,6 +72,17 @@ class BlipSuite(BaseSuite):
         }
         return data
 
+    def get_next_feed_page_url(self, last_url, feed_response):
+        parsed = urlparse.urlparse(last_url)
+        params = urlparse.parse_qs(parsed.query)
+        try:
+            page = int(params.get('page', ['0'])[0])
+        except ValueError:
+            page = 0
+        params['page'] = unicode(page + 1)
+        return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None)),
+                          urllib.urlencode(params, True))
+
     def get_api_url(self, video):
         parsed_url = urlparse.urlparse(video.url)
         post_id = parsed_url[2].rsplit('-', 1)[1]

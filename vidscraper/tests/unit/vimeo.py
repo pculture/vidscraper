@@ -151,6 +151,14 @@ class VimeoFeedTestCase(VimeoTestCase):
         self.maxDiff = None
         self.assertEqual(data, expected_data)
 
+    def test_next_feed_url(self):
+        this_url = "http://vimeo.com/nothing/here/?page=1"
+        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+        this_url = "http://vimeo.com/nothing/here/"
+        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+
 
 class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):

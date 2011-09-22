@@ -163,6 +163,14 @@ class BlipFeedTestCase(BlipTestCase):
         for video in videos:
             self.assertTrue(isinstance(video, ScrapedVideo))
 
+    def test_next_feed_page_url(self):
+        base_url = 'http://blip.tv/nothing/here/?page=5'
+        new_url = self.suite.get_next_feed_page_url(base_url, None)
+        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=6')
+        base_url = 'http://blip.tv/nothing/here/'
+        new_url = self.suite.get_next_feed_page_url(base_url, None)
+        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=1')
+
 
 class BlipSearchTestCase(BlipTestCase):
     def setUp(self):

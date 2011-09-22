@@ -130,7 +130,8 @@ allowFullScreen></iframe>""" % video_id
         except ValueError:
             page = 1
         params['page'] = unicode(page + 1)
-        return "%s?%s" % (''.join(parsed[:4]), urllib.urlencode(params, True))
+        return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None,)),
+                          urllib.urlencode(params, True))
 
     def get_search_url(self, search_string, order_by=None, extra_params=None,
                        **kwargs):

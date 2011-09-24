@@ -28,6 +28,9 @@ from vidscraper import errors
 from vidscraper.suites import ScrapedVideo, registry
 
 
+VERSION = '0.5.0a'
+
+
 def handles_video_url(url):
     """
     Returns True if vidscraper can scrape this url, and False if

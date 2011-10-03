@@ -29,3 +29,22 @@ def search_string_from_terms(include_terms, exclude_terms=None):
     search_term_list = list(include_terms) + marked_exclude_terms
     search_terms = ' '.join(search_term_list)
     return search_terms
+
+
+def intersperse_results(suite_dict, max_results):
+    """
+    Given a dictionary of suite results, returns an iterator which cycles
+    through the suites, yielding one result per suite until either all suite
+    results are exhausted or ``max_results`` results have been returned.
+
+    """
+    iterators = suite_dict.values()
+    num_results = 0
+    while len(iterators) > 0 and num_results < max_results:
+        for iterator in iterators[:]:
+            try:
+                yield iterator.next()
+            except StopIteration:
+                iterators.remove(iterator)
+            else:
+                num_results += 1

@@ -24,7 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from vidscraper.suites.base import registry, ScrapedVideo, BaseSuite
+from vidscraper.suites.base import registry, ScrapedVideo, ScrapedFeed, BaseSuite
 
 # Force loading of these files so that the default suites get registered.
 from vidscraper.suites import blip, fora, google, ustream, vimeo, youtube

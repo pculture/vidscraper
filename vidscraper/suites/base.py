@@ -31,7 +31,8 @@ import feedparser
 
 from vidscraper.compat import json
 from vidscraper.errors import CantIdentifyUrl
-from vidscraper.utils.search import search_string_from_terms
+from vidscraper.utils.search import (intersperse_results,
+                search_string_from_terms, terms_from_search_string)
 
 
 class SuiteRegistry(object):
@@ -196,6 +197,95 @@ class ScrapedVideo(object):
 
     def is_loaded(self):
         return self._loaded
+
+
+class ScrapedFeed(object):
+    """
+    Represents a feed that has been scraped from a website. Note that the term
+    "feed" in this context simply means a list of videos which can be found at a
+    certain url. The source could as easily be an API, a search result rss feed,
+    or a video list page which is literally scraped.
+
+    """
+    #: The url used to initialize the feed.
+    url = None
+
+    def __init__(self, url, suite=None, fields):
+        """
+        
+        """
+
+api_keys = {
+    'vimeo_secret': xxx,
+    'vimeo_key': yyy,
+}
+class ScrapedSearch(object):
+    """
+    Represents a search against a suite. Can be iterated over to return
+    ScrapedVideo instances for the results of the search.
+
+    :param query: The raw string for the search.
+    :param suite: Suite to use for this search.
+    :param fields: Passed on to the :class:`ScrapedVideo` instances which are
+                   created by this feed.
+    :param order_by: The ordering to apply to the search results. If a suite
+                     does not support the given ordering, it will return an
+                     empty list. Possible values: ``relevant``, ``latest``,
+                     ``popular``. Values may be prefixed with a "-" to indicate
+                     descending ordering. Default: ``-relevant``.
+    :param crawl: If ``True``, then the search will continue on to subsequent
+                  pages if the suite supports it. Default: ``False``.
+    :param max_results: The maximum number of results to return from iteration.
+                        Default: ``None`` (as many as possible).
+    :param api_keys: A dictionary of any API keys which may be required for any
+                     of the suites used by this search.
+
+    """
+    total_results = None
+
+    @property
+    def max_results(self):
+        return self._max_results
+
+    def __init__(self, query, suite, fields=None, order_by='-relevant',
+                 crawl=False, max_results=None, api_keys=None):
+        self.include_terms, self.exclude_terms = terms_from_search_string(query)
+        self.query = search_string_from_terms(self.include_terms,
+                                              self.exclude_terms)
+        self.raw_query = query
+        self.suite = suite
+        self.fields = fields
+        self.order_by = order_by
+        self.crawl = crawl
+        self._max_results = max_results
+        self.api_keys = api_keys if api_keys is not None else {}
+
+    def __iter__(self):
+        # NOTE: This should perhaps save the results to a _result_cache?
+        search_url = self.suite.get_search_url(self)
+
+        result_count = 0
+        while result_count < self.max_results:
+            search_response = self.suite.get_search_response(self, search_url)
+            results = self.suite.get_search_results(self, search_response)
+            for result in results:
+                data = self.suite.parse_search_result(self, result)
+                video = self.suite.get_video(data['link'], fields)
+                self.suite.apply_video_data(video, data)
+                yield video
+                result_count += 1
+                if result_count >= self.max_results:
+                    break
+            else:
+                # We haven't hit the limit yet. Continue to the next page if
+                # crawl is enabled and the current page was not empty.
+                if crawl and results:
+                    search_url = self.suite.get_next_search_page_url(self,
+                                            search_response, search_string,
+                                            order_by, **kwargs)
+                else:
+                    break
+        raise StopIteration
 
 
 class BaseSuite(object):
@@ -524,14 +614,7 @@ class BaseSuite(object):
     def search(self, include_terms, exclude_terms=None,
                order_by=None, fields=None, crawl=False, **kwargs):
         """
-        Runs a search for the given parameters and returns a generator which
-        yields :class:`.ScrapedVideo` instances that have been prepopulated with
-        data from the search. Internally calls :meth:`.get_search_url`,
-        :meth:`.get_search_response`, and :meth:`.get_search_results`, then
-        calls :meth:`.parse_search_result` on each result found. If ``crawl`` is
-        ``True`` (not the default) then subsequent pages of search results will
-        be looked for with :meth:`.get_next_search_page_url`. If any are found,
-        they will also be loaded and parsed.
+        Returns a generator which yields :class:`.ScrapedVideo` instances that have been prepopulated with data from the search. Internally calls :meth:`.get_search_url`, :meth:`.get_search_response`, and :meth:`.get_search_results`, then calls :meth:`.parse_search_result` on each result found. If ``crawl`` is ``True`` (not the default) then subsequent pages of search results will be looked for with :meth:`.get_next_search_page_url`. If any are found, they will also be loaded and parsed.
 
         ``order_by`` may be either "relevant" or "latest". Other values will be
         ignored. If a value is passed in, suites which do not support that value

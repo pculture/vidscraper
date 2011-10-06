@@ -49,7 +49,7 @@ def handles_feed_url(url):
     return any((suite.handles_feed_url(url) for suite in registry.suites))
 
 
-def auto_scrape(url, fields=None):
+def auto_scrape(url, fields=None, api_keys=None):
     """
     Automatically determines which suite to use and scrapes ``url`` with that
     suite.
@@ -60,33 +60,35 @@ def auto_scrape(url, fields=None):
         scraped.
 
     """
-    video = ScrapedVideo(url, fields=fields)
+    video = ScrapedVideo(url, fields=fields, api_keys=api_keys)
     video.load()
     return video
 
 
-def auto_feed(feed_url, fields=None, crawl=False):
+def auto_feed(url, fields=None, crawl=False, max_results=None, api_keys=None,
+              last_modified=None, etag=None):
     """
     Automatically determines which suite to use and scrapes ``feed_url`` with
-    that suite. This will return a generator of :class:`.ScrapedVideo` instances
-    which have been initialized with the given ``fields``. If ``crawl`` is
-    ``True`` (not the default) then :mod:`vidscraper` will return results from
-    multiple pages of the feed, if the suite supports it.
+    that suite. This will return a :class:`ScrapedFeed` instance instantiated
+    using the determined suite. When iterated over, the :class:`ScrapedFeed`
+    will yield :class:`.ScrapedVideo` instances which have been initialized with
+    the given ``fields`` and ``api_keys``. If ``crawl`` is ``True`` (not the
+    default) then :mod:`vidscraper` will return results from multiple pages of
+    the feed, if the suite supports it.
 
     .. note:: Crawling will only initiate a new HTTP request after it has
               exhausted the results on the current page.
 
-    :returns: A generator which yields :class:`.ScrapedVideo` instances for the
-              items in the feed.
+    :returns: A :class:`ScrapedFeed` instance which yields
+              :class:`.ScrapedVideo` instances for the items in the feed.
 
     :raises errors.CantIdentifyUrl: if this is a url which none of the suites
                                     know how to handle.
 
     """
-    for suite in registry.suites:
-        if suite.handles_feed_url(feed_url):
-            return suite.get_feed(feed_url, fields, crawl)
-    raise errors.CantIdentifyUrl
+    return ScrapedFeed(url, fields=fields, crawl=crawl, max_results=max_results,
+                       api_keys=api_keys, last_modified=last_modified,
+                       etag=etag)
 
 
 def auto_search(query, fields=None, order_by=None, crawl=False,
@@ -99,6 +101,6 @@ def auto_search(query, fields=None, order_by=None, crawl=False,
     """
     suites = {}
     for suite in registry.suites:
-        suites[suite] = ScrapedSearch(suite, query, fields, order_by, crawl,
+        suites[suite] = ScrapedSearch(query, suite, fields, order_by, crawl,
                                       max_results, api_keys)
     return suites

@@ -215,14 +215,12 @@ class ScrapedFeed(object):
         
         """
 
-api_keys = {
-    'vimeo_secret': xxx,
-    'vimeo_key': yyy,
-}
+
 class ScrapedSearch(object):
     """
-    Represents a search against a suite. Can be iterated over to return
-    ScrapedVideo instances for the results of the search.
+    Represents a search against a suite. Iterating over a :class:`ScrapedSearch`
+    instance will execute the search and yield :class:`ScrapedVideo` instances
+    for the results of the search.
 
     :param query: The raw string for the search.
     :param suite: Suite to use for this search.
@@ -231,8 +229,9 @@ class ScrapedSearch(object):
     :param order_by: The ordering to apply to the search results. If a suite
                      does not support the given ordering, it will return an
                      empty list. Possible values: ``relevant``, ``latest``,
-                     ``popular``. Values may be prefixed with a "-" to indicate
-                     descending ordering. Default: ``-relevant``.
+                     ``popular``, ``None`` (use the default ordering of the
+                     suite's service provider. Values may be prefixed with a "-"
+                     to indicate descending ordering. Default: ``None``.
     :param crawl: If ``True``, then the search will continue on to subsequent
                   pages if the suite supports it. Default: ``False``.
     :param max_results: The maximum number of results to return from iteration.
@@ -240,14 +239,23 @@ class ScrapedSearch(object):
     :param api_keys: A dictionary of any API keys which may be required for any
                      of the suites used by this search.
 
+    Additionally, ScrapedSearch supports the following attributes:
+
+    .. attr:: total_results
+        The estimated number of total results for this search, if supported by
+        the suite. Otherwise, ``None``.
+
+    .. attr:: time
+        The amount of time required by the remote service to execute the query,
+        if supported by the suite. Otherwise, ``None``.
+
     """
-    total_results = None
 
     @property
     def max_results(self):
         return self._max_results
 
-    def __init__(self, query, suite, fields=None, order_by='-relevant',
+    def __init__(self, suite, query, fields=None, order_by=None,
                  crawl=False, max_results=None, api_keys=None):
         self.include_terms, self.exclude_terms = terms_from_search_string(query)
         self.query = search_string_from_terms(self.include_terms,
@@ -260,31 +268,42 @@ class ScrapedSearch(object):
         self._max_results = max_results
         self.api_keys = api_keys if api_keys is not None else {}
 
-    def __iter__(self):
-        # NOTE: This should perhaps save the results to a _result_cache?
-        search_url = self.suite.get_search_url(self)
+        self._first_response_fetched = False
+        self.total_results = None
+        self.time = None
 
-        result_count = 0
-        while result_count < self.max_results:
-            search_response = self.suite.get_search_response(self, search_url)
-            results = self.suite.get_search_results(self, search_response)
-            for result in results:
-                data = self.suite.parse_search_result(self, result)
-                video = self.suite.get_video(data['link'], fields)
-                self.suite.apply_video_data(video, data)
-                yield video
-                result_count += 1
-                if result_count >= self.max_results:
-                    break
-            else:
-                # We haven't hit the limit yet. Continue to the next page if
-                # crawl is enabled and the current page was not empty.
-                if crawl and results:
-                    search_url = self.suite.get_next_search_page_url(self,
-                                            search_response, search_string,
-                                            order_by, **kwargs)
+    def __iter__(self):
+        try:
+            search_url = self.suite.get_search_url(self)
+            result_count = 0
+            while result_count < self.max_results:
+                search_response = self.suite.get_search_response(self,
+                                                                 search_url)
+                if not self._first_response_fetched:
+                    self._first_response_fetched = True
+                    self.total_results = self.suite.get_search_total_results(
+                                                        self, search_response)
+                    self.time = self.suite.get_search_time(self,
+                                                           search_response)
+                results = self.suite.get_search_results(self, search_response)
+                for result in results:
+                    data = self.suite.parse_search_result(self, result)
+                    video = self.suite.get_video(data['link'], fields)
+                    self.suite.apply_video_data(video, data)
+                    yield video
+                    result_count += 1
+                    if result_count >= self.max_results:
+                        break
                 else:
-                    break
+                    # We haven't hit the limit yet. Continue to the next page if
+                    # crawl is enabled and the current page was not empty.
+                    if crawl and results:
+                        search_url = self.suite.get_next_search_page_url(self,
+                                                search_response)
+                    else:
+                        break
+        except NotImplementedError:
+            pass
         raise StopIteration
 
 
@@ -561,7 +580,7 @@ class BaseSuite(object):
                 next_url = self.get_next_feed_page_url(next_url, feed_response)
         raise StopIteration
 
-    def get_search_url(self, search_string, order_by=None, **kwargs):
+    def get_search_url(self, search):
         """
         Returns a url which this suite can use to fetch search results for the
         given string. Must be implemented by subclasses.
@@ -569,7 +588,7 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
-    def get_search_response(self, search_url, **kwargs):
+    def get_search_response(self, search, search_url):
         """
         Returns a parsed response for the given ``search_url``. By default,
         assumes that the url references a feed and passes the work off to
@@ -578,7 +597,24 @@ class BaseSuite(object):
         """
         return self.get_feed_response(search_url)
 
-    def get_search_results(self, search_response):
+    def get_search_total_results(self, search, search_response):
+        """
+        Returns an estimate for the total number of search results based on the
+        first response returned by :meth:`get_search_response` for the
+        :class:`ScrapedSearch`. By default, simply returns ``None``.
+
+        """
+        return None
+
+    def get_search_time(self, search, search_response):
+        """
+        Returns the amount of time required by the service provider for the
+        suite to execute the search. By default, simply returns ``None``.
+
+        """
+        return None
+
+    def get_search_results(self, search, search_response):
         """
         Returns an iterable of search results for a ``search_response`` as
         returned by :meth:`.get_search_response`. By default, assumes that the
@@ -588,7 +624,7 @@ class BaseSuite(object):
         """
         return self.get_feed_entries(search_response)
 
-    def parse_search_result(self, result):
+    def parse_search_result(self, search, result):
         """
         Given a search result (as returned by :meth:`.get_search_results`),
         returns a dictionary containing data from the search result, suitable
@@ -599,8 +635,7 @@ class BaseSuite(object):
         """
         return self.parse_feed_entry(result)
 
-    def get_next_search_page_url(self, search_response, search_string,
-                                 order_by=None, **kwargs):
+    def get_next_search_page_url(self, search, search_response):
         """
         Based on the ``search_response`` and the other :meth:`.get_search_url`
         arguments, generates and returns a url for the next page of the search,
@@ -610,41 +645,3 @@ class BaseSuite(object):
 
         """
         return None
-
-    def search(self, include_terms, exclude_terms=None,
-               order_by=None, fields=None, crawl=False, **kwargs):
-        """
-        Returns a generator which yields :class:`.ScrapedVideo` instances that have been prepopulated with data from the search. Internally calls :meth:`.get_search_url`, :meth:`.get_search_response`, and :meth:`.get_search_results`, then calls :meth:`.parse_search_result` on each result found. If ``crawl`` is ``True`` (not the default) then subsequent pages of search results will be looked for with :meth:`.get_next_search_page_url`. If any are found, they will also be loaded and parsed.
-
-        ``order_by`` may be either "relevant" or "latest". Other values will be
-        ignored. If a value is passed in, suites which do not support that value
-        should return an empty result set.
-
-        Any additional ``kwargs`` will be passed into the calls to
-        :meth:`.get_search_url`, :meth:`.get_search_response`, and
-        :meth:`get_next_search_page_url`. This can be used, for example, to
-        provide authentication support for a specific suite without interfering
-        with the operation of other suites.
-
-        .. warning:: Crawl will continue until it has loaded all pages or until
-                     a page comes back empty. This can take a significant amount
-                     of time.
-
-        """
-        search_string = search_string_from_terms(include_terms, exclude_terms)
-        search_url = self.get_search_url(search_string, order_by, **kwargs)
-
-        while search_url:
-            search_response = self.get_search_response(search_url, **kwargs)
-            results = self.get_search_results(search_response)
-            for result in results:
-                data = self.parse_search_result(result)
-                video = self.get_video(data['link'], fields)
-                self.apply_video_data(video, data)
-                yield video
-            if not crawl or not results:
-                search_url = None
-            else:
-                search_url = self.get_next_search_page_url(search_response,
-                                            search_string, order_by, **kwargs)
-        raise StopIteration

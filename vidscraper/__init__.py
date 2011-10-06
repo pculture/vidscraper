@@ -25,7 +25,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from vidscraper import errors
-from vidscraper.suites import ScrapedVideo, registry
+from vidscraper.suites import ScrapedVideo, registry, ScrapedSearch, ScrapedFeed
 
 
 VERSION = '0.5.0a'
@@ -89,17 +89,16 @@ def auto_feed(feed_url, fields=None, crawl=False):
     raise errors.CantIdentifyUrl
 
 
-def auto_search(include_terms, exclude_terms=None, order_by=None, **kwargs):
+def auto_search(query, fields=None, order_by=None, crawl=False,
+                max_results=None, api_keys=None):
     """
-    Runs the search parameters on each registered suite and returns a dictionary
-    mapping suite instances to a list of search results for that suite.
+    Returns a discionary mapping each registered suite to a
+    :class:`.ScrapedSearch` instance which has been instantiated for that suite
+    and the given arguments.
 
     """
     suites = {}
     for suite in registry.suites:
-        try:
-            suites[suite] = list(suite.search(include_terms, exclude_terms,
-                                              order_by, **kwargs))
-        except NotImplementedError:
-            pass
+        suites[suite] = ScrapedSearch(suite, query, fields, order_by, crawl,
+                                      max_results, api_keys)
     return suites

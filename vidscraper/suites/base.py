@@ -207,14 +207,14 @@ class BaseScrapedVideoIterator(object):
     :class:`ScrapedVideo` instances. :class:`ScrapedFeed` and
     :class:`ScrapedSearch` both subclass :class:`BaseScrapedVideoIterator`.
     """
-    _first_response_fetched = False
+    _first_response = None
     _max_results = None
 
     @property
     def max_results(self):
         """
-        The maximum number of results for this iterator, or ``None`` if there is
-        no maximum.
+        The maximum number of results for this iterator, or ``None`` if there
+        is no maximum.
 
         """
         return self._max_results
@@ -229,7 +229,7 @@ class BaseScrapedVideoIterator(object):
         raise NotImplementedError
 
     def handle_first_response(self, response):
-        self._first_response_fetched = True
+        self._first_response = response 
 
     def get_response_items(self, response):
         raise NotImplementedError
@@ -240,14 +240,20 @@ class BaseScrapedVideoIterator(object):
     def get_next_url(self, response):
         raise NotImplementedError
 
+    def load(self):
+        if self._first_response:
+            return self._first_response
+        url = self.get_first_url()
+        response = self.get_url_response(url)
+        self.handle_first_response(response)
+        return response
+
     def __iter__(self):
         try:
             url = self.get_first_url()
+            response = self.load()
             item_count = 0
-            while self._max_results is None or result_count < self._max_results:
-                response = self.get_url_response(url)
-                if not self._first_response_fetched:
-                    self.handle_first_response(response)
+            while self._max_results is None or item_count < self._max_results:
                 items = self.get_response_items(response)
                 for item in items:
                     data = self.get_item_data(item)
@@ -270,6 +276,7 @@ class BaseScrapedVideoIterator(object):
                         url = self.get_next_url(response)
                     if url is None:
                         break
+                    response = self.get_url_response(url)
         except NotImplementedError:
             pass
         raise StopIteration
@@ -336,25 +343,31 @@ class ScrapedFeed(BaseScrapedVideoIterator):
     def __init__(self, url, suite=None, fields=None, crawl=False,
                  max_results=None, api_keys=None, last_modified=None,
                  etag=None):
-        self.url = url
+        self.original_url = url
         if suite is None:
             suite = registry.suite_for_feed_url(url)
         elif not suite.handles_feed_url(url):
             raise CantIdentifyUrl
+        self.url = suite.get_feed_url(url)
         self.suite = suite
         self.fields = fields
         self.crawl = crawl
-        self.max_results = max_results
+        self._max_results = max_results
         self.api_keys = api_keys if api_keys is not None else {}
         self.last_modified = last_modified
         self.etag = etag
 
-        self._first_response_fetched = False
         self.entry_count = None
         self.description = None
         self.webpage = None
         self.title = None
         self.guid = None
+
+    @property
+    def parsed_feed(self):
+        if not self._first_response:
+            self.load()
+        return self._first_response
 
     def get_first_url(self):
         return self.url

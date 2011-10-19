@@ -33,6 +33,7 @@ import urlparse
 import feedparser
 
 from vidscraper.errors import CantIdentifyUrl
+from vidscraper.suites.base import ScrapedFeed
 from vidscraper.suites.youtube import YouTubeSuite
 
 
@@ -150,8 +151,46 @@ class YouTubeApiTestCase(YouTubeTestCase):
         self.maxDiff = None
         self.assertEqual(data, expected_data)
 
+class YouTubeFeedTestCase(YouTubeTestCase):
+    def setUp(self):
+        YouTubeTestCase.setUp(self)
+        self.feed_url = ('http://gdata.youtube.com/feeds/base/users/'
+                         'AssociatedPress/uploads?alt=rss&v=2')
+        self.feed = ScrapedFeed(self.feed_url, self.suite)
+        self.feed_data = open(
+            os.path.join(self.data_file_dir, 'feed.atom')).read()
 
-class YouTubeSearchTestCase(YouTubeTestCase):
+    def test_get_feed_url(self):
+        self.assertEqual(self.suite.get_feed_url(self.feed_url), self.feed_url)
+        self.assertEqual(self.suite.get_feed_url(
+                'http://www.youtube.com/user/AssociatedPress'),
+                         self.feed_url)
+        self.assertEqual(self.suite.get_feed_url(
+                'http://www.youtube.com/profile?user=AssociatedPress'),
+                         self.feed_url)
+
+    def test_get_feed_entry_count(self):
+        response = self.suite.get_feed_response(self.feed, self.feed_data)
+        self.assertEqual(self.suite.get_feed_entry_count(self.feed,
+                                                         response),
+                         50943)
+
+    def test_next_feed_page_url(self):
+        response = self.suite.get_feed_response(self.feed, self.feed_data)
+        new_url = self.suite.get_next_feed_page_url(self.feed, response)
+        self.assertEqual(new_url,
+                         self.feed_url + '&max_results=25&start_index=26')
+        response = {'feed': {}}
+        new_url = self.suite.get_next_feed_page_url(self.feed, response)
+        self.assertEqual(new_url, None)
+        response = {'feed': {
+                'opensearch_startindex': '1',
+                'opensearch_totalresults': '5',
+                'opensearch_itemsperpage': '25'}}
+        new_url = self.suite.get_next_feed_page_url(self.feed, response)
+        self.assertEqual(new_url, None)
+
+class YouTubeSearchTestCase(object):#YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.atom'))

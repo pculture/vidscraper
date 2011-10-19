@@ -250,7 +250,6 @@ class BaseScrapedVideoIterator(object):
 
     def __iter__(self):
         try:
-            url = self.get_first_url()
             response = self.load()
             item_count = 0
             while self._max_results is None or item_count < self._max_results:

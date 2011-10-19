@@ -148,15 +148,15 @@ class ScrapedVideo(object):
     # These were pretty suite-specific and should perhaps be treated as such?
     #: Whether the video is embeddable? (Youtube)
     is_embeddable = None
-    #: Whether the url can be relied on or is temporary for some reason (such as
-    #: depending on session data). (Vimeo)
+    #: Whether the url can be relied on or is temporary for some reason (such
+    #: as depending on session data). (Vimeo)
     file_url_is_flaky = None
 
     # OTHER ATTRS
     #: The url for this video to scrape based on.
     url = None
-    #: An iterable of fields to be fetched for this video. Other fields will not
-    #: be populated during scraping.
+    #: An iterable of fields to be fetched for this video. Other fields will
+    #: not populated during scraping.
     fields = None
 
     def __init__(self, url, suite=None, fields=None, api_keys=None):
@@ -172,9 +172,9 @@ class ScrapedVideo(object):
         self._suite = suite
         self.api_keys = api_keys if api_keys is not None else {}
 
-        # This private attribute is set to ``True`` when data is loaded into the
-        # video by a scrape suite. It is *not* set when data is pre-loaded from
-        # a feed or a search.
+        # This private attribute is set to ``True`` when data is loaded into
+        # the video by a scrape suite. It is *not* set when data is pre-loaded
+        # from a feed or a search.
         self._loaded = False
 
     @property
@@ -260,7 +260,8 @@ class BaseScrapedVideoIterator(object):
                         if item_count >= self._max_results:
                             break
                 else:
-                    # We haven't hit the limit yet. Continue to the next page if
+                    # We haven't hit the limit yet. Continue to the next page
+                    # if:
                     # - crawl is enabled
                     # - the current page was not empty
                     # - a url can be calculated for the next page.
@@ -277,9 +278,9 @@ class BaseScrapedVideoIterator(object):
 class ScrapedFeed(BaseScrapedVideoIterator):
     """
     Represents a feed that has been scraped from a website. Note that the term
-    "feed" in this context simply means a list of videos which can be found at a
-    certain url. The source could as easily be an API, a search result rss feed,
-    or a video list page which is literally scraped.
+    "feed" in this context simply means a list of videos which can be found at
+    a certain url. The source could as easily be an API, a search result rss
+    feed, or a video list page which is literally scraped.
     
     :param url: The url to be scraped.
     :param suite: The suite to use for the scraping. If none is provided, one
@@ -295,10 +296,11 @@ class ScrapedFeed(BaseScrapedVideoIterator):
     :param api_keys: A dictionary of any API keys which may be required for the
                      suite used by this feed.
     :param last_modified: A last-modified date which may be sent to the service
-                          provider to try to short-circuit fetching a feed whose
-                          contents are already known.
+                          provider to try to short-circuit fetching a feed
+                          whose contents are already known.
     :param etag: An etag which may be sent to the service provider to try to
-                 short-circuit fetching a feed whose contents are already known.
+                 short-circuit fetching a feed whose contents are already
+                 known.
 
     Additionally, :class:`ScrapedFeed` populates the following attributes after
     fetching its first response. Attributes which are not supported by the
@@ -309,12 +311,13 @@ class ScrapedFeed(BaseScrapedVideoIterator):
 
     .. attr:: last_modified
         A python datetime representing when the feed was last changed. Before
-        fetching the first response, this will be equal to the ``last_modified``
-        date the :class:`ScrapedFeed` was instantiated with.
+        fetching the first response, this will be equal to the
+        ``last_modified`` date the :class:`ScrapedFeed` was instantiated with.
 
     .. attr:: etag
         A marker representing a feed's current state. Before fetching the first
-        response, this will be equal to the ``etag`` the :class:`ScrapedFeed` was instantiated with.
+        response, this will be equal to the ``etag`` the :class:`ScrapedFeed`
+        was instantiated with.
 
     .. attr:: description
         A description of the feed.
@@ -373,7 +376,7 @@ class ScrapedFeed(BaseScrapedVideoIterator):
         return self.suite.get_feed_entries(self, response)
 
     def get_item_data(self, item):
-        return self.suite.parse_feed_entry(self, item)
+        return self.suite.parse_feed_entry(item)
 
     def get_next_url(self, response):
         return self.suite.get_next_feed_page_url(self, response)
@@ -381,9 +384,9 @@ class ScrapedFeed(BaseScrapedVideoIterator):
 
 class ScrapedSearch(BaseScrapedVideoIterator):
     """
-    Represents a search against a suite. Iterating over a :class:`ScrapedSearch`
-    instance will execute the search and yield :class:`ScrapedVideo` instances
-    for the results of the search.
+    Represents a search against a suite. Iterating over a
+    :class:`ScrapedSearch` instance will execute the search and yield
+    :class:`ScrapedVideo` instances for the results of the search.
 
     :param query: The raw string for the search.
     :param suite: Suite to use for this search.
@@ -422,7 +425,8 @@ class ScrapedSearch(BaseScrapedVideoIterator):
 
     def __init__(self, query, suite, fields=None, order_by=None,
                  crawl=False, max_results=None, api_keys=None):
-        self.include_terms, self.exclude_terms = terms_from_search_string(query)
+        self.include_terms, self.exclude_terms = terms_from_search_string(
+            query)
         self.query = search_string_from_terms(self.include_terms,
                                               self.exclude_terms)
         self.raw_query = query
@@ -444,7 +448,8 @@ class ScrapedSearch(BaseScrapedVideoIterator):
 
     def handle_first_response(self, response):
         super(ScrapedSearch, self).handle_first_response(response)
-        self.total_results = self.suite.get_search_total_results(self, response)
+        self.total_results = self.suite.get_search_total_results(self,
+                                                                 response)
         self.time = self.suite.get_search_time(self, response)
 
     def get_response_items(self, response):
@@ -486,15 +491,16 @@ class BaseSuite(object):
         """
         if self.oembed_endpoint is None:
             return set()
-        return set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
+        return set(['title', 'user', 'user_url', 'thumbnail_url',
+                    'embed_code'])
 
-    #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
-    #: a site-specific API. Must be supplied by subclasses for accurate
+    #: A set of :class:`.ScrapedVideo` fields that this suite can supply
+    #through : a site-specific API. Must be supplied by subclasses for accurate
     #: optimization.
     api_fields = set()
-    #: A set of :class:`.ScrapedVideo` fields that this suite can supply through
-    #: a site-specific scrape. Must be supplied by subclasses for accurate
-    #: optimization.
+    #: A set of :class:`.ScrapedVideo` fields that this suite can supply
+    #through : a site-specific scrape. Must be supplied by subclasses for
+    #accurate : optimization.
     scrape_fields = set()
 
     def __init__(self):
@@ -525,18 +531,28 @@ class BaseSuite(object):
 
         """
         try:
-            return bool(self.video_regex.match(url))
+            return bool(self.feed_regex.match(url))
         except AttributeError:
             raise NotImplementedError
 
-    def get_video(self, url, fields=None, api_key=None):
+    def get_feed_url(self, url):
+        """
+        Some suites can handle URLs that are not technically feeds, but can
+        convert them into a feed that is usable.  This method can be overidden
+        to do that conversion.  By default, this method just returns the
+        original URL.
+
+        """
+        return url
+
+    def get_video(self, url, fields=None, api_keys=None):
         """Returns a video using this suite."""
-        return ScrapedVideo(url, suite=self, fields=fields, api_key=api_key)
+        return ScrapedVideo(url, suite=self, fields=fields, api_keys=api_keys)
 
     def apply_video_data(self, video, data):
         """
-        Stores values from a ``data`` dictionary on the corresponding attributes
-        of a :class:`ScrapedVideo` instance.
+        Stores values from a ``data`` dictionary on the corresponding
+        attributes of a :class:`ScrapedVideo` instance.
 
         """
         for field, value in data.iteritems():
@@ -621,8 +637,9 @@ class BaseSuite(object):
 
     def load_video_data(self, video):
         """
-        Makes the smallest requests necessary for loading all the missing fields
-        for the ``video``. The data is immediately stored on the video instance.
+        Makes the smallest requests necessary for loading all the missing
+        fields for the ``video``. The data is immediately stored on the video
+        instance.
 
         """
         missing_fields = set(video.missing_fields)
@@ -664,17 +681,18 @@ class BaseSuite(object):
     def get_feed_response(self, feed, feed_url):
         """
         Returns a parsed response for this ``feed``. By default, this uses
-        :mod:`feedparser` to get a response for the ``feed_url`` and returns the
-        resulting structure.
+        :mod:`feedparser` to get a response for the ``feed_url`` and returns
+        the resulting structure.
 
         """
         return feedparser.parse(feed_url)
 
     def get_feed_title(self, feed, feed_response):
         """
-        Returns a title for the feed based on the ``feed_response``, or ``None``
-        if no title can be determined. By default, assumes that the response is
-        a :mod:`feedparser` structure and returns a value based on that.
+        Returns a title for the feed based on the ``feed_response``, or
+        ``None`` if no title can be determined. By default, assumes that the
+        response is a :mod:`feedparser` structure and returns a value based on
+        that.
 
         """
         return feed_response.get('title')
@@ -682,10 +700,11 @@ class BaseSuite(object):
     def get_feed_entry_count(self, feed, feed_response):
         """
         Returns an estimate of the total number of entries in this feed, or
-        ``None`` if that cannot be determined. By default, returns ``None``.
+        ``None`` if that cannot be determined. By default, returns the number
+        of entries in the feed.
 
         """
-        return None
+        return len(feed_response.entries)
 
     def get_feed_description(self, feed, feed_response):
         """
@@ -709,19 +728,19 @@ class BaseSuite(object):
 
     def get_feed_guid(self, feed, feed_response):
         """
-        Returns the guid of the ``feed_response``, or ``None`` if no guid can be
-        determined. By default, assumes that the response is a :mod:`feedparser`
-        structure and returns a value based on that.
+        Returns the guid of the ``feed_response``, or ``None`` if no guid can
+        be determined. By default, assumes that the response is a
+        :mod:`feedparser` structure and returns a value based on that.
 
         """
         return feed_response.get('id')
 
     def get_feed_last_modified(self, feed, feed_response):
         """
-        Returns the last modification date for the ``feed_response`` as a python
-        datetime, or ``None`` if no date can be determined. By default, assumes
-        that the response is a :mod:`feedparser` structure and returns a value
-        based on that.
+        Returns the last modification date for the ``feed_response`` as a
+        python datetime, or ``None`` if no date can be determined. By default,
+        assumes that the response is a :mod:`feedparser` structure and returns
+        a value based on that.
 
         """
         struct_time = feed_response.get('updated_parsed')
@@ -730,8 +749,8 @@ class BaseSuite(object):
 
     def get_feed_etag(self, feed, feed_response):
         """
-        Returns the etag for a ``feed_response``, or ``None`` if no such url can
-        be determined. By default, assumes that the response is a
+        Returns the etag for a ``feed_response``, or ``None`` if no such url
+        can be determined. By default, assumes that the response is a
         :mod:`feedparser` structure and returns a value based on that.
 
         """
@@ -747,7 +766,7 @@ class BaseSuite(object):
         """
         return feed_response.entries
 
-    def parse_feed_entry(self, feed, entry):
+    def parse_feed_entry(self, entry):
         """
         Given a feed entry (as returned by :meth:`.get_feed_entries`), creates
         and returns a dictionary containing data from the feed entry, suitable
@@ -782,7 +801,7 @@ class BaseSuite(object):
         :meth:`.get_feed_response`.
 
         """
-        return self.get_feed_response(search_url)
+        return self.get_feed_response(search, search_url)
 
     def get_search_total_results(self, search, search_response):
         """
@@ -803,8 +822,8 @@ class BaseSuite(object):
 
     def get_search_results(self, search, search_response):
         """
-        Returns an iterable of search results for a :class:`ScrapedSearch` and a
-        ``search_response`` as returned by :meth:`.get_search_response`. By
+        Returns an iterable of search results for a :class:`ScrapedSearch` and
+        a ``search_response`` as returned by :meth:`.get_search_response`. By
         default, assumes that the ``search_response`` is a :mod:`feedparser`
         structure and passes the work off to :meth:`.get_feed_entries`.
 
@@ -813,22 +832,23 @@ class BaseSuite(object):
 
     def parse_search_result(self, search, result):
         """
-        Given a :class:`ScrapedSearch` instance and a search result (as returned
-        by :meth:`.get_search_results`), returns a dictionary containing data
-        from the search result, suitable for application via
+        Given a :class:`ScrapedSearch` instance and a search result (as
+        returned by :meth:`.get_search_results`), returns a dictionary
+        containing data from the search result, suitable for application via
         :meth:`apply_video_data`. By default, assumes that the ``result`` is a
         :mod:`feedparser` entry and passes the work off to
         :meth:`.parse_feed_entry`.
 
         """
-        return self.parse_feed_entry(search, result)
+        return self.parse_feed_entry(result)
 
     def get_next_search_page_url(self, search, search_response):
         """
         Based on a :class:`ScrapedSearch` and a ``search_response``, generates
         and returns a url for the next page of the search, or returns ``None``
-        if that is not possible. By default, simply returns ``None``. Subclasses
-        must override this method to have a meaningful search crawl.
+        if that is not possible. By default, simply returns
+        ``None``. Subclasses must override this method to have a meaningful
+        search crawl.
 
         """
         return None

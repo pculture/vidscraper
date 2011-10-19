@@ -94,7 +94,7 @@ def auto_feed(url, fields=None, crawl=False, max_results=None, api_keys=None,
 def auto_search(query, fields=None, order_by=None, crawl=False,
                 max_results=None, api_keys=None):
     """
-    Returns a discionary mapping each registered suite to a
+    Returns a dictionary mapping each registered suite to a
     :class:`.ScrapedSearch` instance which has been instantiated for that suite
     and the given arguments.
 

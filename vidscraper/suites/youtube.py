@@ -131,8 +131,8 @@ class YouTubeSuite(BaseSuite):
         if new_start > int(total_results):
             return None
         extra_params = {
-            'start_index': new_start,
-            'max_results': per_page
+            'start-index': new_start,
+            'max-results': per_page
         }
         return extra_params
 

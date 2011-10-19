@@ -140,6 +140,12 @@ class YouTubeApiTestCase(YouTubeTestCase):
         api_url = self.suite.get_api_url(self.video)
         self.assertEqual(api_url,
                         "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4")
+        video = self.suite.get_video(
+            url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
+        api_url = self.suite.get_api_url(video)
+        self.assertEqual(api_url,
+                         "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ")
+                         
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'api.atom'))

@@ -39,7 +39,7 @@ from vidscraper.utils.feedparser import struct_time_to_datetime
 class YouTubeSuite(BaseSuite):
     video_regex = r'^https?://(' +\
     r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v=' +\
-                  r'|youtu.be/)(?P<video_id>\w+)'
+                  r'|youtu.be/)(?P<video_id>[\w-]+)'
     feed_regex = r'^https?://([^/]+\.)?youtube.com/'
     non_feed_regexes = [re.compile(r) for r in (
             (r'^(http://)?(www\.)?youtube\.com/profile(_videos)?'
@@ -72,19 +72,27 @@ class YouTubeSuite(BaseSuite):
 
         """
         user = entry['author']
+        if 'published_parsed' in entry:
+            best_date = struct_time_to_datetime(entry['published_parsed'])
+        elif 'updated_parsed' in entry:
+            best_date = struct_time_to_datetime(entry['updated_parsed'])
+        else:
+            best_date = None
         data = {
             'link': entry['links'][0]['href'].split('&', 1)[0],
             'title': entry['title'],
             'description': entry['summary'],
             'thumbnail_url': get_entry_thumbnail_url(entry),
-            'publish_datetime':
-                struct_time_to_datetime(entry['published_parsed']),
+            'publish_datetime': best_date,
             'tags': [t['term'] for t in entry['tags']
                     if not t['term'].startswith('http')],
-            'flash_enclosure_url': entry['media_player']['url'],
             'user': user,
             'user_url': u'http://www.youtube.com/user/%s' % user,
         }
+        if 'guid' in entry.keys():
+            data['guid'] = entry.guid
+        if 'media_player' in entry: # not in feeds, just the API
+            data['flash_enclosure_url'] = entry['media_player']['url']
         return data
 
     def get_feed_entry_count(self, feed, feed_response):

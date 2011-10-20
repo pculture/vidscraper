@@ -46,6 +46,7 @@ class SuiteRegistry(object):
     def __init__(self):
         self._suites = []
         self._suite_dict = {}
+        self._fallback = None
 
     @property
     def suites(self):
@@ -58,9 +59,16 @@ class SuiteRegistry(object):
             self._suite_dict[suite] = suite()
             self._suites.append(self._suite_dict[suite])
 
+    def register_fallback(self, suite):
+        """Registers a fallback suite, which used only if no other suite
+        succeeds.  If no fallback is registered, then CantIdentifyUrl will be
+        raised for unknown videos/feeds.
+        """
+        self._fallback = suite()
+
     def unregister(self, suite):
         """Unregisters a suite if it is registered."""
-        if suite in self._suite_set:
+        if suite in self._suites:
             self._suites.remove(self._suite_dict[suite])
             del self._suite_dict[suite]
 
@@ -76,6 +84,8 @@ class SuiteRegistry(object):
                     return suite
             except NotImplementedError:
                 pass
+        if self._fallback and self._fallback.handles_video_url(url):
+            return self._fallback
         raise CantIdentifyUrl
 
     def suite_for_feed_url(self, url):
@@ -90,6 +100,8 @@ class SuiteRegistry(object):
                     return suite
             except NotImplementedError:
                 pass
+        if self._fallback and self._fallback.handles_feed_url(url):
+            return self._fallback
         raise CantIdentifyUrl
 
 
@@ -115,8 +127,9 @@ class ScrapedVideo(object):
     # FIELDS
     _all_fields = (
         'title', 'description', 'publish_datetime', 'file_url',
-        'file_url_is_flaky', 'flash_enclosure_url', 'is_embeddable',
-        'embed_code', 'thumbnail_url', 'user', 'user_url', 'tags', 'link'
+        'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
+        'flash_enclosure_url', 'is_embeddable', 'embed_code',
+        'thumbnail_url', 'user', 'user_url', 'tags', 'link'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -129,6 +142,10 @@ class ScrapedVideo(object):
     publish_datetime = None
     #: The url to the actual video file.
     file_url = None
+    #: The MIME type for the actual video file
+    file_url_mimetype = None
+    #: The length of the actual video file
+    file_url_length = None
     #: "Crappy enclosure link that doesn't actually point to a url.. the kind
     #: crappy flash video sites give out when they don't actually want their
     #: enclosures to point to video files."
@@ -556,6 +573,10 @@ class BaseSuite(object):
 
         """
         return url
+
+    def get_feed(self, url, fields=None, api_keys=None):
+        """Returns a feed using this suite."""
+        return ScrapedFeed(url, suite=self, fields=fields, api_keys=api_keys)
 
     def get_video(self, url, fields=None, api_keys=None):
         """Returns a video using this suite."""

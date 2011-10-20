@@ -707,7 +707,7 @@ class BaseSuite(object):
         that.
 
         """
-        return feed_response.get('title')
+        return feed_response.feed.get('title')
 
     def get_feed_entry_count(self, feed, feed_response):
         """
@@ -726,7 +726,7 @@ class BaseSuite(object):
         on that.
 
         """
-        return feed_response.get('subtitle')
+        return feed_response.feed.get('subtitle')
 
     def get_feed_webpage(self, feed, feed_response):
         """
@@ -736,7 +736,7 @@ class BaseSuite(object):
         on that.
 
         """
-        return feed_response.get('link')
+        return feed_response.feed.get('link')
 
     def get_feed_guid(self, feed, feed_response):
         """
@@ -745,7 +745,7 @@ class BaseSuite(object):
         :mod:`feedparser` structure and returns a value based on that.
 
         """
-        return feed_response.get('id')
+        return feed_response.feed.get('id')
 
     def get_feed_last_modified(self, feed, feed_response):
         """
@@ -755,7 +755,7 @@ class BaseSuite(object):
         a value based on that.
 
         """
-        struct_time = feed_response.get('updated_parsed')
+        struct_time = feed_response.feed.get('updated_parsed')
         return (struct_time_to_datetime(struct_time)
                 if struct_time is not None else None)
 
@@ -766,7 +766,7 @@ class BaseSuite(object):
         :mod:`feedparser` structure and returns a value based on that.
 
         """
-        return feed_response.get('etag')
+        return feed_response.feed.get('etag')
 
     def get_feed_entries(self, feed, feed_response):
         """

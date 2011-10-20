@@ -39,3 +39,13 @@ class AutoFunctionalTestCase(unittest.TestCase):
     #     for result_list in result_lists:
     #         results.extend(result_list)
     #     self.assertTrue(len(results) > 0)
+
+    def test_auto_feed(self):
+        feed = auto_feed("http://youtube.com/AssociatedPress")
+        self.assertEqual(feed.url,
+                         ('http://gdata.youtube.com/feeds/base/users/'
+                          'AssociatedPress/uploads?alt=rss&v=2'))
+        feed.load()
+        self.assertEqual(feed.title, 'Uploads by AssociatedPress')
+        self.assertTrue('AssociatedPress' in feed.webpage)
+        self.assertTrue(feed.entry_count > 50000)

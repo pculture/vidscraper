@@ -144,7 +144,7 @@ class YouTubeSuite(BaseSuite):
         return self.get_search_url(
             search.query, order_by,
             extra_params=extra_params,
-            order_by=order_by, **kwargs)
+            **kwargs)
 
     def get_next_feed_page_url(self, feed, feed_response):
         extra_params = self.get_next_page_url_params(feed_response)

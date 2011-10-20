@@ -196,16 +196,17 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         new_url = self.suite.get_next_feed_page_url(self.feed, response)
         self.assertEqual(new_url, None)
 
-class YouTubeSearchTestCase(object):#YouTubeTestCase):
+class YouTubeSearchTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.atom'))
         response = feedparser.parse(search_file.read())
-        self.results = self.suite.get_search_results(response)
+        self.search = self.suite.get_search('query')
+        self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result(self):
         self.maxDiff = None
-        data = self.suite.parse_search_result(self.results[0])
+        data = self.suite.parse_search_result(self.search, self.results[0])
         self.assertTrue(isinstance(data, dict))
         data['tags'] = set(data['tags'])
         expected_data = CARAMELL_DANSEN_ATOM_DATA.copy()
@@ -218,20 +219,41 @@ class YouTubeSearchTestCase(object):#YouTubeTestCase):
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
 
+    def test_get_search_url(self):
+        search_string = 'foo'
+        extra_params = {'bar': 'baz'}
+        self.assertEqual(
+            self.suite.get_search_url(search_string,
+                                      extra_params=extra_params),
+            'http://gdata.youtube.com/feeds/api/videos?vq=foo&bar=baz')
+        self.assertEqual(
+            self.suite.get_search_url(search_string,
+                                      order_by='relevant'),
+            ('http://gdata.youtube.com/feeds/api/videos?'
+             'orderby=relevance&vq=foo'))
+        self.assertEqual(
+            self.suite.get_search_url(search_string,
+                                      order_by='latest'),
+            ('http://gdata.youtube.com/feeds/api/videos?'
+             'orderby=published&vq=foo'))
+            
+
     def test_next_search_page_url(self):
         response = {
-            'opensearch_startindex': '1',
-            'opensearch_itemsperpage': '50',
-            'opensearch_totalresults': '10',
-        }
-        new_url = self.suite.get_next_search_page_url("caramell dansen",
+            'feed': {
+                'opensearch_startindex': '1',
+                'opensearch_itemsperpage': '50',
+                'opensearch_totalresults': '10',
+                }
+            }
+        new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertTrue(new_url is None)
-        response['opensearch_totalresults'] = '100'
-        new_url = self.suite.get_next_search_page_url("caramell dansen",
+        response['feed']['opensearch_totalresults'] = '100'
+        new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertFalse(new_url is None)
         parsed = urlparse.urlparse(new_url)
         params = urlparse.parse_qs(parsed.query)
-        self.assertEqual(params['start_index'][0], '51')
-        self.assertEqual(params['max_results'][0], '50')
+        self.assertEqual(params['start-index'][0], '51')
+        self.assertEqual(params['max-results'][0], '50')

@@ -179,21 +179,22 @@ class BlipFeedTestCase(BlipTestCase):
         self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=2')
 
 
-class BlipSearchTestCase(object):#BlipTestCase):
+class BlipSearchTestCase(BlipTestCase):
     def setUp(self):
         BlipTestCase.setUp(self)
         self.feed_data = open(
             os.path.join(self.data_file_dir, 'search.rss')
         ).read()
+        self.search = self.suite.get_search('search query')
 
     def test_parse_search_feed(self):
-        response = self.suite.get_search_response(self.feed_data)
-        results = self.suite.get_search_results(response)
+        response = self.suite.get_search_response(self.search, self.feed_data)
+        results = self.suite.get_search_results(self.search, response)
         self.assertTrue(len(results) > 0)
 
     def test_parse_result(self):
-        response = self.suite.get_search_response(self.feed_data)
-        results = self.suite.get_search_results(response)
-        data = self.suite.parse_search_result(results[1])
+        response = self.suite.get_search_response(self.search, self.feed_data)
+        results = self.suite.get_search_results(self.search, response)
+        data = self.suite.parse_search_result(self.search, results[1])
         self.assertTrue(isinstance(data, dict))
         self._check_disqus_data(data)

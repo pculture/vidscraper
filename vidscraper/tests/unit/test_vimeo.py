@@ -107,6 +107,15 @@ class VimeoFeedTestCase(VimeoTestCase):
         response = json.loads(feed_file.read())
         self.entries = self.suite.get_feed_entries(response)
 
+    def test_get_feed_url(self):
+        self.assertEqual(
+            self.suite.get_feed_url('http://vimeo.com/jakob/videos/rss'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url(
+                'http://vimeo.com/channels/whitehouse/videos/rss'),
+            'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
+
     def test_parse_feed_entry_0(self):
         data = self.suite.parse_feed_entry(self.entries[0])
         self.assertTrue(isinstance(data, dict))
@@ -158,6 +167,9 @@ class VimeoFeedTestCase(VimeoTestCase):
         this_url = "http://vimeo.com/nothing/here/"
         next_url = self.suite.get_next_feed_page_url(this_url, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+        this_url = "http://vimeo.com/nothing/here/?page=notanumber"
+        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
 
 class VimeoSearchTestCase(VimeoTestCase):
@@ -165,7 +177,8 @@ class VimeoSearchTestCase(VimeoTestCase):
         VimeoTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.json'))
         response = json.loads(search_file.read())
-        self.results = self.suite.get_search_results(response)
+        self.search = self.suite.get_search('search query')
+        self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result_1(self):
         data = self.suite.parse_search_result(self.results[0])

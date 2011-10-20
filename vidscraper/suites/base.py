@@ -829,6 +829,12 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
+    def get_search(self, query, **kwargs):
+        """
+        Returns a search using this suite.
+        """
+        return ScrapedSearch(query, self, **kwargs)
+
     def get_search_response(self, search, search_url):
         """
         Returns a parsed response for the given ``search_url``. By default,

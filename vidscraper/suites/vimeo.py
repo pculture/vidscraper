@@ -94,7 +94,7 @@ allowFullScreen></iframe>""" % video_id
         }
         return data
 
-    def get_feed(self, feed_url, fields=None, crawl=False):
+    def get_feed_url(self, feed_url):
         """
         Rewrites a feed url into an api request url so that crawl can work, and
         because more information can be retrieved from the api.
@@ -105,8 +105,7 @@ allowFullScreen></iframe>""" % video_id
             path = "/".join((groups['collection'], groups['name']))
         else:
             path = groups['name']
-        real_url = 'http://vimeo.com/api/v2/%s/%s.json' % (path, groups['type'])
-        return super(VimeoSuite, self).get_feed(real_url, fields, crawl)
+        return 'http://vimeo.com/api/v2/%s/%s.json' % (path, groups['type'])
 
     def get_feed_response(self, feed_url):
         response_text = urllib2.urlopen(feed_url, timeout=5).read()
@@ -174,10 +173,10 @@ allowFullScreen></iframe>""" % video_id
             raise NotImplementedError("API Key and Secret missing.")
         consumer = oauth2.Consumer(api_key, api_secret)
         client = oauth2.Client(consumer)
-        request = client.request(url)
+        request = client.request(search_url)
         return json.loads(request[1])
 
-    def get_search_results(self, search_response):
+    def get_search_results(self, search, search_response):
         return search_response['videos']['video']
 
     def parse_search_result(self, result):

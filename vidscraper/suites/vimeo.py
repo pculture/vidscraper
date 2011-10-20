@@ -132,19 +132,16 @@ allowFullScreen></iframe>""" % video_id
         return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None,)),
                           urllib.urlencode(params, True))
 
-    def get_search_url(self, search_string, order_by=None, extra_params=None,
-                       **kwargs):
-        api_key = kwargs.get('vimeo_api_key')
-        if api_key is None:
+    def get_search_url(self, search, order_by=None, extra_params=None):
+        if search.api_keys is None or not search.api_keys.get('vimeo_api_key'):
             raise NotImplementedError("API Key is missing.")
         params = {
             'format': 'json',
             'full_response': '1',
             'method': 'vimeo.videos.search',
-            'query': search_string,
+            'query': search.query,
         }
-        if api_key:
-            params['api_key'] = api_key
+        params['api_key'] = search.api_keys['vimeo_api_key']
         if order_by == 'relevant':
             params['sort'] = 'relevant'
         elif order_by == 'latest':
@@ -153,22 +150,24 @@ allowFullScreen></iframe>""" % video_id
             params.update(extra_params)
         return "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
 
-    def get_next_search_page_url(self, search_response, search_string,
-                                 order_by=None, **kwargs):
+    def get_next_search_page_url(self, search, search_response,
+                                 order_by=None):
         total = int(search_response['total'])
         page = int(search_response['page'])
         per_page = int(search_response['per_page'])
         if page * per_page > total:
             return None
         extra_params = {'page': page + 1}
-        return self.get_search_url(search_string, order_by,
-                                   extra_params=extra_params, **kwargs)
+        return self.get_search_url(search, order_by,
+                                   extra_params=extra_params)
 
-    def get_search_response(self, search_url, **kwargs):
+    def get_search_response(self, search, search_url):
         if oauth2 is None:
             raise NotImplementedError("OAuth2 library must be installed.")
-        api_key = kwargs.get('vimeo_api_key')
-        api_secret = kwargs.get('vimeo_api_secret')
+        api_key = (search.api_keys.get('vimeo_api_key')
+                   if search.api_keys else None)
+        api_secret = (search.api_keys.get('vimeo_api_secret')
+                      if search.api_keys else None)
         if api_key is None or api_secret is None:
             raise NotImplementedError("API Key and Secret missing.")
         consumer = oauth2.Consumer(api_key, api_secret)

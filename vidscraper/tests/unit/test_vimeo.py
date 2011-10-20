@@ -177,7 +177,10 @@ class VimeoSearchTestCase(VimeoTestCase):
         VimeoTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.json'))
         response = json.loads(search_file.read())
-        self.search = self.suite.get_search('search query')
+        self.search = self.suite.get_search(
+            'search query',
+            api_keys={'vimeo_api_key': 'BLANK',
+                      'vimeo_api_secret': 'BLANK'})
         self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result_1(self):
@@ -203,14 +206,13 @@ allowFullScreen></iframe>"""
             self.assertEqual(data[key], expected_data[key])
 
     def test_next_page_url(self):
-        kwargs = {'vimeo_api_key': 'BLANK'}
         response = {'total': '10', 'page': '1', 'per_page': '50'}
-        new_url = self.suite.get_next_search_page_url(response, "blink",
-                                                      **kwargs)
+        new_url = self.suite.get_next_search_page_url(self.search,
+                                                      response)
         self.assertTrue(new_url is None)
         response['total'] = '100'
-        new_url = self.suite.get_next_search_page_url(response, "blink",
-                                                      **kwargs)
+        new_url = self.suite.get_next_search_page_url(self.search,
+                                                      response)
         self.assertFalse(new_url is None)
         parsed = urlparse.urlparse(new_url)
         params = urlparse.parse_qs(parsed.query)

@@ -32,8 +32,8 @@ import feedparser
 from vidscraper.compat import json
 from vidscraper.errors import CantIdentifyUrl
 from vidscraper.utils.feedparser import struct_time_to_datetime
-from vidscraper.utils.search import (intersperse_results,
-                search_string_from_terms, terms_from_search_string)
+from vidscraper.utils.search import (search_string_from_terms,
+                                     terms_from_search_string)
 
 
 class SuiteRegistry(object):
@@ -576,13 +576,13 @@ class BaseSuite(object):
         """
         return url
 
-    def get_feed(self, url, fields=None, api_keys=None):
+    def get_feed(self, url, **kwargs):
         """Returns a feed using this suite."""
-        return ScrapedFeed(url, suite=self, fields=fields, api_keys=api_keys)
+        return ScrapedFeed(url, self, **kwargs)
 
-    def get_video(self, url, fields=None, api_keys=None):
+    def get_video(self, url, **kwargs):
         """Returns a video using this suite."""
-        return ScrapedVideo(url, suite=self, fields=fields, api_keys=api_keys)
+        return ScrapedVideo(url, self, **kwargs)
 
     def apply_video_data(self, video, data):
         """

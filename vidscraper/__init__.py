@@ -101,6 +101,14 @@ def auto_search(query, fields=None, order_by=None, crawl=False,
     """
     suites = {}
     for suite in registry.suites:
-        suites[suite] = ScrapedSearch(query, suite, fields, order_by, crawl,
-                                      max_results, api_keys)
+        search = ScrapedSearch(query, suite, fields, order_by, crawl,
+                               max_results, api_keys)
+        try:
+            search.get_first_url()
+        except NotImplementedError:
+            # suite doesn't implement search
+            pass
+        else:
+            suites[suite] = search
+        
     return suites

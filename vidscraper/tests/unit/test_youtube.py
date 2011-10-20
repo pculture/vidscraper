@@ -220,22 +220,21 @@ class YouTubeSearchTestCase(YouTubeTestCase):
             self.assertEqual(data[key], expected_data[key])
 
     def test_get_search_url(self):
-        search_string = 'foo'
         extra_params = {'bar': 'baz'}
         self.assertEqual(
-            self.suite.get_search_url(search_string,
+            self.suite.get_search_url(self.search,
                                       extra_params=extra_params),
-            'http://gdata.youtube.com/feeds/api/videos?vq=foo&bar=baz')
+            'http://gdata.youtube.com/feeds/api/videos?vq=query&bar=baz')
         self.assertEqual(
-            self.suite.get_search_url(search_string,
+            self.suite.get_search_url(self.search,
                                       order_by='relevant'),
             ('http://gdata.youtube.com/feeds/api/videos?'
-             'orderby=relevance&vq=foo'))
+             'orderby=relevance&vq=query'))
         self.assertEqual(
-            self.suite.get_search_url(search_string,
+            self.suite.get_search_url(self.search,
                                       order_by='latest'),
             ('http://gdata.youtube.com/feeds/api/videos?'
-             'orderby=published&vq=foo'))
+             'orderby=published&vq=query'))
             
 
     def test_next_search_page_url(self):

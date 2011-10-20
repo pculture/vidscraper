@@ -33,12 +33,13 @@ class AutoFunctionalTestCase(unittest.TestCase):
         self.assertEqual(video.title,
                          u'CaramellDansen (Full Version + Lyrics)')
 
-    # def test_auto_search(self):
-    #     result_lists = auto_search('parrot -dead').values()
-    #     results = []
-    #     for result_list in result_lists:
-    #         results.extend(result_list)
-    #     self.assertTrue(len(results) > 0)
+    def test_auto_search(self):
+        result_lists = auto_search('parrot -dead').values()
+        results = []
+        for result_list in result_lists:
+            print result_list
+            results.extend(result_list)
+        self.assertTrue(len(results) > 0)
 
     def test_auto_feed(self):
         feed = auto_feed("http://youtube.com/AssociatedPress")

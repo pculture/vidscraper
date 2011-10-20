@@ -107,10 +107,9 @@ class YouTubeSuite(BaseSuite):
         parsed = feedparser.parse(response_text)
         return self.parse_feed_entry(parsed.entries[0])
 
-    def get_search_url(self, search_string, order_by=None, extra_params=None,
-                       **kwargs):
+    def get_search_url(self, search, order_by=None, extra_params=None):
         params = {
-            'vq': search_string,
+            'vq': search.query,
         }
         if extra_params is not None:
             params.update(extra_params)
@@ -119,7 +118,7 @@ class YouTubeSuite(BaseSuite):
         elif order_by == 'latest':
             params['orderby'] = 'published'
         return 'http://gdata.youtube.com/feeds/api/videos?%s' % (
-                                    urllib.urlencode(params))
+            urllib.urlencode(params))
 
     def get_next_page_url_params(self, response):
         start_index = response['feed'].get('opensearch_startindex', None)
@@ -137,14 +136,13 @@ class YouTubeSuite(BaseSuite):
         return extra_params
 
     def get_next_search_page_url(self, search, search_response,
-                                 order_by=None, **kwargs):
+                                 order_by=None):
         extra_params = self.get_next_page_url_params(search_response)
         if not extra_params:
             return None
         return self.get_search_url(
-            search.query, order_by,
-            extra_params=extra_params,
-            **kwargs)
+            search, order_by,
+            extra_params=extra_params)
 
     def get_next_feed_page_url(self, feed, feed_response):
         extra_params = self.get_next_page_url_params(feed_response)

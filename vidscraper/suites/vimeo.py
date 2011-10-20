@@ -156,7 +156,6 @@ allowFullScreen></iframe>""" % video_id
 
     def get_next_search_page_url(self, search_response, search_string,
                                  order_by=None, **kwargs):
-        print search_response
         total = int(search_response['total'])
         page = int(search_response['page'])
         per_page = int(search_response['per_page'])

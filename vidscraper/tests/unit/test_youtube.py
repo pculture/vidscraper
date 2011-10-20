@@ -184,8 +184,8 @@ class YouTubeFeedTestCase(YouTubeTestCase):
     def test_next_feed_page_url(self):
         response = self.suite.get_feed_response(self.feed, self.feed_data)
         new_url = self.suite.get_next_feed_page_url(self.feed, response)
-        self.assertEqual(new_url,
-                         self.feed_url + '&max-results=25&start-index=26')
+        self.assertTrue('&max-results=25' in new_url)
+        self.assertTrue('&start-index=26' in new_url)
         response = {'feed': {}}
         new_url = self.suite.get_next_feed_page_url(self.feed, response)
         self.assertEqual(new_url, None)

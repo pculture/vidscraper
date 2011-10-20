@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2011 - Participatory Culture Foundation
 #
 # This file is part of vidscraper.
@@ -64,7 +65,7 @@ class FeedSuiteTestCase(unittest.TestCase):
              'This RSS feed is generated dynamically'))
         self.assertEqual(feed.last_modified,
                          datetime.datetime(2011, 10, 20, 14, 36, 1))
-        self.assertEqual(feed.entry_count, 1)
+        self.assertEqual(feed.entry_count, 2)
         
     def test_feed_entry_data(self):
         feed = self.suite.get_feed(
@@ -96,3 +97,39 @@ Text, MP3, MPEG2, Metadata, SubRip, Thumbnail, Video Index, h.264</p>""")
         self.assertEqual(video.file_url_mimetype, "video/h264")
         self.assertEqual(video.publish_datetime,
                          datetime.datetime(2011, 10, 20, 14, 14, 14))
+
+    def test_feed_entry_unicode(self):
+        feed = self.suite.get_feed(
+            'file://%s' % os.path.join(self.data_file_dir, 'feed.rss'))
+        i = iter(feed)
+        i.next() # skip the first one
+        video = i.next()
+        self.assertEqual(
+            video.title,
+            u'مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 "')
+        self.assertEqual(
+            video.description,
+            u"""<img \
+src="http://www.archive.org/services/get-item-image.php?identifier=\
+forsan2011-2196&amp;mediatype=movies&amp;collection=opensource_movies" \
+style="padding-right:3px;float:left;" width="160" />\
+<p>منتدى فرسان السنة - فرسان الحقـ www.forsanelhaq.com ____________________ \
+مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 ".</p>\
+<p>This item belongs to: movies/opensource_movies.</p>\
+<p>This item has files of the following types: Animated GIF, Cinepack, \
+Metadata, Ogg Video, Ogg Vorbis, Thumbnail, VBR MP3, Windows Media Audio, \
+h.264</p>""")
+        self.assertEqual(
+            video.link,
+            "http://www.archive.org/details/forsan2011-2196")
+        self.assertEqual(
+            video.thumbnail_url,
+            ("http://www.archive.org/download/"
+             "forsan2011-2196/format=Thumbnail"))
+        self.assertEqual(
+            video.file_url,
+            ("http://www.archive.org/download/"
+             "forsan2011-2196/format=h.264"))
+        self.assertEqual(video.file_url_mimetype, "video/h264")
+        self.assertEqual(video.publish_datetime,
+                         datetime.datetime(2011, 10, 20, 14, 17, 44))

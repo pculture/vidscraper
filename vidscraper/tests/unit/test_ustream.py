@@ -47,12 +47,8 @@ class UstreamApiTestCase(UstreamTestCase):
     def setUp(self):
         UstreamTestCase.setUp(self)
         self.base_url = "http://www.ustream.tv/recorded/16417223"
-        self.video = self.suite.get_video(self.base_url)
-        self.suite._old_key = self.suite._api_key
-        self.suite._api_key = "TEST_KEY"
-
-    def tearDown(self):
-        self.suite._api_key = self.suite._old_key
+        self.video = self.suite.get_video(self.base_url,
+                                          api_keys={'ustream_key': 'TEST_KEY'})
 
     def test_get_oembed_url(self):
         url = self.suite.get_oembed_url(self.video)

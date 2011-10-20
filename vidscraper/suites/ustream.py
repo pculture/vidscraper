@@ -36,28 +36,19 @@ class UstreamSuite(BaseSuite):
 
     oembed_endpoint = "http://www.ustream.tv/oembed/"
 
-    _api_fields = set(['link', 'title', 'description', 'flash_enclosure_url',
-                    'embed_code', 'thumbnail_url', 'publish_date', 'tags',
-                    'user', 'user_url'])
-    @property
-    def api_fields(self):
-        if self._api_key is None:
-            return set()
-        return self._api_fields
-
-    _api_key = None
-
-    def set_api_key(self, key):
-        self._api_key = key
+    api_fields = set(['link', 'title', 'description', 'flash_enclosure_url',
+                      'embed_code', 'thumbnail_url', 'publish_date', 'tags',
+                      'user', 'user_url'])
 
     def get_api_url(self, video):
         video_id = self.video_regex.match(video.url).group('id')
-        if self._api_key is None:
+        if video.api_keys is None or 'ustream_key' not in video.api_keys:
             raise ValueError("API key must be set for Ustream API requests.")
         return 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (
-                                video_id, self._api_key)
+                                video_id, video.api_keys['ustream_key'])
 
     def parse_api_response(self, response_text):
+        print 'calling parse api response',
         parsed = json.loads(response_text)['results']
         url = parsed['embedTagSourceUrl']
         publish_date = datetime.datetime.strptime(parsed['createdAt'],

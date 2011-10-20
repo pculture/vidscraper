@@ -27,14 +27,24 @@ class FeedSuite(BaseSuite):
         else:
             best_date = None
 
+        link = entry['link']
+        if 'links' in entry:
+            for possible_link in entry.links:
+                if possible_link.get('rel') == 'via':
+                    # original URL
+                    link = possible_link['href']
+                    break
+
         return {
-            'link': entry['link'],
+            'link': link,
             'title': entry['title'],
             'description': entry['summary'],
             'thumbnail_url': get_entry_thumbnail_url(entry),
             'file_url': enclosure.get('url') if enclosure else None,
             'file_url_mimetype': enclosure.get('type') if enclosure else None,
-            'file_url_length': enclosure.get('length') if enclosure else None,
+            'file_url_length': ((enclosure.get('filesize') or
+                                enclosure.get('length'))
+                                if enclosure else None),
             'publish_datetime': best_date,
             }
 

@@ -134,6 +134,8 @@ class ScrapedVideo(object):
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
     link = None
+    #: A (supposedly) global identifier for the video
+    guid = None
     #: The video's title.
     title = None
     #: A text or html description of the video.

@@ -275,8 +275,9 @@ class BaseScrapedVideoIterator(object):
                 items = self.get_response_items(response)
                 for item in items:
                     data = self.get_item_data(item)
-                    video = self.suite.get_video(data['link'], self.fields,
-                                                 self.api_keys)
+                    video = self.suite.get_video(data['link'],
+                                                 fields=self.fields,
+                                                 api_keys=self.api_keys)
                     self.suite.apply_video_data(video, data)
                     yield video
                     if self._max_results is not None:

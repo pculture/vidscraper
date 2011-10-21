@@ -16,7 +16,11 @@ class FeedSuite(BaseSuite):
         response = super(FeedSuite, self).get_feed_response(feed, url)
         if response.entries or not response.bozo_exception: # good feed
             return response
-        raise CantIdentifyUrl
+        if response.bozo_exception:
+            raise CantIdentifyUrl('exception during response',
+                                  response.bozo_exception)
+        else:
+            raise CantIdentifyUrl
 
     def parse_feed_entry(self, entry):
         enclosure = get_first_accepted_enclosure(entry)

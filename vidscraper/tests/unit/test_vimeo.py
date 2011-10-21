@@ -184,7 +184,7 @@ class VimeoSearchTestCase(VimeoTestCase):
         self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result_1(self):
-        data = self.suite.parse_search_result(self.results[0])
+        data = self.suite.parse_search_result(self.search, self.results[0])
         self.assertTrue(isinstance(data, dict))
         expected_data = {
             'title': u'Dancing Pigeons - Ritalin',

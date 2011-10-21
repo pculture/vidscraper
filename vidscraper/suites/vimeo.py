@@ -178,7 +178,7 @@ allowFullScreen></iframe>""" % video_id
     def get_search_results(self, search, search_response):
         return search_response['videos']['video']
 
-    def parse_search_result(self, result):
+    def parse_search_result(self, search, result):
         # TODO: results have an embed_privacy key. What is this? Should
         # vidscraper return that information? Doesn't youtube have something
         # similar?

@@ -55,7 +55,7 @@ def intersperse_results(suite_dict, max_results):
     results are exhausted or ``max_results`` results have been returned.
 
     """
-    iterators = suite_dict.values()
+    iterators = [iter(i) for i in suite_dict.values()]
     num_results = 0
     while len(iterators) > 0 and num_results < max_results:
         for iterator in iterators[:]:

@@ -33,7 +33,6 @@ import urlparse
 import feedparser
 
 from vidscraper.errors import CantIdentifyUrl
-from vidscraper.suites.base import ScrapedFeed
 from vidscraper.suites.youtube import YouTubeSuite
 
 
@@ -163,7 +162,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         YouTubeTestCase.setUp(self)
         self.feed_url = ('http://gdata.youtube.com/feeds/base/users/'
                          'AssociatedPress/uploads?alt=rss&v=2')
-        self.feed = ScrapedFeed(self.feed_url, self.suite)
+        self.feed = self.suite.get_feed(self.feed_url)
         self.feed_data = open(
             os.path.join(self.data_file_dir, 'feed.atom')).read()
 

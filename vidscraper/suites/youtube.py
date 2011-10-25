@@ -68,7 +68,7 @@ class YouTubeSuite(BaseSuite):
     def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a youtube rss feed.
-        Returns a dictionary mapping :class:`.ScrapedVideo` fields to values.
+        Returns a dictionary mapping :class:`.Video` fields to values.
 
         """
         user = entry['author']

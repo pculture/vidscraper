@@ -30,7 +30,7 @@ import unittest
 import urllib
 import urlparse
 
-from vidscraper.suites import ScrapedVideo, ScrapedFeed
+from vidscraper.suites import Video
 from vidscraper.suites.blip import BlipSuite
 
 
@@ -143,7 +143,7 @@ class BlipFeedTestCase(BlipTestCase):
     def setUp(self):
         BlipTestCase.setUp(self)
         self.feed_url = 'http://blip.tv/djangocon'
-        self.feed = ScrapedFeed(self.feed_url, self.suite)
+        self.feed = self.suite.get_feed(self.feed_url)
         self.feed_data = open(
             os.path.join(self.data_file_dir, 'feed.rss')
             ).read()
@@ -165,7 +165,7 @@ class BlipFeedTestCase(BlipTestCase):
     def test_parse_feed(self):
         self.assertEqual(len(list(self.feed)), 77)
         for video in self.feed:
-            self.assertTrue(isinstance(video, ScrapedVideo))
+            self.assertTrue(isinstance(video, Video))
 
     def test_next_feed_page_url(self):
         base_url = 'http://blip.tv/nothing/here/?page=5'

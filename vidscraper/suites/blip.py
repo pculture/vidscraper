@@ -49,7 +49,7 @@ class BlipSuite(BaseSuite):
     def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a blip rss feed into
-        a dictionary mapping :class:`.ScrapedVideo` fields to values.
+        a dictionary mapping :class:`.Video` fields to values.
 
         """
         enclosure = get_first_accepted_enclosure(entry)

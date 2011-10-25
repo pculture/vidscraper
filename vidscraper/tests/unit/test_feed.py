@@ -29,12 +29,11 @@ import os
 import unittest
 import feedparser
 
-from vidscraper.errors import CantIdentifyUrl
-from vidscraper.suites.feed import FeedSuite
+from vidscraper.suites.feed import GenericFeedSuite
 
-class FeedSuiteTestCase(unittest.TestCase):
+class GenericFeedSuiteTestCase(unittest.TestCase):
     def setUp(self):
-        self.suite = FeedSuite()
+        self.suite = GenericFeedSuite()
         self.old_SANITIZE = feedparser.SANITIZE_HTML
         feedparser.SANITIZE_HTML = False
 

@@ -4,7 +4,7 @@ from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
                                          get_entry_thumbnail_url,
                                          struct_time_to_datetime)
 
-class FeedSuite(BaseSuite):
+class GenericFeedSuite(BaseSuite):
 
     def handles_video_url(self, url):
         return True
@@ -13,7 +13,7 @@ class FeedSuite(BaseSuite):
         return True
 
     def get_feed_response(self, feed, url):
-        response = super(FeedSuite, self).get_feed_response(feed, url)
+        response = super(GenericFeedSuite, self).get_feed_response(feed, url)
         if response.entries or not response.bozo_exception: # good feed
             return response
         if response.bozo_exception:
@@ -52,4 +52,4 @@ class FeedSuite(BaseSuite):
             'publish_datetime': best_date,
             }
 
-registry.register_fallback(FeedSuite)
+registry.register_fallback(GenericFeedSuite)

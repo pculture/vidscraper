@@ -50,7 +50,7 @@ class YouTubeSuite(BaseSuite):
                     'uploads?alt=rss&v=2')
 
     oembed_endpoint = "http://www.youtube.com/oembed"
-    api_fields = set(['link', 'title', 'description',
+    api_fields = set(['link', 'title', 'description', 'guid',
                       'thumbnail_url', 'publish_datetime', 'tags',
                       'flash_enclosure_url', 'user', 'user_url'])
 
@@ -74,10 +74,8 @@ class YouTubeSuite(BaseSuite):
         user = entry['author']
         if 'published_parsed' in entry:
             best_date = struct_time_to_datetime(entry['published_parsed'])
-        elif 'updated_parsed' in entry:
-            best_date = struct_time_to_datetime(entry['updated_parsed'])
         else:
-            best_date = None
+            best_date = struct_time_to_datetime(entry['updated_parsed'])
         data = {
             'link': entry['links'][0]['href'].split('&', 1)[0],
             'title': entry['title'],
@@ -89,8 +87,8 @@ class YouTubeSuite(BaseSuite):
             'user': user,
             'user_url': u'http://www.youtube.com/user/%s' % user,
         }
-        if 'guid' in entry.keys():
-            data['guid'] = entry.guid
+        if 'id' in entry:
+            data['guid'] = entry.id
         if 'media_player' in entry: # not in feeds, just the API
             data['flash_enclosure_url'] = entry['media_player']['url']
         return data

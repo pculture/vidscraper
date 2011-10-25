@@ -25,7 +25,7 @@
 
 import re
 
-from BeautifulSoup import BeautifulSoup, SoupStrainer
+from BeautifulSoup import BeautifulSoup
 
 from vidscraper.suites import BaseSuite, registry
 

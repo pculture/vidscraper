@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import re
 import os
 import unittest
 import urllib
@@ -32,7 +31,6 @@ import urlparse
 
 import feedparser
 
-from vidscraper.errors import CantIdentifyUrl
 from vidscraper.suites.youtube import YouTubeSuite
 
 

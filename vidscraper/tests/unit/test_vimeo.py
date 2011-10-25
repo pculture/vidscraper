@@ -205,6 +205,26 @@ allowFullScreen></iframe>"""
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
 
+    def test_get_search_url(self):
+        extra_params = {'bar': 'baz'}
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      extra_params=extra_params),
+            'http://vimeo.com/api/rest/v2/?bar=baz&full_response=1&format=json'
+            '&query=query+search&api_key=BLANK&method=vimeo.videos.search')
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      order_by='relevant'),
+            'http://vimeo.com/api/rest/v2/?sort=relevant&full_response=1&'
+            'format=json&query=query+search&api_key=BLANK&'
+            'method=vimeo.videos.search')
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      order_by='latest'),
+            'http://vimeo.com/api/rest/v2/?sort=newest&full_response=1&'
+            'format=json&query=query+search&api_key=BLANK&'
+            'method=vimeo.videos.search')
+
     def test_next_page_url(self):
         response = {'total': '10', 'page': '1', 'per_page': '50'}
         new_url = self.suite.get_next_search_page_url(self.search,

@@ -31,7 +31,8 @@ import feedparser
 
 from vidscraper.compat import json
 from vidscraper.errors import CantIdentifyUrl
-from vidscraper.utils.feedparser import struct_time_to_datetime
+from vidscraper.utils.feedparser import (struct_time_to_datetime,
+                                         get_item_thumbnail_url)
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
@@ -354,6 +355,9 @@ class ScrapedFeed(BaseScrapedVideoIterator):
     .. attr:: title
         The title of the feed.
 
+    .. attr:: thumbnail_url
+        A URL for a thumbnail representing the whole feed.
+
     .. attr:: guid
         A unique identifier for the feed.
 
@@ -380,6 +384,7 @@ class ScrapedFeed(BaseScrapedVideoIterator):
         self.description = None
         self.webpage = None
         self.title = None
+        self.thumbnail_url = None
         self.guid = None
 
     @property
@@ -400,6 +405,7 @@ class ScrapedFeed(BaseScrapedVideoIterator):
         self.entry_count = self.suite.get_feed_entry_count(self, response)
         self.description = self.suite.get_feed_description(self, response)
         self.webpage = self.suite.get_feed_webpage(self, response)
+        self.thumbnail_url = self.suite.get_feed_thumbnail_url(self, response)
         self.guid = self.suite.get_feed_guid(self, response)
         self.last_modified = self.suite.get_feed_last_modified(self, response)
         self.etag = self.suite.get_feed_etag(self, response)
@@ -770,6 +776,17 @@ class BaseSuite(object):
 
         """
         return feed_response.feed.get('id')
+
+    def get_feed_thumbnail_url(self, feed, feed_response):
+        """
+        Returns the thumbnail URL of the ``feed_response``, or ``None`` if no
+        thumbnail can be found.  By default, assumes that the response is a
+        :mod:`feedparser` structur4e and returns a value based on that.
+        """
+        try:
+            return get_item_thumbnail_url(feed_response.feed)
+        except KeyError:
+            return None
 
     def get_feed_last_modified(self, feed, feed_response):
         """

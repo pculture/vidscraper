@@ -48,5 +48,8 @@ class AutoFunctionalTestCase(unittest.TestCase):
                           'AssociatedPress/uploads?alt=rss&v=2'))
         feed.load()
         self.assertEqual(feed.title, 'Uploads by AssociatedPress')
+        self.assertEqual(
+            feed.thumbnail_url,
+            'http://www.youtube.com/img/pic_youtubelogo_123x63.gif')
         self.assertTrue('AssociatedPress' in feed.webpage)
         self.assertTrue(feed.entry_count > 50000)

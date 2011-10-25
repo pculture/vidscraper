@@ -66,6 +66,7 @@ CARAMELL_DANSEN_ATOM_DATA = {
         u"Music",
     ]),
     'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
+    'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4'
 }
 
 

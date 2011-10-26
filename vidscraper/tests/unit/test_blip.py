@@ -85,6 +85,12 @@ class BlipApiTestCase(BlipTestCase):
     def test_get_api_url(self):
         self._test_video_api_url(self.video)
 
+    def test_get_api_url_old_url(self):
+        self.video.url = 'http://blip.tv/file/1077145/'
+        api_url = self.suite.get_api_url(self.video)
+        parsed_url = urlparse.urlparse(api_url)
+        self.assertEqual(parsed_url[2], '/rss/1083325')
+
     def test_get_api_url_overrides(self):
         video = self.suite.get_video(url="%s?skin=json" % self.base_url)
         self._test_video_api_url(video)

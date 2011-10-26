@@ -55,30 +55,21 @@ class BlipSuite(BaseSuite):
         """
         enclosure = get_first_accepted_enclosure(entry)
 
-        if 'blip_puredescription' in entry:
-            description = entry['blip_puredescription']
-        else:
-            description = entry['summary']
-        if 'blip_datestamp' in entry:
-            datestamp = datetime.strptime(entry['blip_datestamp'],
-                                          "%Y-%m-%dT%H:%M:%SZ")
-        else:
-            datestamp = struct_time_to_datetime(entry['updated_parsed'])
-
-        data = {
+        return {
             'link': entry['link'],
             'title': entry['title'],
-            'description': clean_description_html(description),
+            'description': clean_description_html(
+                entry['blip_puredescription']),
             'file_url': enclosure['url'],
             'embed_code': entry['media_player']['content'],
-            'publish_datetime': datestamp,
+            'publish_datetime': datetime.strptime(entry['blip_datestamp'],
+                                                  "%Y-%m-%dT%H:%M:%SZ"),
             'thumbnail_url': get_entry_thumbnail_url(entry),
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None][1:],
             'user': entry['blip_safeusername'],
             'user_url': entry['blip_showpage']
-        }
-        return data
+            }
 
     def get_next_feed_page_url(self, last_url, feed_response):
         parsed = urlparse.urlparse(last_url)
@@ -99,10 +90,7 @@ class BlipSuite(BaseSuite):
             video.url = resp.geturl()
             resp.close()
         parsed_url = urlparse.urlparse(video.url)
-        if parsed_url.path.startswith('/file/'):
-            post_id = parsed_url.path.split('/')[2]
-        else:
-            post_id = parsed_url[2].rsplit('-', 1)[1]
+        post_id = parsed_url[2].rsplit('-', 1)[1]
         new_parsed_url = parsed_url[:2] + ("/rss/%s" % post_id,
                                             None, None, None)
         return urlparse.urlunparse(new_parsed_url)

@@ -48,10 +48,10 @@ class GenericFeedSuite(BaseSuite):
         embed_code = None
         if 'media_player' in entry:
             player = entry['media_player']
-            if 'content' in player:
+            if player.get('content'):
                 embed_code = convert_entities(player['content'])
             elif 'url' in player:
-                embed_code = make_embed_code(player, {})
+                embed_code = make_embed_code(player['url'], '')
 
         return {
             'link': link,

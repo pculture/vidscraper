@@ -1,0 +1,20 @@
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://www.mirocommunity.org/myfeed</id>
+  <title>Miro Community Feed</title>
+  <updated>2005-07-15T12:00:00Z</updated>
+  <link href="http://mirocommunity.org" />
+  <link rel="self" href="http://mirocommunity.org/myfeed" />
+  <entry>
+    <id>http://www.mirocommunity.org/entries/1</id>
+    <title>Atom 1.0</title>
+    <updated>2005-07-15T12:00:00Z</updated>
+    <link href="http://www.mirocommunity.org/entries/1" />
+    <summary>An overview of Atom 1.0</summary>
+    <link rel="via" href="http://www.example.org/entries/1">
+    <link rel="enclosure"
+          type="application/ogg"
+          title="Ogg"
+          href="http://www.example.org/myvideo.ogg"
+          length="1234" />
+  </entry>
+</feed>

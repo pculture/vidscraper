@@ -1,5 +1,6 @@
 from vidscraper.errors import CantIdentifyUrl
 from vidscraper.suites import BaseSuite, registry
+from vidscraper.utils.html import convert_entities, make_embed_code
 from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
                                          get_entry_thumbnail_url,
                                          struct_time_to_datetime)
@@ -31,18 +32,31 @@ class GenericFeedSuite(BaseSuite):
         else:
             best_date = None
 
-        link = entry['link']
+        link = entry.get('link')
         if 'links' in entry:
             for possible_link in entry.links:
                 if possible_link.get('rel') == 'via':
                     # original URL
                     link = possible_link['href']
                     break
+        if ('content' in entry and entry['content'] and
+            entry['content'][0]['value']): # Atom
+            description = entry['content'][0]['value']
+        else:
+            description = entry['summary'] or ''
+
+        embed_code = None
+        if 'media_player' in entry:
+            player = entry['media_player']
+            if 'content' in player:
+                embed_code = convert_entities(player['content'])
+            elif 'url' in player:
+                embed_code = make_embed_code(player, {})
 
         return {
             'link': link,
-            'title': entry['title'],
-            'description': entry['summary'],
+            'title': convert_entities(entry['title']),
+            'description': description,
             'thumbnail_url': get_entry_thumbnail_url(entry),
             'file_url': enclosure.get('url') if enclosure else None,
             'file_url_mimetype': enclosure.get('type') if enclosure else None,
@@ -50,6 +64,10 @@ class GenericFeedSuite(BaseSuite):
                                 enclosure.get('length'))
                                 if enclosure else None),
             'publish_datetime': best_date,
+            'guid': entry.get('id'),
+            'embed_code': embed_code,
+            'tags': [tag['term'] for tag in entry['tags']
+                     if tag['scheme'] is None] if 'tags' in entry else None
             }
 
 registry.register_fallback(GenericFeedSuite)

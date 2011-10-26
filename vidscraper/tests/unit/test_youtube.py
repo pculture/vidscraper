@@ -198,17 +198,16 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         response = self.suite.get_feed_response(self.feed, self.feed_data)
         entries = self.suite.get_feed_entries(self.feed, response)
         data = self.suite.parse_feed_entry(entries[0])
-        import pprint
-        pprint.pprint(data)
         self.assertTrue('Dire Straits' in data['description'])
         del data['description']
         self.assertEqual(
             data,
-            {'guid': u'tag:youtube.com,2008:video:w_eGBcd--HU',
+            {'guid': u'http://gdata.youtube.com/feeds/api/videos/w_eGBcd--HU',
              'link': u'http://www.youtube.com/watch?v=w_eGBcd--HU',
              'publish_datetime': datetime.datetime(2011, 10, 19, 16, 50, 10),
              'tags': [],
-             'thumbnail_url': u'http://i.ytimg.com/vi/w_eGBcd--HU/default.jpg',
+             'thumbnail_url':
+                 u'http://i.ytimg.com/vi/w_eGBcd--HU/hqdefault.jpg',
              'title': u'Getting It Straight With the Straits',
              'user': u'AssociatedPress',
              'user_url': u'http://www.youtube.com/user/AssociatedPress'}

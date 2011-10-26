@@ -130,7 +130,7 @@ class Video(object):
         'title', 'description', 'publish_datetime', 'file_url',
         'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
-        'thumbnail_url', 'user', 'user_url', 'tags', 'link'
+        'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -268,6 +268,17 @@ class BaseVideoIterator(object):
         self.handle_first_response(response)
         return response
 
+    def _data_from_item(self, item):
+        """
+        Returns a :class:`Video` given some data from a feed.
+        """
+        data = self.get_item_data(item)
+        video = self.suite.get_video(data['link'],
+                                     fields=self.fields,
+                                     api_keys=self.api_keys)
+        self.suite.apply_video_data(video, data)
+        return video
+
     def __iter__(self):
         try:
             response = self.load()
@@ -275,11 +286,7 @@ class BaseVideoIterator(object):
             while self._max_results is None or item_count < self._max_results:
                 items = self.get_response_items(response)
                 for item in items:
-                    data = self.get_item_data(item)
-                    video = self.suite.get_video(data['link'],
-                                                 fields=self.fields,
-                                                 api_keys=self.api_keys)
-                    self.suite.apply_video_data(video, data)
+                    video = self._data_from_item(item)
                     yield video
                     if self._max_results is not None:
                         item_count += 1
@@ -300,6 +307,35 @@ class BaseVideoIterator(object):
         except NotImplementedError:
             pass
         raise StopIteration
+
+    def __reversed__(self):
+        try:
+             # XXX make this not take unlimited memory during crawl
+            responses = [self.load()]
+            response = responses[0]
+            item_count = 0
+            if self.crawl and self.get_response_items(response):
+                while True:
+                    url = self.get_next_url(response)
+                    if not url:
+                        break
+                    response = self.get_url_response(url)
+                    if self.get_response_items(response):
+                        responses.append(response)
+                    else:
+                        break
+            # okay, we've got all the responses; iterate over them backwards
+            for response in reversed(responses):
+                items = self.get_response_items(response)
+                for item in reversed(items):
+                    video = self._data_from_item(item)
+                    yield video
+                    if self._max_results is not None:
+                        item_count += 1
+                        if item_count >= self._max_results:
+                            break
+        except NotImplementedError:
+            raise StopIteration
 
 
 class VideoFeed(BaseVideoIterator):
@@ -401,6 +437,7 @@ class VideoFeed(BaseVideoIterator):
 
     def handle_first_response(self, response):
         super(VideoFeed, self).handle_first_response(response)
+        response = self.suite.get_feed_info_response(self, response)
         self.title = self.suite.get_feed_title(self, response)
         self.entry_count = self.suite.get_feed_entry_count(self, response)
         self.description = self.suite.get_feed_description(self, response)
@@ -598,7 +635,7 @@ class BaseSuite(object):
 
         """
         for field, value in data.iteritems():
-            if (field in video.fields and getattr(video, field) is None):
+            if (field in video.fields):# and getattr(video, field) is None):
                 setattr(video, field, value)
 
     def get_oembed_url(self, video):
@@ -728,6 +765,15 @@ class BaseSuite(object):
 
         """
         return feedparser.parse(feed_url)
+
+    def get_feed_info_response(self, feed, response):
+        """
+        In case the response for the given ``feed`` needs to do other work on
+        ``reponse`` to get feed information (title, &c), suites can override
+        this method to do that work.  By default, this method just returns the
+        ``response`` it was given.
+        """
+        return response
 
     def get_feed_title(self, feed, feed_response):
         """

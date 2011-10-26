@@ -93,6 +93,7 @@ class VimeoApiTestCase(VimeoTestCase):
                      u'smile', u'fart'],
             'user': u'Jake Lodwick',
             'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
+            'guid': u'tag:vimeo,2005-02-16:clip2',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/2" '
                            'width="320" height="240" frameborder="0" '
                            'webkitAllowFullScreen allowFullScreen></iframe>',
@@ -105,7 +106,9 @@ class VimeoFeedTestCase(VimeoTestCase):
         VimeoTestCase.setUp(self)
         feed_file = open(os.path.join(self.data_file_dir, 'feed.json'))
         response = json.loads(feed_file.read())
-        self.entries = self.suite.get_feed_entries(response)
+        self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
+        self.feed._first_response = response
+        self.entries = self.suite.get_feed_entries(self.feed, response)
 
     def test_get_feed_url(self):
         self.assertEqual(
@@ -131,6 +134,7 @@ class VimeoFeedTestCase(VimeoTestCase):
             'user': u"Jake Lodwick",
             'user_url': u"http://vimeo.com/jakob",
             "tags": [],
+            'guid': u'tag:vimeo,2011-06-06:clip24714980',
             'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
         }
         self.assertEqual(data, expected_data)
@@ -154,7 +158,8 @@ class VimeoFeedTestCase(VimeoTestCase):
             'user_url': u"http://vimeo.com/jakob",
             'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
             'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
-            'tags': [u'archives', u'santa', u'easter bunny'],
+            'tags': [u'archives', u'santa', u'easter bunnstsy'],
+            'guid': u'tag:vimeo,2011-05-16:clip23833511',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
         }
         self.maxDiff = None

@@ -51,7 +51,7 @@ class VimeoSuite(BaseSuite):
                   r'(?:/(?P<type>videos|likes))?')
     _tag_re = re.compile(r'>([\w ]+)</a>')
 
-    api_fields = set(['link', 'title', 'description', 'tags',
+    api_fields = set(['link', 'title', 'description', 'tags', 'guid',
                       'publish_datetime', 'thumbnail_url', 'user', 'user_url',
                       'flash_enclosure_url', 'embed_code'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
@@ -90,11 +90,16 @@ allowFullScreen></iframe>""" % video_id
                                              '%Y-%m-%d %H:%M:%S'),
             'tags': [tag for tag in video['tags'].split(', ') if tag],
             'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
-            'embed_code': self._embed_code_from_id(video_id)
+            'embed_code': self._embed_code_from_id(video_id),
+            'guid': 'tag:vimeo,%s:clip%i' % (video['upload_date'][:10],
+                                             video['id'])
         }
         return data
 
-    def get_feed_url(self, feed_url):
+    def _get_user_api_url(self, user, type):
+        return 'http://vimeo.com/api/v2/%s/%s.json' % (user, type)
+        
+    def get_feed_url(self, feed_url, type_override=None):
         """
         Rewrites a feed url into an api request url so that crawl can work, and
         because more information can be retrieved from the api.
@@ -105,13 +110,53 @@ allowFullScreen></iframe>""" % video_id
             path = "/".join((groups['collection'], groups['name']))
         else:
             path = groups['name']
-        return 'http://vimeo.com/api/v2/%s/%s.json' % (path, groups['type'])
+        return self._get_user_api_url(path,
+                                      groups['type']
+                                      if not type_override else type_override)
 
-    def get_feed_response(self, feed_url):
+    def get_feed_response(self, feed, feed_url):
         response_text = urllib2.urlopen(feed_url, timeout=5).read()
         return json.loads(response_text)
 
-    def get_feed_entries(self, feed_response):
+    def get_feed_info_response(self, feed, response):
+        info_url = self.get_feed_url(feed.original_url, type_override='info')
+        return self.get_feed_response(feed, info_url)
+
+    def get_feed_title(self, feed, response):
+        username = response['display_name']
+        if feed.url.endswith('likes.json'):
+            return 'Videos %s likes on Vimeo' % username
+        else:
+            return "%s's videos on Vimeo" % username
+
+    def get_feed_entry_count(self, feed, response):
+        if feed.url.endswith('likes.json'):
+            return response['total_videos_liked']
+        else:
+            return response['total_videos_uploaded']
+
+    def get_feed_description(self, feed, response):
+        return response['bio']
+
+    def get_feed_webpage(self, feed, response):
+        if feed.url.endswith('likes.json'):
+            return '%s/likes' % response['profile_url']
+        else:
+            return response['videos_url']
+
+    def get_feed_thumbnail_url(self, feed, response):
+        return response['portrait_huge']
+
+    def get_feed_guid(self, feed, response):
+        return None
+
+    def get_feed_last_modified(self, feed, response):
+        return None
+
+    def get_feed_etag(self, feed, response):
+        return None
+
+    def get_feed_entries(self, feed, feed_response):
         return feed_response
 
     def parse_feed_entry(self, entry):

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Vimeo / Latoya Peterson's uploaded videos</title>
+    <link>http://vimeo.com/user1751935/videos/uploaded</link>
+    <description>Videos uploaded to Vimeo by Latoya Peterson</description>
+    <pubDate>Fri, 04 Dec 2009 08:23:47 -0500</pubDate>
+    <atom:link href="http://vimeo.com/user1751935/videos/uploaded/rss" rel="self" />
+    <language>en-us</language>
+    <generator>The Vimeo</generator>
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    <image>
+      <url>http://bitcast.vimeo.com/vimeo/portraits/defaults/d.75.jpg</url>
+      <title>Vimeo / Latoya Peterson's uploaded videos</title>
+      <link>http://vimeo.com/user1751935/videos/uploaded</link>
+    </image>
+    <item>
+      <title>Tishana - Pro-Choicers on Stupak</title>
+      <pubDate>Fri, 04 Dec 2009 08:23:47 -0500</pubDate>
+      <link>http://vimeo.com/7981161</link>
+      <dc:creator>Latoya Peterson</dc:creator>
+      <description>&lt;p&gt;&lt;a href=&quot;http://vimeo.com/7981161&quot; title=&quot;Tishana - Pro-Choicers on Stupak&quot;&gt;&lt;img src=&quot;http://ts.vimeo.com.s3.amazonaws.com/360/198/36019806_200.jpg&quot; alt=&quot;Tishana - Pro-Choicers on Stupak&quot; /&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;Tishana from SPARK Reproductive Justice talking about the right to choose after the National Day of Action Rally to Stop Stupak-Pitts, 12.2.2009
+&lt;/p&gt;&lt;p&gt;Cast: &lt;a href=&quot;http://vimeo.com/user1751935&quot; style=&quot;color: #2786c2; text-decoration: none;&quot;&gt;Latoya Peterson&lt;/a&gt;&lt;/p&gt;</description>
+      <guid isPermaLink="false">tag:vimeo,2009-12-04:clip7981161</guid>
+      <enclosure length="15993252" type="application/x-shockwave-flash" url="http://vimeo.com/moogaloop.swf?clip_id=7981161" />
+      <media:content>
+        <media:player url="http://vimeo.com/moogaloop.swf?clip_id=7981161" />
+        <media:credit role="author" scheme="http://vimeo.com">Latoya Peterson</media:credit>
+        <media:thumbnail height="150" url="http://ts.vimeo.com.s3.amazonaws.com/360/198/36019806_200.jpg" width="200" />
+        <media:title>Tishana - Pro-Choicers on Stupak</media:title>
+        <media:category label="Tags">Stupak-Pitts, Pro-Choice</media:category>
+      </media:content>
+      <category domain="http://vimeo.com/tag:Stupak-Pitts">Stupak-Pitts</category>
+      <category domain="http://vimeo.com/tag:Pro-Choice">Pro-Choice</category>
+    </item>
+  </channel>
+</rss>

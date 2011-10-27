@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import re
 import os
 import unittest
 import urllib
@@ -32,7 +31,6 @@ import urlparse
 
 import feedparser
 
-from vidscraper.errors import CantIdentifyUrl
 from vidscraper.suites.youtube import YouTubeSuite
 
 
@@ -65,6 +63,7 @@ CARAMELL_DANSEN_ATOM_DATA = {
         u"Music",
     ]),
     'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
+    'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4'
 }
 
 
@@ -139,6 +138,12 @@ class YouTubeApiTestCase(YouTubeTestCase):
         api_url = self.suite.get_api_url(self.video)
         self.assertEqual(api_url,
                         "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4")
+        video = self.suite.get_video(
+            url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
+        api_url = self.suite.get_api_url(video)
+        self.assertEqual(api_url,
+                         "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ")
+                         
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'api.atom'))
@@ -150,17 +155,75 @@ class YouTubeApiTestCase(YouTubeTestCase):
         self.maxDiff = None
         self.assertEqual(data, expected_data)
 
+class YouTubeFeedTestCase(YouTubeTestCase):
+    def setUp(self):
+        YouTubeTestCase.setUp(self)
+        self.feed_url = ('http://gdata.youtube.com/feeds/base/users/'
+                         'AssociatedPress/uploads?alt=rss&v=2')
+        self.feed = self.suite.get_feed(self.feed_url)
+        self.feed_data = open(
+            os.path.join(self.data_file_dir, 'feed.atom')).read()
+
+    def test_get_feed_url(self):
+        self.assertEqual(self.suite.get_feed_url(self.feed_url), self.feed_url)
+        self.assertEqual(self.suite.get_feed_url(
+                'http://www.youtube.com/user/AssociatedPress'),
+                         self.feed_url)
+        self.assertEqual(self.suite.get_feed_url(
+                'http://www.youtube.com/profile?user=AssociatedPress'),
+                         self.feed_url)
+
+    def test_get_feed_entry_count(self):
+        response = self.suite.get_feed_response(self.feed, self.feed_data)
+        self.assertEqual(self.suite.get_feed_entry_count(self.feed,
+                                                         response),
+                         50943)
+
+    def test_next_feed_page_url(self):
+        response = self.suite.get_feed_response(self.feed, self.feed_data)
+        new_url = self.suite.get_next_feed_page_url(self.feed, response)
+        self.assertTrue('&max-results=25' in new_url)
+        self.assertTrue('&start-index=26' in new_url)
+        response = {'feed': {}}
+        new_url = self.suite.get_next_feed_page_url(self.feed, response)
+        self.assertEqual(new_url, None)
+        response = {'feed': {
+                'opensearch_startindex': '1',
+                'opensearch_totalresults': '5',
+                'opensearch_itemsperpage': '25'}}
+        new_url = self.suite.get_next_feed_page_url(self.feed, response)
+        self.assertEqual(new_url, None)
+
+    def test_parse_feed_entry(self):
+        response = self.suite.get_feed_response(self.feed, self.feed_data)
+        entries = self.suite.get_feed_entries(self.feed, response)
+        data = self.suite.parse_feed_entry(entries[0])
+        self.assertTrue('Dire Straits' in data['description'])
+        del data['description']
+        self.assertEqual(
+            data,
+            {'guid': u'http://gdata.youtube.com/feeds/api/videos/w_eGBcd--HU',
+             'link': u'http://www.youtube.com/watch?v=w_eGBcd--HU',
+             'publish_datetime': datetime.datetime(2011, 10, 19, 16, 50, 10),
+             'tags': [],
+             'thumbnail_url':
+                 u'http://i.ytimg.com/vi/w_eGBcd--HU/hqdefault.jpg',
+             'title': u'Getting It Straight With the Straits',
+             'user': u'AssociatedPress',
+             'user_url': u'http://www.youtube.com/user/AssociatedPress'}
+            )
 
 class YouTubeSearchTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.atom'))
         response = feedparser.parse(search_file.read())
-        self.results = self.suite.get_search_results(response)
+        self.search = self.suite.get_search('query')
+        self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result(self):
         self.maxDiff = None
-        data = self.suite.parse_search_result(self.results[0])
+        data = self.suite.parse_search_result(self.search, self.results[0])
         self.assertTrue(isinstance(data, dict))
         data['tags'] = set(data['tags'])
         expected_data = CARAMELL_DANSEN_ATOM_DATA.copy()
@@ -173,20 +236,40 @@ class YouTubeSearchTestCase(YouTubeTestCase):
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
 
+    def test_get_search_url(self):
+        extra_params = {'bar': 'baz'}
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      extra_params=extra_params),
+            'http://gdata.youtube.com/feeds/api/videos?vq=query&bar=baz')
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      order_by='relevant'),
+            ('http://gdata.youtube.com/feeds/api/videos?'
+             'orderby=relevance&vq=query'))
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      order_by='latest'),
+            ('http://gdata.youtube.com/feeds/api/videos?'
+             'orderby=published&vq=query'))
+            
+
     def test_next_search_page_url(self):
         response = {
-            'opensearch_startindex': '1',
-            'opensearch_itemsperpage': '50',
-            'opensearch_totalresults': '10',
-        }
-        new_url = self.suite.get_next_search_page_url("caramell dansen",
+            'feed': {
+                'opensearch_startindex': '1',
+                'opensearch_itemsperpage': '50',
+                'opensearch_totalresults': '10',
+                }
+            }
+        new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertTrue(new_url is None)
-        response['opensearch_totalresults'] = '100'
-        new_url = self.suite.get_next_search_page_url("caramell dansen",
+        response['feed']['opensearch_totalresults'] = '100'
+        new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertFalse(new_url is None)
         parsed = urlparse.urlparse(new_url)
         params = urlparse.parse_qs(parsed.query)
-        self.assertEqual(params['start_index'][0], '51')
-        self.assertEqual(params['max_results'][0], '50')
+        self.assertEqual(params['start-index'][0], '51')
+        self.assertEqual(params['max-results'][0], '50')

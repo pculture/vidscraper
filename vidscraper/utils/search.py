@@ -24,11 +24,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-def search_string_from_terms(include_terms, exclude_terms=None):
+def terms_from_search_string(search_string):
+    """
+    Returns a ``(include_terms, exclude_terms)`` tuple, where ``include_terms``
+    and ``exclude_terms`` are sets of strings. Currently extremely naive;
+    doesn't handle quoted terms.
+
+    """
+    terms = set(search_string.split())
+    exclude_terms = set((term for term in terms if term.startswith('-')))
+    include_terms = terms - exclude_terms
+    stripped_exclude_terms = set([term.lstrip('-') for term in exclude_terms])
+    return include_terms, stripped_exclude_terms
+
+
+def search_string_from_terms(include_terms, exclude_terms):
+    """
+    
+    """
     marked_exclude_terms = ['-' + term for term in exclude_terms or []]
     search_term_list = list(include_terms) + marked_exclude_terms
-    search_terms = ' '.join(search_term_list)
-    return search_terms
+    search_string = ' '.join(search_term_list)
+    return search_string
 
 
 def intersperse_results(suite_dict, max_results):
@@ -38,7 +55,7 @@ def intersperse_results(suite_dict, max_results):
     results are exhausted or ``max_results`` results have been returned.
 
     """
-    iterators = suite_dict.values()
+    iterators = [iter(i) for i in suite_dict.values()]
     num_results = 0
     while len(iterators) > 0 and num_results < max_results:
         for iterator in iterators[:]:

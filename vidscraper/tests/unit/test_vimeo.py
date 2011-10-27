@@ -93,6 +93,7 @@ class VimeoApiTestCase(VimeoTestCase):
                      u'smile', u'fart'],
             'user': u'Jake Lodwick',
             'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
+            'guid': u'tag:vimeo,2005-02-16:clip2',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/2" '
                            'width="320" height="240" frameborder="0" '
                            'webkitAllowFullScreen allowFullScreen></iframe>',
@@ -105,7 +106,78 @@ class VimeoFeedTestCase(VimeoTestCase):
         VimeoTestCase.setUp(self)
         feed_file = open(os.path.join(self.data_file_dir, 'feed.json'))
         response = json.loads(feed_file.read())
-        self.entries = self.suite.get_feed_entries(response)
+        self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
+        self.feed._first_response = response
+        self.entries = self.suite.get_feed_entries(self.feed, response)
+        info_file = open(os.path.join(self.data_file_dir, 'info.json'))
+        self.info_response = json.load(info_file)
+
+    def test_get_feed_url(self):
+        self.assertEqual(
+            self.suite.get_feed_url('http://vimeo.com/jakob/videos/rss'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url(
+                'http://vimeo.com/channels/whitehouse/videos/rss'),
+            'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
+
+    def test_get_feed_title(self):
+        self.assertEqual(
+            self.suite.get_feed_title(self.feed, self.info_response),
+            "Jake Lodwick's videos on Vimeo")
+
+    def test_get_feed_title_likes(self):
+        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
+        self.assertEqual(
+            self.suite.get_feed_title(self.feed, self.info_response),
+            "Videos Jake Lodwick likes on Vimeo")        
+
+    def test_get_feed_entry_count(self):
+        self.assertEqual(
+            self.suite.get_feed_entry_count(self.feed, self.info_response),
+            359)
+
+    def test_get_feed_entry_count_likes(self):
+        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
+        self.assertEqual(
+            self.suite.get_feed_entry_count(self.feed, self.info_response),
+            1333)        
+
+    def test_get_feed_description(self):
+        self.assertEqual(
+            self.suite.get_feed_description(self.feed, self.info_response),
+            "")
+
+    def test_get_feed_webpage(self):
+        self.assertEqual(
+            self.suite.get_feed_webpage(self.feed, self.info_response),
+            "http://vimeo.com/jakob/videos")
+
+    def test_feed_webpage_likes(self):
+        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
+        self.assertEqual(
+            self.suite.get_feed_webpage(self.feed, self.info_response),
+            "http://vimeo.com/jakob/likes")
+
+    def test_get_feed_thumbnail_url(self):
+        self.assertEqual(
+            self.suite.get_feed_thumbnail_url(self.feed, self.info_response),
+            "http://b.vimeocdn.com/ps/137/734/1377340_300.jpg")
+
+    def test_get_feed_guid(self):
+        self.assertEqual(
+            self.suite.get_feed_guid(self.feed, self.info_response),
+            None)
+
+    def test_get_feed_last_modified(self):
+        self.assertEqual(
+            self.suite.get_feed_last_modified(self.feed, self.info_response),
+            None)
+
+    def test_get_feed_etag(self):
+        self.assertEqual(
+            self.suite.get_feed_etag(self.feed, self.info_response),
+            None)
 
     def test_parse_feed_entry_0(self):
         data = self.suite.parse_feed_entry(self.entries[0])
@@ -122,6 +194,7 @@ class VimeoFeedTestCase(VimeoTestCase):
             'user': u"Jake Lodwick",
             'user_url': u"http://vimeo.com/jakob",
             "tags": [],
+            'guid': u'tag:vimeo,2011-06-06:clip24714980',
             'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
         }
         self.assertEqual(data, expected_data)
@@ -146,6 +219,7 @@ class VimeoFeedTestCase(VimeoTestCase):
             'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
             'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
             'tags': [u'archives', u'santa', u'easter bunny'],
+            'guid': u'tag:vimeo,2011-05-16:clip23833511',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
         }
         self.maxDiff = None
@@ -158,6 +232,9 @@ class VimeoFeedTestCase(VimeoTestCase):
         this_url = "http://vimeo.com/nothing/here/"
         next_url = self.suite.get_next_feed_page_url(this_url, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+        this_url = "http://vimeo.com/nothing/here/?page=notanumber"
+        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
 
 class VimeoSearchTestCase(VimeoTestCase):
@@ -165,10 +242,14 @@ class VimeoSearchTestCase(VimeoTestCase):
         VimeoTestCase.setUp(self)
         search_file = open(os.path.join(self.data_file_dir, 'search.json'))
         response = json.loads(search_file.read())
-        self.results = self.suite.get_search_results(response)
+        self.search = self.suite.get_search(
+            'search query',
+            api_keys={'vimeo_api_key': 'BLANK',
+                      'vimeo_api_secret': 'BLANK'})
+        self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result_1(self):
-        data = self.suite.parse_search_result(self.results[0])
+        data = self.suite.parse_search_result(self.search, self.results[0])
         self.assertTrue(isinstance(data, dict))
         expected_data = {
             'title': u'Dancing Pigeons - Ritalin',
@@ -189,15 +270,34 @@ allowFullScreen></iframe>"""
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
 
+    def test_get_search_url(self):
+        extra_params = {'bar': 'baz'}
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      extra_params=extra_params),
+            'http://vimeo.com/api/rest/v2/?bar=baz&full_response=1&format=json'
+            '&query=query+search&api_key=BLANK&method=vimeo.videos.search')
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      order_by='relevant'),
+            'http://vimeo.com/api/rest/v2/?sort=relevant&full_response=1&'
+            'format=json&query=query+search&api_key=BLANK&'
+            'method=vimeo.videos.search')
+        self.assertEqual(
+            self.suite.get_search_url(self.search,
+                                      order_by='latest'),
+            'http://vimeo.com/api/rest/v2/?sort=newest&full_response=1&'
+            'format=json&query=query+search&api_key=BLANK&'
+            'method=vimeo.videos.search')
+
     def test_next_page_url(self):
-        kwargs = {'vimeo_api_key': 'BLANK'}
         response = {'total': '10', 'page': '1', 'per_page': '50'}
-        new_url = self.suite.get_next_search_page_url(response, "blink",
-                                                      **kwargs)
+        new_url = self.suite.get_next_search_page_url(self.search,
+                                                      response)
         self.assertTrue(new_url is None)
         response['total'] = '100'
-        new_url = self.suite.get_next_search_page_url(response, "blink",
-                                                      **kwargs)
+        new_url = self.suite.get_next_search_page_url(self.search,
+                                                      response)
         self.assertFalse(new_url is None)
         parsed = urlparse.urlparse(new_url)
         params = urlparse.parse_qs(parsed.query)

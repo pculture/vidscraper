@@ -43,7 +43,7 @@ class FieldNotFound(Error):
 class CantIdentifyUrl(Error):
     """
     Raised if a url can't be handled by any known :doc:`suite </api/suites>`, or
-    if a :class:`.ScrapedVideo` is initialized with an incorrect suite.
+    if a :class:`.Video` is initialized with an incorrect suite.
 
     """
 

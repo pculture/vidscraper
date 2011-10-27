@@ -27,15 +27,29 @@ import unittest
 
 from vidscraper import auto_scrape, auto_search, auto_feed
 
-
 class AutoFunctionalTestCase(unittest.TestCase):
     def test_auto_scrape(self):
         video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
-        self.assertEqual(video.title, u'CaramellDansen (Full Version + Lyrics)')
+        self.assertEqual(video.title,
+                         u'CaramellDansen (Full Version + Lyrics)')
 
     def test_auto_search(self):
-        result_lists = auto_search(['parrot'], exclude_terms=['dead']).values()
+        result_lists = auto_search('parrot -dead').values()
         results = []
         for result_list in result_lists:
+            print result_list
             results.extend(result_list)
-        self.assertGreater(len(results), 0)
+        self.assertTrue(len(results) > 0)
+
+    def test_auto_feed(self):
+        feed = auto_feed("http://youtube.com/AssociatedPress")
+        self.assertEqual(feed.url,
+                         ('http://gdata.youtube.com/feeds/base/users/'
+                          'AssociatedPress/uploads?alt=rss&v=2'))
+        feed.load()
+        self.assertEqual(feed.title, 'Uploads by AssociatedPress')
+        self.assertEqual(
+            feed.thumbnail_url,
+            'http://www.youtube.com/img/pic_youtubelogo_123x63.gif')
+        self.assertTrue('AssociatedPress' in feed.webpage)
+        self.assertTrue(feed.entry_count > 50000)

@@ -24,9 +24,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import re
 
 from vidscraper.utils.mimetypes import is_accepted_filename, is_accepted_type
+
+
+def struct_time_to_datetime(struct_time):
+    """
+    Returns a python datetime for the passed-in ``struct_time``.
+
+    """
+    return datetime.datetime(*struct_time[:6])
 
 
 def get_entry_enclosures(entry):

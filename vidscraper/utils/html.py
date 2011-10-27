@@ -23,6 +23,17 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from BeautifulSoup import BeautifulStoneSoup
+
+def convert_entities(text):
+    """
+    Uses :mod:`BeautifulSoup` to convert the HTML entities in some text into
+    the appropriate characters.
+    """
+    return unicode(
+        BeautifulStoneSoup(text,
+                           convertEntities=BeautifulStoneSoup.HTML_ENTITIES))
+
 def make_embed_code(video_url, flash_qs, width=400, height=264):
     """Generates embed code from a flash enclosure."""
     return u"""<object width="%(width)s" height="%(height)s">

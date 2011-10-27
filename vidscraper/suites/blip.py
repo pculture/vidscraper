@@ -31,12 +31,13 @@ import feedparser
 
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
-                                        get_first_accepted_enclosure
+                                        get_first_accepted_enclosure, \
+                                        struct_time_to_datetime
 from vidscraper.utils.http import clean_description_html
 
 
 class BlipSuite(BaseSuite):
-    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv/'
+    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?$'
     feed_regex = video_regex
 
     api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
@@ -49,28 +50,26 @@ class BlipSuite(BaseSuite):
     def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a blip rss feed into
-        a dictionary mapping :class:`.ScrapedVideo` fields to values.
+        a dictionary mapping :class:`.Video` fields to values.
 
         """
         enclosure = get_first_accepted_enclosure(entry)
 
-        description = entry['blip_puredescription']
-        datestamp = datetime.strptime(entry['blip_datestamp'],
-                                      "%Y-%m-%dT%H:%M:%SZ")
-        data = {
+        return {
             'link': entry['link'],
             'title': entry['title'],
-            'description': clean_description_html(description),
+            'description': clean_description_html(
+                entry['blip_puredescription']),
             'file_url': enclosure['url'],
             'embed_code': entry['media_player']['content'],
-            'publish_datetime': datestamp,
+            'publish_datetime': datetime.strptime(entry['blip_datestamp'],
+                                                  "%Y-%m-%dT%H:%M:%SZ"),
             'thumbnail_url': get_entry_thumbnail_url(entry),
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None][1:],
             'user': entry['blip_safeusername'],
             'user_url': entry['blip_showpage']
-        }
-        return data
+            }
 
     def get_next_feed_page_url(self, last_url, feed_response):
         parsed = urlparse.urlparse(last_url)
@@ -84,6 +83,12 @@ class BlipSuite(BaseSuite):
                           urllib.urlencode(params, True))
 
     def get_api_url(self, video):
+        if '-' not in video.url:
+            # http://blip.tv/file/1077145/
+            # oh no, an older URL; get the redirected URL
+            resp = urllib.urlopen(video.url)
+            video.url = resp.geturl()
+            resp.close()
         parsed_url = urlparse.urlparse(video.url)
         post_id = parsed_url[2].rsplit('-', 1)[1]
         new_parsed_url = parsed_url[:2] + ("/rss/%s" % post_id,

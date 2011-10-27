@@ -29,9 +29,6 @@ Although the name is vidscraper, the library also accepts audio files.
 
 """
 
-import os
-
-
 #: A tuple of extensions which :mod:`vidscraper` accepts.
 ACCEPTED_EXTENSIONS = (
     '.mov', '.wmv', '.mp4', '.m4v', '.ogg', '.ogv', '.anx',

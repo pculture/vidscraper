@@ -131,12 +131,15 @@ class Video(object):
         'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
+        'index'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
     link = None
     #: A (supposedly) global identifier for the video
     guid = None
+    #: Where the video was in the feed/search
+    index = None
     #: The video's title.
     title = None
     #: A text or html description of the video.
@@ -283,15 +286,21 @@ class BaseVideoIterator(object):
         try:
             response = self.load()
             item_count = 0
+            # decrease the index as we count down through the entries.  doesn't
+            # quite work for feeds where we don't know the /total/ number of
+            # items; then it'll just index the video within the one feed
+            start_index = self.get_start_index()
             while self._max_results is None or item_count < self._max_results:
                 items = self.get_response_items(response)
                 for item in items:
                     video = self._data_from_item(item)
+                    video.index = start_index
+                    start_index -= 1
                     yield video
                     if self._max_results is not None:
                         item_count += 1
                         if item_count >= self._max_results:
-                            break
+                            raise StopIteration
                 else:
                     # We haven't hit the limit yet. Continue to the next page
                     # if:
@@ -314,14 +323,21 @@ class BaseVideoIterator(object):
             responses = [self.load()]
             response = responses[0]
             item_count = 0
+            total_items = 0
+            start_index = 0
             if self.crawl and self.get_response_items(response):
                 while True:
                     url = self.get_next_url(response)
                     if not url:
                         break
                     response = self.get_url_response(url)
-                    if self.get_response_items(response):
+                    items = self.get_response_items(response)
+                    if items:
+                        total_items += len(items)
                         responses.append(response)
+                        if self._max_results:
+                            if total_items >= self._max_results:
+                                break
                     else:
                         break
             # okay, we've got all the responses; iterate over them backwards
@@ -329,11 +345,13 @@ class BaseVideoIterator(object):
                 items = self.get_response_items(response)
                 for item in reversed(items):
                     video = self._data_from_item(item)
+                    video.index = start_index
+                    start_index += 1
                     yield video
                     if self._max_results is not None:
                         item_count += 1
                         if item_count >= self._max_results:
-                            break
+                            raise StopIteration
         except NotImplementedError:
             raise StopIteration
 
@@ -432,6 +450,9 @@ class VideoFeed(BaseVideoIterator):
     def get_first_url(self):
         return self.url
 
+    def get_start_index(self):
+        return self.entry_count
+
     def get_url_response(self, url):
         return self.suite.get_feed_response(self, url)
 
@@ -517,6 +538,9 @@ class VideoSearch(BaseVideoIterator):
 
     def get_first_url(self):
         return self.suite.get_search_url(self)
+
+    def get_start_index(self):
+        return self.total_results
 
     def get_url_response(self, url):
         return self.suite.get_search_response(self, url)
@@ -912,10 +936,10 @@ class BaseSuite(object):
         """
         Returns an estimate for the total number of search results based on the
         first response returned by :meth:`get_search_response` for the
-        :class:`VideoSearch`. By default, simply returns ``None``.
-
+        :class:`VideoSearch`. By default, assumes that the url references a
+        feed and passes the work off to :meth:`.get_feed_entry_count`.
         """
-        return None
+        return self.get_feed_entry_count(search, search_response)
 
     def get_search_time(self, search, search_response):
         """

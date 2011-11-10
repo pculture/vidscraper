@@ -36,6 +36,8 @@ from vidscraper.utils.feedparser import (struct_time_to_datetime,
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
+RegexpPattern = type(re.compile(''))
+
 
 class SuiteRegistry(object):
     """
@@ -607,6 +609,23 @@ class BaseSuite(object):
             self.video_regex = re.compile(self.video_regex)
         if isinstance(self.feed_regex, basestring):
             self.feed_regex = re.compile(self.feed_regex)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        regexes = {}
+        for key, value in state.items():
+            if isinstance(value, RegexpPattern):
+                regexes[key] = value.pattern
+        state['_regexes'] = regexes
+        for key in regexes:
+            del state[key]
+        return state
+
+    def __setstate__(self, state):
+        regexes = state.pop('_regexes')
+        for key, value in regexes.items():
+            state[key] = re.compile(value)
+        self.__dict__ = state
 
     def handles_video_url(self, url):
         """

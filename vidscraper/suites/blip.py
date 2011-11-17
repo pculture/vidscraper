@@ -71,8 +71,8 @@ class BlipSuite(BaseSuite):
             'user_url': entry['blip_showpage']
             }
 
-    def get_next_feed_page_url(self, last_url, feed_response):
-        parsed = urlparse.urlparse(last_url)
+    def get_next_feed_page_url(self, feed, feed_response):
+        parsed = urlparse.urlparse(feed.url)
         params = urlparse.parse_qs(parsed.query)
         try:
             page = int(params.get('page', ['1'])[0])

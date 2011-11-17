@@ -31,8 +31,7 @@ import feedparser
 
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
-                                        get_first_accepted_enclosure, \
-                                        struct_time_to_datetime
+                                        get_first_accepted_enclosure
 from vidscraper.utils.http import clean_description_html
 
 

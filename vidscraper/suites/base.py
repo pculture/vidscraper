@@ -287,7 +287,7 @@ class BaseVideoIterator(object):
     def __iter__(self):
         try:
             response = self.load()
-            item_count = 0
+            item_count = 1
             # decrease the index as we count down through the entries.  doesn't
             # quite work for feeds where we don't know the /total/ number of
             # items; then it'll just index the video within the one feed
@@ -295,12 +295,12 @@ class BaseVideoIterator(object):
                 items = self.get_response_items(response)
                 for item in items:
                     video = self._data_from_item(item)
-                    video.index = item_count + 1 # first item is 1
+                    video.index = item_count
                     yield video
                     if self._max_results is not None:
-                        item_count += 1
                         if item_count >= self._max_results:
                             raise StopIteration
+                    item_count += 1
                 else:
                     # We haven't hit the limit yet. Continue to the next page
                     # if:

@@ -123,6 +123,8 @@ allowFullScreen></iframe>""" % video_id
         return self.get_feed_response(feed, info_url)
 
     def get_feed_title(self, feed, response):
+        if 'creator_display_name' in response:
+            return u'%s on Vimeo' % response['creator_display_name']
         username = response['display_name']
         if feed.url.endswith('likes.json'):
             return 'Videos %s likes on Vimeo' % username
@@ -132,20 +134,30 @@ allowFullScreen></iframe>""" % video_id
     def get_feed_entry_count(self, feed, response):
         if feed.url.endswith('likes.json'):
             return response['total_videos_liked']
-        else:
+        elif 'total_videos_uploaded' in response:
             return response['total_videos_uploaded']
+        else:
+            return response['total_videos']
 
     def get_feed_description(self, feed, response):
-        return response['bio']
+        if 'bio' in response:
+            return response['bio']
+        else:
+            return response['description']
 
     def get_feed_webpage(self, feed, response):
         if feed.url.endswith('likes.json'):
             return '%s/likes' % response['profile_url']
-        else:
+        elif 'videos_url' in response:
             return response['videos_url']
+        else:
+            return response['creator_url']
 
     def get_feed_thumbnail_url(self, feed, response):
-        return response['portrait_huge']
+        if 'portrait_huge' in response:
+            return response['portrait_huge']
+        else:
+            return response['logo']
 
     def get_feed_guid(self, feed, response):
         return None
@@ -219,6 +231,9 @@ allowFullScreen></iframe>""" % video_id
         client = oauth2.Client(consumer)
         request = client.request(search_url)
         return json.loads(request[1])
+
+    def get_search_total_results(self, search, search_response):
+        return int(search_response['videos']['total'])
 
     def get_search_results(self, search, search_response):
         return search_response['videos']['video']

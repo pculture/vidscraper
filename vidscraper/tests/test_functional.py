@@ -37,7 +37,6 @@ class AutoFunctionalTestCase(unittest.TestCase):
         result_lists = auto_search('parrot -dead').values()
         results = []
         for result_list in result_lists:
-            print result_list
             results.extend(result_list)
         self.assertTrue(len(results) > 0)
 

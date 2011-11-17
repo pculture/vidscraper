@@ -36,6 +36,8 @@ from vidscraper.utils.feedparser import (struct_time_to_datetime,
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
+RegexpPattern = type(re.compile(''))
+
 
 class SuiteRegistry(object):
     """
@@ -131,12 +133,15 @@ class Video(object):
         'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
+        'index'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
     link = None
     #: A (supposedly) global identifier for the video
     guid = None
+    #: Where the video was in the feed/search
+    index = None
     #: The video's title.
     title = None
     #: A text or html description of the video.
@@ -282,16 +287,20 @@ class BaseVideoIterator(object):
     def __iter__(self):
         try:
             response = self.load()
-            item_count = 0
+            item_count = 1
+            # decrease the index as we count down through the entries.  doesn't
+            # quite work for feeds where we don't know the /total/ number of
+            # items; then it'll just index the video within the one feed
             while self._max_results is None or item_count < self._max_results:
                 items = self.get_response_items(response)
                 for item in items:
                     video = self._data_from_item(item)
+                    video.index = item_count
                     yield video
                     if self._max_results is not None:
-                        item_count += 1
                         if item_count >= self._max_results:
-                            break
+                            raise StopIteration
+                    item_count += 1
                 else:
                     # We haven't hit the limit yet. Continue to the next page
                     # if:
@@ -307,35 +316,6 @@ class BaseVideoIterator(object):
         except NotImplementedError:
             pass
         raise StopIteration
-
-    def __reversed__(self):
-        try:
-             # XXX make this not take unlimited memory during crawl
-            responses = [self.load()]
-            response = responses[0]
-            item_count = 0
-            if self.crawl and self.get_response_items(response):
-                while True:
-                    url = self.get_next_url(response)
-                    if not url:
-                        break
-                    response = self.get_url_response(url)
-                    if self.get_response_items(response):
-                        responses.append(response)
-                    else:
-                        break
-            # okay, we've got all the responses; iterate over them backwards
-            for response in reversed(responses):
-                items = self.get_response_items(response)
-                for item in reversed(items):
-                    video = self._data_from_item(item)
-                    yield video
-                    if self._max_results is not None:
-                        item_count += 1
-                        if item_count >= self._max_results:
-                            break
-        except NotImplementedError:
-            raise StopIteration
 
 
 class VideoFeed(BaseVideoIterator):
@@ -583,6 +563,23 @@ class BaseSuite(object):
             self.video_regex = re.compile(self.video_regex)
         if isinstance(self.feed_regex, basestring):
             self.feed_regex = re.compile(self.feed_regex)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        regexes = {}
+        for key, value in state.items():
+            if isinstance(value, RegexpPattern):
+                regexes[key] = value.pattern
+        state['_regexes'] = regexes
+        for key in regexes:
+            del state[key]
+        return state
+
+    def __setstate__(self, state):
+        regexes = state.pop('_regexes')
+        for key, value in regexes.items():
+            state[key] = re.compile(value)
+        self.__dict__ = state
 
     def handles_video_url(self, url):
         """
@@ -912,10 +909,10 @@ class BaseSuite(object):
         """
         Returns an estimate for the total number of search results based on the
         first response returned by :meth:`get_search_response` for the
-        :class:`VideoSearch`. By default, simply returns ``None``.
-
+        :class:`VideoSearch`. By default, assumes that the url references a
+        feed and passes the work off to :meth:`.get_feed_entry_count`.
         """
-        return None
+        return self.get_feed_entry_count(search, search_response)
 
     def get_search_time(self, search, search_response):
         """

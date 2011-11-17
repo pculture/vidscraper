@@ -291,13 +291,11 @@ class BaseVideoIterator(object):
             # decrease the index as we count down through the entries.  doesn't
             # quite work for feeds where we don't know the /total/ number of
             # items; then it'll just index the video within the one feed
-            start_index = self.get_start_index()
             while self._max_results is None or item_count < self._max_results:
                 items = self.get_response_items(response)
                 for item in items:
                     video = self._data_from_item(item)
-                    video.index = start_index
-                    start_index -= 1
+                    video.index = item_count + 1 # first item is 1
                     yield video
                     if self._max_results is not None:
                         item_count += 1
@@ -414,9 +412,6 @@ class VideoFeed(BaseVideoIterator):
     def get_first_url(self):
         return self.url
 
-    def get_start_index(self):
-        return self.entry_count
-
     def get_url_response(self, url):
         return self.suite.get_feed_response(self, url)
 
@@ -502,9 +497,6 @@ class VideoSearch(BaseVideoIterator):
 
     def get_first_url(self):
         return self.suite.get_search_url(self)
-
-    def get_start_index(self):
-        return self.total_results
 
     def get_url_response(self, url):
         return self.suite.get_search_response(self, url)

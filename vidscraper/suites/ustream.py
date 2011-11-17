@@ -48,7 +48,6 @@ class UstreamSuite(BaseSuite):
                                 video_id, video.api_keys['ustream_key'])
 
     def parse_api_response(self, response_text):
-        print 'calling parse api response',
         parsed = json.loads(response_text)['results']
         url = parsed['embedTagSourceUrl']
         publish_date = datetime.datetime.strptime(parsed['createdAt'],

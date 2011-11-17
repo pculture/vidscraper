@@ -319,44 +319,6 @@ class BaseVideoIterator(object):
             pass
         raise StopIteration
 
-    def __reversed__(self):
-        try:
-             # XXX make this not take unlimited memory during crawl
-            responses = [self.load()]
-            response = responses[0]
-            item_count = 0
-            total_items = 0
-            start_index = 0
-            if self.crawl and self.get_response_items(response):
-                while True:
-                    url = self.get_next_url(response)
-                    if not url:
-                        break
-                    response = self.get_url_response(url)
-                    items = self.get_response_items(response)
-                    if items:
-                        total_items += len(items)
-                        responses.append(response)
-                        if self._max_results:
-                            if total_items >= self._max_results:
-                                break
-                    else:
-                        break
-            # okay, we've got all the responses; iterate over them backwards
-            for response in reversed(responses):
-                items = self.get_response_items(response)
-                for item in reversed(items):
-                    video = self._data_from_item(item)
-                    video.index = start_index
-                    start_index += 1
-                    yield video
-                    if self._max_results is not None:
-                        item_count += 1
-                        if item_count >= self._max_results:
-                            raise StopIteration
-        except NotImplementedError:
-            raise StopIteration
-
 
 class VideoFeed(BaseVideoIterator):
     """

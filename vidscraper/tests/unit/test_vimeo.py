@@ -244,8 +244,8 @@ class VimeoSearchTestCase(VimeoTestCase):
         response = json.loads(search_file.read())
         self.search = self.suite.get_search(
             'search query',
-            api_keys={'vimeo_api_key': 'BLANK',
-                      'vimeo_api_secret': 'BLANK'})
+            api_keys={'vimeo_key': 'BLANK',
+                      'vimeo_secret': 'BLANK'})
         self.results = self.suite.get_search_results(self.search, response)
 
     def test_parse_search_result_1(self):

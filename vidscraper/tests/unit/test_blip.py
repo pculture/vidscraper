@@ -152,8 +152,8 @@ class BlipFeedTestCase(BlipTestCase):
         self.feed_data = open(
             os.path.join(self.data_file_dir, 'feed.rss')
             ).read()
-        self.feed._first_response = self.suite.get_feed_response(
-            self.feed, self.feed_data)
+        self.feed.handle_first_response(self.suite.get_feed_response(
+                self.feed, self.feed_data))
 
     def test_get_feed_entries(self):
         response = self.suite.get_feed_response(self.feed, self.feed_data)

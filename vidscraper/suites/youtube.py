@@ -43,11 +43,13 @@ class YouTubeSuite(BaseSuite):
     r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v=' +\
                   r'|youtu.be/)(?P<video_id>[\w-]+)'
     feed_regex = r'^https?://([^/]+\.)?youtube.com/'
-    non_feed_regexes = [re.compile(r) for r in (
+    feed_regexes = [re.compile(r) for r in (
             (r'^(http://)?(www\.)?youtube\.com/profile(_videos)?'
              r'\?(\w+=\w+&)*user=(?P<name>\w+)'),
             (r'^(http://)?(www\.)?youtube\.com/((rss/)?user/)?'
-             r'(?P<name>\w+)'))]
+             r'(?P<name>\w+)'),
+            (r'^(https?://)?gdata.youtube.com/feeds/base/users/(?P<name>\w+)'
+             ))]
     feed_url_base = ('http://gdata.youtube.com/feeds/base/users/%s/'
                     'uploads?alt=rss&v=2')
 
@@ -57,7 +59,7 @@ class YouTubeSuite(BaseSuite):
                       'flash_enclosure_url', 'user', 'user_url'])
 
     def get_feed_url(self, url, extra_params=None):
-        for regex in self.non_feed_regexes:
+        for regex in self.feed_regexes:
             match = regex.match(url)
             if match:
                 name = match.group('name')

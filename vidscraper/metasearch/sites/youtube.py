@@ -28,6 +28,7 @@ import urllib
 
 import feedparser
 
+from vidscraper import errors
 from vidscraper.sites import youtube as youtube_scraper
 from vidscraper.metasearch import defaults
 from vidscraper.metasearch import util as metasearch_util
@@ -75,6 +76,12 @@ def get_entries(include_terms, exclude_terms=None,
 
     parsed_feed = feedparser.parse(get_url)
 
+    entries = []
+    for entry in parsed_feed.entries:
+        try:
+            entries.append(parse_youtube_entry(entry))
+        except errors.VideoDeleted:
+            pass
     return [parse_youtube_entry(entry) for entry in parsed_feed.entries]
 
 

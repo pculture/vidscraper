@@ -69,6 +69,9 @@ class BlipTestCase(unittest.TestCase):
                         [u'shmpe', u'djangocon', u'2010'])
         self.assertEqual(data['user'], 'djangocon')
         self.assertEqual(data['user_url'], 'http://djangocon.blip.tv/')
+        self.assertEqual(data['license'],
+                         'http://creativecommons.org/licenses/by-nc-sa/3.0/')
+        
 
 
 class BlipApiTestCase(BlipTestCase):

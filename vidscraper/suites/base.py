@@ -133,7 +133,7 @@ class Video(object):
         'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
-        'index'
+        'index', 'license'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -169,6 +169,9 @@ class Video(object):
     user_url = None
     #: A list of tag names associated with the video.
     tags = None
+    #: A URL to a description of the license the Video is under (often Creative
+    #: Commons)
+    license = None
 
     # These were pretty suite-specific and should perhaps be treated as such?
     #: Whether the video is embeddable? (Youtube)

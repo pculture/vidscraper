@@ -40,7 +40,8 @@ class BlipSuite(BaseSuite):
     feed_regex = video_regex
 
     api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
-            'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url'])
+            'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url',
+                      'license'])
 
     oembed_endpoint = u"http://blip.tv/oembed/"
     oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
@@ -67,7 +68,8 @@ class BlipSuite(BaseSuite):
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None][1:],
             'user': entry['blip_safeusername'],
-            'user_url': entry['blip_showpage']
+            'user_url': entry['blip_showpage'],
+            'license': entry['license']
             }
 
     def get_next_feed_page_url(self, feed, feed_response):

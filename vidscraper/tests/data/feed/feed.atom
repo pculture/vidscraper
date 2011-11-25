@@ -18,6 +18,8 @@
           title="Ogg"
           href="http://www.example.org/myvideo.ogg"
           length="1234" />
+    <link rel="license" type="text/html"
+          href="http://creativecommons.org/licenses/by/2.5/" />
     <content type="xhtml">
       <div xmlns="http://www.w3.org/1999/xhtml">
         <h1>Show Notes</h1>

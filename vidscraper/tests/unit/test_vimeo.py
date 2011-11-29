@@ -35,6 +35,8 @@ from vidscraper.suites.vimeo import VimeoSuite
 class VimeoTestCase(unittest.TestCase):
     def setUp(self):
         self.suite = VimeoSuite()
+        self.base_url = "http://vimeo.com/2"
+        self.video = self.suite.get_video(self.base_url)
 
     @property
     def data_file_dir(self):
@@ -44,13 +46,7 @@ class VimeoTestCase(unittest.TestCase):
             self._data_file_dir = os.path.join(test_dir, 'data', 'vimeo')
         return self._data_file_dir
 
-
-class VimeoApiTestCase(VimeoTestCase):
-    def setUp(self):
-        VimeoTestCase.setUp(self)
-        self.base_url = "http://vimeo.com/2"
-        self.video = self.suite.get_video(self.base_url)
-
+class VimeoOembedTestCase(VimeoTestCase):
     def test_get_oembed_url(self):
         url = self.suite.get_oembed_url(self.video)
         self.assertEqual(url, "http://vimeo.com/api/oembed.json?url=http%3A%2F%2Fvimeo.com%2F2")
@@ -73,6 +69,8 @@ class VimeoApiTestCase(VimeoTestCase):
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
 
+    
+class VimeoApiTestCase(VimeoTestCase):
     def test_get_api_url(self):
         api_url = self.suite.get_api_url(self.video)
         self.assertEqual(api_url, 'http://vimeo.com/api/v2/video/2.json')
@@ -100,6 +98,30 @@ class VimeoApiTestCase(VimeoTestCase):
         }
         self.assertEqual(data, expected_data)
 
+class VimeoScrapeTestCase(VimeoTestCase):
+    def get_scrape_url(self):
+        scrape_url = self.suite.get_scrape_url(self.video)
+        self.assertEqual(scrape_url, 'http://vimeo.com/moogaloop/load/clip:2')
+
+    def test_parse_scrape_response(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.xml'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(set(data), self.suite.scrape_fields)
+        expected_data = {
+            'title': u'Good morning, universe',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
+            'link': u'http://vimeo.com/2',
+            'user': u'Jake Lodwick',
+            'user_url': u'http://vimeo.com/jakob',
+            'embed_code': '<object width="400" height="300"><param name="allowfullscreen" value="true" /><param name="allowscriptaccess" value="always" /><param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" /><embed src="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="300"></embed></object><p><a href="http://vimeo.com/2">Good morning, universe</a> from <a href="http://vimeo.com/jakob">Jake Lodwick</a> on <a href="http://vimeo.com">Vimeo</a>.</p>',
+            'file_url_expires': datetime.datetime(2011, 11, 29, 19, 11, 40),
+            'file_url_is_flaky': True,
+            'file_url_mimetype': u'video/x-flv',
+            'file_url': 'http://www.vimeo.com/moogaloop/play/clip:2/e82cb5d075e82a8cd790a1710e8b1d2f/1322593900/?q=sd'
+        }
+        for key in data:
+            self.assertEqual(data[key], expected_data[key])
 
 class VimeoFeedTestCase(VimeoTestCase):
     def setUp(self):

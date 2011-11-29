@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+  <timestamp>1322593900</timestamp>
+  <locked>0</locked>
+  <video>
+    <caption>Good morning, universe</caption>
+    <width>320</width>
+    <height>240</height>
+    <duration>29</duration>
+    <thumbnail>http://b.vimeocdn.com/ts/228/979/22897998_640.jpg</thumbnail>
+    <totalComments>47</totalComments>
+    <totalLikes>68</totalLikes>
+    <totalPlays>25170</totalPlays>
+    <url_clean>http://vimeo.com/2</url_clean>
+    <url>http://vimeo.com/2</url>
+    <uploader_url>http://vimeo.com/jakob</uploader_url>
+    <uploader_portrait>http://b.vimeocdn.com/ps/137/734/1377340_75.jpg</uploader_portrait>
+    <uploader_display_name>Jake Lodwick</uploader_display_name>
+    <nodeId>2</nodeId>
+    <isHD>0</isHD>
+    <privacy>anybody</privacy>
+    <isPrivate>0</isPrivate>
+    <isPassword>0</isPassword>
+    <isNobody>0</isNobody>
+    <embed_code>&lt;object width=&quot;400&quot; height=&quot;300&quot;&gt;&lt;param name=&quot;allowfullscreen&quot; value=&quot;true&quot; /&gt;&lt;param name=&quot;allowscriptaccess&quot; value=&quot;always&quot; /&gt;&lt;param name=&quot;movie&quot; value=&quot;http://vimeo.com/moogaloop.swf?clip_id=2&amp;amp;server=vimeo.com&amp;amp;show_title=1&amp;amp;show_byline=1&amp;amp;show_portrait=1&amp;amp;color=00adef&amp;amp;fullscreen=1&amp;amp;autoplay=0&amp;amp;loop=0&quot; /&gt;&lt;embed src=&quot;http://vimeo.com/moogaloop.swf?clip_id=2&amp;amp;server=vimeo.com&amp;amp;show_title=1&amp;amp;show_byline=1&amp;amp;show_portrait=1&amp;amp;color=00adef&amp;amp;fullscreen=1&amp;amp;autoplay=0&amp;amp;loop=0&quot; type=&quot;application/x-shockwave-flash&quot; allowfullscreen=&quot;true&quot; allowscriptaccess=&quot;always&quot; width=&quot;400&quot; height=&quot;300&quot;&gt;&lt;/embed&gt;&lt;/object&gt;&lt;p&gt;&lt;a href=&quot;http://vimeo.com/2&quot;&gt;Good morning, universe&lt;/a&gt; from &lt;a href=&quot;http://vimeo.com/jakob&quot;&gt;Jake Lodwick&lt;/a&gt; on &lt;a href=&quot;http://vimeo.com&quot;&gt;Vimeo&lt;/a&gt;.&lt;/p&gt;</embed_code>
+    <isLoggedIn>1</isLoggedIn>
+    <isOwner>0</isOwner>
+    <likeIt>0</likeIt>
+    <watch_later>0</watch_later>
+    <default_volume>48</default_volume>
+    <hd_preference>1</hd_preference>
+    <scaling_preference>1</scaling_preference>
+    <embed_permission>public</embed_permission>
+    <allow_hd_embed />
+  </video>
+  <stream_clips>
+    <video>
+      <caption>The green balloon</caption>
+      <thumbnail>http://b.vimeocdn.com/ts/455/416/45541667_100.jpg</thumbnail>
+      <url>http://vimeo.com/8</url>
+      <nodeId>8</nodeId>
+    </video>
+    <video>
+      <caption>We need more employees.</caption>
+      <thumbnail>http://b.vimeocdn.com/ts/455/406/45540662_100.jpg</thumbnail>
+      <url>http://vimeo.com/6</url>
+      <nodeId>6</nodeId>
+    </video>
+    <video>
+      <caption>Good morning, universe</caption>
+      <thumbnail>http://b.vimeocdn.com/ts/228/979/22897998_100.jpg</thumbnail>
+      <url>http://vimeo.com/2</url>
+      <nodeId>2</nodeId>
+    </video>
+  </stream_clips>
+  <source>cache</source>
+  <embed_settings>
+    <byline_badge>1</byline_badge>
+    <like_button>1</like_button>
+    <watch_later_button>1</watch_later_button>
+    <share_button>1</share_button>
+    <embed_button>1</embed_button>
+    <playbar>1</playbar>
+    <volume>1</volume>
+    <fullscreen_button>1</fullscreen_button>
+    <scaling_button>1</scaling_button>
+    <vimeo_logo>1</vimeo_logo>
+    <custom_logo>0</custom_logo>
+    <sticky_custom_logo>0</sticky_custom_logo>
+    <autoplay>0</autoplay>
+    <loop>0</loop>
+    <color>00adef</color>
+    <outro>text</outro>
+    <outro_videos_type>uploaded_videos</outro_videos_type>
+    <outro_videos_id />
+    <outro_link_url />
+    <outro_link_name />
+    <outro_text />
+    <outro_clip_ids />
+    <stream_clips>
+      <video />
+    </stream_clips>
+    <clipinfo_title>1</clipinfo_title>
+    <clipinfo_portrait>1</clipinfo_portrait>
+    <clipinfo_byline>1</clipinfo_byline>
+  </embed_settings>
+  <referrer />
+  <cached_timestamp>1322593278</cached_timestamp>
+  <is_mod>0</is_mod>
+  <request_signature>e82cb5d075e82a8cd790a1710e8b1d2f</request_signature>
+  <request_signature_expires>1322593900</request_signature_expires>
+</xml>

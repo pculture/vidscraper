@@ -82,7 +82,7 @@ def get_entries(include_terms, exclude_terms=None,
             entries.append(parse_youtube_entry(entry))
         except errors.VideoDeleted:
             pass
-    return [parse_youtube_entry(entry) for entry in parsed_feed.entries]
+    return entries
 
 
 SUITE = {

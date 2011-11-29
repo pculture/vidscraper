@@ -133,7 +133,7 @@ class Video(object):
         'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
-        'index'
+        'index', 'file_url_expires'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -154,6 +154,11 @@ class Video(object):
     file_url_mimetype = None
     #: The length of the actual video file
     file_url_length = None
+    #: True if the file_url isn't a real permalink to a video file
+    file_url_is_flaky = None
+    #: a datetime.datetime() representing when we think the file URL is no
+    #: longer valid
+    file_url_expires = None
     #: "Crappy enclosure link that doesn't actually point to a url.. the kind
     #: crappy flash video sites give out when they don't actually want their
     #: enclosures to point to video files."

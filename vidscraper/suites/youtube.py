@@ -24,7 +24,9 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import time
 import urllib
+import urlparse 
 
 from BeautifulSoup import BeautifulSoup
 
@@ -57,6 +59,22 @@ class YouTubeSuite(BaseSuite):
     api_fields = set(['link', 'title', 'description', 'guid',
                       'thumbnail_url', 'publish_datetime', 'tags',
                       'flash_enclosure_url', 'user', 'user_url'])
+
+    scrape_fields = set(['title', 'thumbnail_url', 'user', 'user_url', 'tags',
+                         'file_url', 'file_url_mimetype', 'file_url_expires',
+                         'file_url_is_flaky'])
+
+    # the ordering of fmt codes we prefer to download
+    preferred_fmt_types = [
+        (38, u'video/mp4'), # 4096x3072
+        (37, u'video/mp4'), # 1920x1080
+        (22, u'video/mp4'), # 1280x720
+        (18, u'video/mp4'), # 640x360
+        (35, u'video/x-flv'), # 854x480, MPEG-4 encoded
+        (34, u'video/x-flv'), # 640x360, MPEG-4 encoded
+        (6, u'video/x-flv'), # 480x270
+        (5, u'video/x-flv'), # 400x240
+        ]
 
     def get_feed_url(self, url, extra_params=None):
         for regex in self.feed_regexes:
@@ -122,6 +140,49 @@ class YouTubeSuite(BaseSuite):
         parsed = feedparser.parse(response_text)
         return self.parse_feed_entry(parsed.entries[0])
 
+    def get_scrape_url(self, video):
+        video_id = self.video_regex.match(video.url).group('video_id')
+        return (u"http://www.youtube.com/get_video_info?video_id=%s&"
+                "el=embedded&ps=default&eurl=" % video_id)
+
+    def parse_scrape_response(self, response_text):
+        params = urlparse.parse_qs(response_text)
+        data = {
+            'title': params['title'][0].decode('utf8'),
+            'user': params['author'][0].decode('utf8'),
+            'user_url': u'http://www.youtube.com/user/%s' % (
+                params['author'][0].decode('utf8')),
+            'thumbnail_url': params['thumbnail_url'][0],
+            'tags': params['keywords'][0].decode('utf8').split(',')
+            }
+        if data['thumbnail_url'].endswith('/default.jpg'):
+            # got a crummy version; increase the resolution
+            data['thumbnail_url'] = data['thumbnail_url'].replace(
+                '/default.jpg', '/hqdefault.jpg')
+
+        # fmt_url_map is a comma separated list of pipe separated
+        # pairs of fmt, url
+        # build the format codes.
+        fmt_list = [int(x.split('/')[0])
+                    for x in params['fmt_list'][0].split(',')]
+        # build the list of available urls.
+        fmt_url_map = params["url_encoded_fmt_stream_map"][0].split(",")
+        # strip url= from url=xxxxxx, strip trailer.
+        fmt_url_map = [urllib.unquote_plus(x[4:]).split(';')[0]
+                       for x in fmt_url_map]
+        # now build the actual fmt_url_map ...
+        fmt_url_map = dict(zip(fmt_list, fmt_url_map))
+        for fmt, mimetype in self.preferred_fmt_types:
+            if fmt in fmt_url_map:
+                data['file_url_is_flaky'] = True
+                data['file_url'] = file_url = fmt_url_map[fmt]
+                data['file_url_mimetype'] = mimetype
+                parsed_url = urlparse.urlparse(file_url)
+                file_url_qs = urlparse.parse_qs(parsed_url.query)
+                data['file_url_expires'] = struct_time_to_datetime(
+                    time.gmtime(int(file_url_qs['expire'][0])))
+        return data
+            
     def get_search_url(self, search, order_by=None, extra_params=None):
         params = {
             'vq': search.query,

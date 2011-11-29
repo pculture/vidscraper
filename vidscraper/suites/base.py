@@ -585,6 +585,14 @@ class BaseSuite(object):
             state[key] = re.compile(value)
         self.__dict__ = state
 
+    @property
+    def available_fields(self):
+        """
+        Returns a set of all of the fields we could possible get from this
+        suite.
+        ""
+        return self.oembed_fields | self.api_fields | self.scrape_fields
+
     def handles_video_url(self, url):
         """
         Returns ``True`` if this suite can handle the ``url`` as a video and

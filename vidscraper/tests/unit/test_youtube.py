@@ -84,6 +84,15 @@ class YouTubeTestCase(unittest.TestCase):
             self._data_file_dir = os.path.join(test_dir, 'data', 'youtube')
         return self._data_file_dir
 
+class YouTubeSuiteTestCase(YouTubeTestCase):
+    def test_available_fields(self):
+        self.assertEqual(
+            self.suite.available_fields,
+            set(['embed_code', 'description', 'flash_enclosure_url', 'title',
+                 'file_url_mimetype', 'user_url', 'file_url',
+                 'file_url_is_flaky', 'thumbnail_url', 'link', 'user', 'guid',
+                 'publish_datetime', 'tags', 'file_url_expires']))
+
 
 class YouTubeOembedTestCase(YouTubeTestCase):
     def test_short_url(self):

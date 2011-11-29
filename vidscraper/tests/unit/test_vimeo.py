@@ -46,6 +46,15 @@ class VimeoTestCase(unittest.TestCase):
             self._data_file_dir = os.path.join(test_dir, 'data', 'vimeo')
         return self._data_file_dir
 
+class VimeoSuiteTestCase(VimeoTestCase):
+    def test_available_fields(self):
+        self.assertEqual(
+            self.suite.available_fields,
+            set(['embed_code', 'description', 'flash_enclosure_url',
+                 'user_url', 'publish_datetime', 'file_url_mimetype', 'title',
+                 'file_url', 'file_url_is_flaky', 'thumbnail_url', 'link',
+                 'user', 'guid', 'tags', 'file_url_expires']))
+
 class VimeoOembedTestCase(VimeoTestCase):
     def test_get_oembed_url(self):
         url = self.suite.get_oembed_url(self.video)

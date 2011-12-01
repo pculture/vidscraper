@@ -61,8 +61,7 @@ class YouTubeSuite(BaseSuite):
                       'flash_enclosure_url', 'user', 'user_url'])
 
     scrape_fields = set(['title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                         'file_url', 'file_url_mimetype', 'file_url_expires',
-                         'file_url_is_flaky'])
+                         'file_url', 'file_url_mimetype', 'file_url_expires'])
 
     # the ordering of fmt codes we prefer to download
     preferred_fmt_types = [
@@ -174,7 +173,6 @@ class YouTubeSuite(BaseSuite):
         fmt_url_map = dict(zip(fmt_list, fmt_url_map))
         for fmt, mimetype in self.preferred_fmt_types:
             if fmt in fmt_url_map:
-                data['file_url_is_flaky'] = True
                 data['file_url'] = file_url = fmt_url_map[fmt]
                 data['file_url_mimetype'] = mimetype
                 parsed_url = urlparse.urlparse(file_url)

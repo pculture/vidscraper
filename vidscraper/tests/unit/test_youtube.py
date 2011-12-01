@@ -90,7 +90,7 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
             self.suite.available_fields,
             set(['embed_code', 'description', 'flash_enclosure_url', 'title',
                  'file_url_mimetype', 'user_url', 'file_url',
-                 'file_url_is_flaky', 'thumbnail_url', 'link', 'user', 'guid',
+                 'thumbnail_url', 'link', 'user', 'guid',
                  'publish_datetime', 'tags', 'file_url_expires']))
 
 
@@ -181,7 +181,6 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
             'file_url_expires': datetime.datetime(2011, 11, 30, 1, 0),
             'file_url_mimetype': u'video/x-flv',
             'file_url': 'http://o-o.preferred.comcast-lga1.v6.lscache7.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Calgorithm%2Cburst%2Cfactor%2Ccp&fexp=914999%2C908425&algorithm=throttle-factor&itag=5&ip=71.0.0.0&burst=40&sver=3&signature=67657D04EC6665D74BD0B736A9C3C3305B41A72B.48096D7D9D9D1DB4BEDF185A14B15AA19DE2A9C6&source=youtube&expire=1322614800&key=yt1&ipbits=8&factor=1.25&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=small&fallback_host=tc.v6.cache7.c.youtube.com&type=video/x-flv&itag=5',
-            'file_url_is_flaky': True,
             }
         for field in self.suite.scrape_fields:
             self.assertEqual(data[field], expected[field])

@@ -130,10 +130,10 @@ class Video(object):
     # FIELDS
     _all_fields = (
         'title', 'description', 'publish_datetime', 'file_url',
-        'file_url_mimetype', 'file_url_length', 'file_url_is_flaky',
+        'file_url_mimetype', 'file_url_length', 'file_url_expires',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
-        'index', 'file_url_expires'
+        'index'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -154,8 +154,6 @@ class Video(object):
     file_url_mimetype = None
     #: The length of the actual video file
     file_url_length = None
-    #: True if the file_url isn't a real permalink to a video file
-    file_url_is_flaky = None
     #: a datetime.datetime() representing when we think the file URL is no
     #: longer valid
     file_url_expires = None
@@ -178,9 +176,6 @@ class Video(object):
     # These were pretty suite-specific and should perhaps be treated as such?
     #: Whether the video is embeddable? (Youtube)
     is_embeddable = None
-    #: Whether the url can be relied on or is temporary for some reason (such
-    #: as depending on session data). (Vimeo)
-    file_url_is_flaky = None
 
     # OTHER ATTRS
     #: The url for this video to scrape based on.
@@ -590,7 +585,7 @@ class BaseSuite(object):
         """
         Returns a set of all of the fields we could possible get from this
         suite.
-        ""
+        """
         return self.oembed_fields | self.api_fields | self.scrape_fields
 
     def handles_video_url(self, url):

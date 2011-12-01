@@ -59,7 +59,7 @@ class VimeoSuite(BaseSuite):
                       'flash_enclosure_url', 'embed_code'])
     scrape_fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
                          'embed_code', 'file_url', 'file_url_mimetype',
-                         'file_url_expires', 'file_url_is_flaky'])
+                         'file_url_expires'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def _embed_code_from_id(self, video_id):
@@ -123,7 +123,6 @@ allowFullScreen></iframe>""" % video_id
             'title': xml_data['caption'],
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
-            'file_url_is_flaky': True,
             'file_url_expires': struct_time_to_datetime(time.gmtime(
                     int(xml_data['request_signature_expires']))),
             'file_url_mimetype': u'video/x-flv',

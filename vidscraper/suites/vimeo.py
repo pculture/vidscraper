@@ -209,9 +209,9 @@ allowFullScreen></iframe>""" % video_id
 
     def get_next_search_page_url(self, search, search_response,
                                  order_by=None):
-        total = int(search_response['total'])
-        page = int(search_response['page'])
-        per_page = int(search_response['per_page'])
+        total = int(search_response['videos']['total'])
+        page = int(search_response['videos']['page'])
+        per_page = int(search_response['videos']['perpage'])
         if page * per_page > total:
             return None
         extra_params = {'page': page + 1}

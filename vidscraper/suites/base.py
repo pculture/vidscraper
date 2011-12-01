@@ -760,7 +760,11 @@ class BaseSuite(object):
         the resulting structure.
 
         """
-        return feedparser.parse(feed_url)
+        response = feedparser.parse(feed_url)
+        # Don't let feedparser silence connection problems.
+        if isinstance(response.get('bozo_exception', None), urllib2.URLError):
+            raise response.bozo_exception
+        return response
 
     def get_feed_info_response(self, feed, response):
         """

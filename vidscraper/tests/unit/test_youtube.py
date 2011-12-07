@@ -105,6 +105,8 @@ CARAMELL_DANSEN_SEARCH_DESCRIPTION = u"English: do-do-do-oo, yeah-yeah-yeah-yeah
 class YouTubeTestCase(unittest.TestCase):
     def setUp(self):
         self.suite = YouTubeSuite()
+        self.base_url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
+        self.video = self.suite.get_video(url=self.base_url)
 
     @property
     def data_file_dir(self):
@@ -114,13 +116,17 @@ class YouTubeTestCase(unittest.TestCase):
             self._data_file_dir = os.path.join(test_dir, 'data', 'youtube')
         return self._data_file_dir
 
+class YouTubeSuiteTestCase(YouTubeTestCase):
+    def test_available_fields(self):
+        self.assertEqual(
+            self.suite.available_fields,
+            set(['embed_code', 'description', 'flash_enclosure_url', 'title',
+                 'file_url_mimetype', 'user_url', 'file_url',
+                 'thumbnail_url', 'link', 'user', 'guid',
+                 'publish_datetime', 'tags', 'file_url_expires']))
+
 
 class YouTubeOembedTestCase(YouTubeTestCase):
-    def setUp(self):
-        YouTubeTestCase.setUp(self)
-        self.base_url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
-        self.video = self.suite.get_video(url=self.base_url)
-
     def test_short_url(self):
         url = 'http://youtu.be/J_DV9b0x7v4'
         self.assertTrue(self.suite.handles_video_url(url))
@@ -161,11 +167,6 @@ class YouTubeOembedTestCase(YouTubeTestCase):
 
 
 class YouTubeApiTestCase(YouTubeTestCase):
-    def setUp(self):
-        YouTubeTestCase.setUp(self)
-        self.base_url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
-        self.video = self.suite.get_video(url=self.base_url)
-
     def test_get_api_url(self):
         api_url = self.suite.get_api_url(self.video)
         self.assertEqual(
@@ -193,6 +194,36 @@ class YouTubeApiTestCase(YouTubeTestCase):
                     field, data[field], expected_data[field]))
 
 
+class YouTubeScrapeTestCase(YouTubeTestCase):
+    def test_get_scrape_url(self):
+        scrape_url = self.suite.get_scrape_url(self.video)
+        self.assertEqual(
+            scrape_url,
+            ('http://www.youtube.com/get_video_info?video_id=J_DV9b0x7v4&'
+             'el=embedded&ps=default&eurl='))
+
+    def test_parse_scrape_response(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.txt'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(set(data), self.suite.scrape_fields)
+        expected = {
+            'title': u'CaramellDansen (Full Version + Lyrics)',
+            'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
+            'user': u'DrunkenVuko',
+            'user_url': u'http://www.youtube.com/user/DrunkenVuko',
+            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop',
+                     u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
+                     u'schweden', u'anime', u'musik', u'music', u'funny',
+                     u'caramelldansen', u'U-U-U-Aua', u'Dance'],
+            'file_url_expires': datetime.datetime(2011, 11, 30, 1, 0),
+            'file_url_mimetype': u'video/x-flv',
+            'file_url': 'http://o-o.preferred.comcast-lga1.v6.lscache7.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Calgorithm%2Cburst%2Cfactor%2Ccp&fexp=914999%2C908425&algorithm=throttle-factor&itag=5&ip=71.0.0.0&burst=40&sver=3&signature=67657D04EC6665D74BD0B736A9C3C3305B41A72B.48096D7D9D9D1DB4BEDF185A14B15AA19DE2A9C6&source=youtube&expire=1322614800&key=yt1&ipbits=8&factor=1.25&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=small&fallback_host=tc.v6.cache7.c.youtube.com&type=video/x-flv&itag=5',
+            }
+        for field in self.suite.scrape_fields:
+            self.assertEqual(data[field], expected[field])
+
+        
 class YouTubeFeedTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)

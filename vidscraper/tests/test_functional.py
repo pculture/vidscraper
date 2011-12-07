@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import unittest
 
 from vidscraper import auto_scrape, auto_search, auto_feed
@@ -32,6 +33,11 @@ class AutoFunctionalTestCase(unittest.TestCase):
         video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
         self.assertEqual(video.title,
                          u'CaramellDansen (Full Version + Lyrics)')
+        self.assertNotEqual(video.file_url, None)
+        self.assertEqual(video.file_url_mimetype, u'video/x-flv')
+        self.assertTrue(
+            video.file_url_expires - datetime.datetime.now() >
+            datetime.timedelta(hours=1))
 
     def test_auto_search(self):
         result_lists = auto_search('parrot -dead').values()

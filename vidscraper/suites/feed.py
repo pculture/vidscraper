@@ -67,7 +67,9 @@ class GenericFeedSuite(BaseSuite):
             'guid': entry.get('id'),
             'embed_code': embed_code,
             'tags': [tag['term'] for tag in entry['tags']
-                     if tag['scheme'] is None] if 'tags' in entry else None
+                     if tag['scheme'] is None] if 'tags' in entry else None,
+            'license': entry.get('license',
+                                 entry.get('media_license', {}).get('href'))
             }
 
 registry.register_fallback(GenericFeedSuite)

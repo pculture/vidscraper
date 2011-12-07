@@ -96,6 +96,8 @@ Text, MP3, MPEG2, Metadata, SubRip, Thumbnail, Video Index, h.264</p>""")
         self.assertEqual(video.file_url_mimetype, "video/h264")
         self.assertEqual(video.publish_datetime,
                          datetime.datetime(2011, 10, 20, 14, 14, 14))
+        self.assertEqual(video.license,
+                         'http://creativecommons.org/licenses/by/2.5/')
 
     def test_feed_entry_unicode(self):
         feed = self.suite.get_feed(
@@ -161,7 +163,8 @@ h.264</p>""")
              'file_url_length': u'1234',
              'file_url_mimetype': u'application/ogg',
              'thumbnail_url': None,
-             'publish_datetime': datetime.datetime(2005, 7, 15, 12, 0)})
+             'publish_datetime': datetime.datetime(2005, 7, 15, 12, 0),
+             'license': 'http://creativecommons.org/licenses/by/2.5/'})
 
     def test_parse_feed_media_player(self):
         fp = feedparser.parse(os.path.join(self.data_file_dir,

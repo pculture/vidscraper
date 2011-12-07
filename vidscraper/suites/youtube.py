@@ -56,7 +56,7 @@ class YouTubeSuite(BaseSuite):
     oembed_endpoint = "http://www.youtube.com/oembed"
     api_fields = set(['link', 'title', 'description', 'guid',
                       'thumbnail_url', 'publish_datetime', 'tags',
-                      'flash_enclosure_url', 'user', 'user_url'])
+                      'flash_enclosure_url', 'user', 'user_url', 'license'])
 
     def get_feed_url(self, url, extra_params=None):
         for regex in self.feed_regexes:
@@ -102,7 +102,7 @@ class YouTubeSuite(BaseSuite):
         if entry.id.startswith('tag:youtube.com'):
             data['guid'] = 'http://gdata.youtube.com/feeds/api/videos/%s' % (
                 entry.id.split(':')[-1],)
-        if 'media_player' in entry: # not in feeds, just the API
+        if 'media_player' in entry: # only in search feeds/API?
             data['flash_enclosure_url'] = entry['media_player']['url']
         if data['thumbnail_url'].endswith('/default.jpg'):
             # got a crummy version; increase the resolution
@@ -116,11 +116,36 @@ class YouTubeSuite(BaseSuite):
 
     def get_api_url(self, video):
         video_id = self.video_regex.match(video.url).group('video_id')
-        return "http://gdata.youtube.com/feeds/api/videos/%s" % video_id
+        return "http://gdata.youtube.com/feeds/api/videos/%s?v=2" % video_id
 
     def parse_api_response(self, response_text):
         parsed = feedparser.parse(response_text)
-        return self.parse_feed_entry(parsed.entries[0])
+        entry = parsed.entries[0]
+        user = entry['author']
+        if 'published_parsed' in entry:
+            best_date = struct_time_to_datetime(entry['published_parsed'])
+        else:
+            best_date = struct_time_to_datetime(entry['updated_parsed'])
+        data = {
+            'link': entry['links'][0]['href'].split('&', 1)[0],
+            'title': entry['title'],
+            'description': entry['media_group'],
+            'thumbnail_url': get_entry_thumbnail_url(entry),
+            'publish_datetime': best_date,
+            'tags': [t['term'] for t in entry['tags']
+                    if not t['term'].startswith('http')],
+            'user': user,
+            'user_url': u'http://www.youtube.com/user/%s' % user,
+            'guid' : 'http://gdata.youtube.com/feeds/api/videos/%s' % (
+                entry.id.split(':')[-1],),
+            'license': entry['media_license']['href'],
+            'flash_enclosure_url': entry['media_player']['url']
+        }
+        if data['thumbnail_url'].endswith('/default.jpg'):
+            # got a crummy version; increase the resolution
+            data['thumbnail_url'] = data['thumbnail_url'].replace(
+                '/default.jpg', '/hqdefault.jpg')
+        return data
 
     def get_search_url(self, search, order_by=None, extra_params=None):
         params = {

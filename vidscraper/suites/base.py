@@ -253,6 +253,17 @@ class Enclosure(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
+    def __repr__(self):
+        return u'<vidscraper.suites.base.Enclosure: %s>' % unicode(self)
+
+    def __unicode__(self):
+        return u', '.join(u'%s=%r' % (k, v) for k, v in self.__dict__.items())
+
+    def __eq__(self, other):
+        if not isinstance(other, Enclosure):
+            return NotImplemented
+        return self.__dict__ == other.__dict__
+
 
 class BaseVideoIterator(object):
     """

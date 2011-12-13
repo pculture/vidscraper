@@ -133,7 +133,7 @@ class Video(object):
         'file_url_mimetype', 'file_url_length', 'file_url_expires',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
-        'index', 'license'
+        'index', 'license', 'enclosures'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -157,6 +157,9 @@ class Video(object):
     #: a datetime.datetime() representing when we think the file URL is no
     #: longer valid
     file_url_expires = None
+    #: a list of L{Enclosure} objects representing all the possible downloads
+    #: for this video
+    enclosures = None
     #: "Crappy enclosure link that doesn't actually point to a url.. the kind
     #: crappy flash video sites give out when they don't actually want their
     #: enclosures to point to video files."
@@ -227,6 +230,28 @@ class Video(object):
 
     def is_loaded(self):
         return self._loaded
+
+
+class Enclosure(object):
+    """
+    Represents a single downloadable URL for a URL.
+    """
+    #: the URL to download
+    url = None
+    #: when the URL expires, if at all
+    url_expires = None
+    #: the size of the file, in bytes
+    length = None
+    #: the width of the URL, in pixels
+    width = None
+    #: the height of the URL, in pixels
+    height = None
+    #: the MIME type of the URL
+    mime_type = None
+
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 class BaseVideoIterator(object):

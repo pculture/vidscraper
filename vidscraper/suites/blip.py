@@ -55,7 +55,7 @@ class BlipSuite(BaseSuite):
         """
         enclosure = get_first_accepted_enclosure(entry)
 
-        return {
+        data = {
             'link': entry['link'],
             'title': entry['title'],
             'description': clean_description_html(
@@ -68,9 +68,11 @@ class BlipSuite(BaseSuite):
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None][1:],
             'user': entry['blip_safeusername'],
-            'user_url': entry['blip_showpage'],
-            'license': entry['license']
-            }
+            'user_url': entry['blip_showpage']
+        }
+        if 'license' in entry:
+            data['license'] = entry['license']
+        return data
 
     def get_next_feed_page_url(self, feed, feed_response):
         parsed = urlparse.urlparse(feed_response.href)

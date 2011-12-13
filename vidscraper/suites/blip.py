@@ -36,7 +36,7 @@ from vidscraper.utils.http import clean_description_html
 
 
 class BlipSuite(BaseSuite):
-    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?$'
+    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?(?<!.mp4)$'
     feed_regex = video_regex
 
     api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',

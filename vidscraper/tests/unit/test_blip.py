@@ -29,6 +29,7 @@ import unittest
 import urllib
 import urlparse
 
+from vidscraper.errors import CantIdentifyUrl
 from vidscraper.suites import Video
 from vidscraper.suites.blip import BlipSuite
 
@@ -209,3 +210,8 @@ class BlipSearchTestCase(BlipTestCase):
         data = self.suite.parse_search_result(self.search, results[1])
         self.assertTrue(isinstance(data, dict))
         self._check_disqus_data(data)
+
+class BlipSuiteTestCase(BlipTestCase):
+    def test_mp4_not_included(self):
+        self.assertFalse(self.suite.handles_video_url(
+                'http://blip.tv/file/get/Miropcf-Miro20Introduction119.mp4'))

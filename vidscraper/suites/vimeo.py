@@ -52,6 +52,10 @@ class VimeoSuite(BaseSuite):
                   r'(?:(?P<collection>channel|group)s/)?'
                   r'(?P<name>\w+)'
                   r'(?:/(?P<type>videos|likes))?')
+    api_regex = (r'http://(?:www\.)?vimeo.com/api/v./'
+                 r'(?:(?P<collection>channel|group)s/)?'
+                 r'(?P<name>\w+)'
+                 r'(?:/(?P<type>videos|likes))\.json')
     _tag_re = re.compile(r'>([\w ]+)</a>')
 
     api_fields = set(['link', 'title', 'description', 'tags', 'guid',
@@ -61,6 +65,10 @@ class VimeoSuite(BaseSuite):
                          'embed_code', 'file_url', 'file_url_mimetype',
                          'file_url_expires'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
+
+    def __init__(self, *args, **kwargs):
+        super(VimeoSuite, self).__init__(*args, **kwargs)
+        self.api_regex = re.compile(self.api_regex)
 
     def _embed_code_from_id(self, video_id):
         return u"""<iframe src="http://player.vimeo.com/video/%s" \
@@ -141,21 +149,30 @@ allowFullScreen></iframe>""" % video_id
 
     def _get_user_api_url(self, user, type):
         return 'http://vimeo.com/api/v2/%s/%s.json' % (user, type)
-        
+
     def get_feed_url(self, feed_url, type_override=None):
         """
         Rewrites a feed url into an api request url so that crawl can work, and
         because more information can be retrieved from the api.
 
         """
-        groups = self.feed_regex.match(feed_url).groupdict()
+        match = self.api_regex.match(feed_url)
+        if match:
+            groups = match.groupdict()
+        else:
+            groups = self.feed_regex.match(feed_url).groupdict()
+        print groups
         if groups['collection'] is not None:
             path = "/".join((groups['collection'], groups['name']))
         else:
             path = groups['name']
-        return self._get_user_api_url(path,
-                                      groups['type']
-                                      if not type_override else type_override)
+        if type_override:
+            type_ = type_override
+        elif groups['type']:
+            type_ = groups['type']
+        else:
+            type_ = 'videos'
+        return self._get_user_api_url(path, type_)
 
     def get_feed_response(self, feed, feed_url):
         response_text = urllib2.urlopen(feed_url, timeout=5).read()

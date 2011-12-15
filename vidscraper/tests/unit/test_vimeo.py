@@ -150,6 +150,16 @@ class VimeoFeedTestCase(VimeoTestCase):
             self.suite.get_feed_url(
                 'http://vimeo.com/channels/whitehouse/videos/rss'),
             'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url('http://vimeo.com/jakob/videos'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url('http://vimeo.com/jakob'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url(
+                'http://vimeo.com/api/v2/jakob/videos.json'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
 
     def test_get_feed_title(self):
         self.assertEqual(
@@ -321,11 +331,11 @@ allowFullScreen></iframe>"""
             'method=vimeo.videos.search')
 
     def test_next_page_url(self):
-        response = {'total': '10', 'page': '1', 'per_page': '50'}
+        response = {'videos': {'total': '10', 'page': '1', 'perpage': '50'}}
         new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertTrue(new_url is None)
-        response['total'] = '100'
+        response['videos']['total'] = '100'
         new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertFalse(new_url is None)

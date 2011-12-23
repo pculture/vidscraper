@@ -123,7 +123,7 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
             set(['embed_code', 'description', 'flash_enclosure_url', 'title',
                  'file_url_mimetype', 'user_url', 'file_url',
                  'thumbnail_url', 'link', 'user', 'guid',
-                 'publish_datetime', 'tags', 'file_url_expires']))
+                 'publish_datetime', 'tags', 'file_url_expires', 'license']))
 
 
 class YouTubeOembedTestCase(YouTubeTestCase):

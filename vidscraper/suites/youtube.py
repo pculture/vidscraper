@@ -139,10 +139,7 @@ class YouTubeSuite(BaseSuite):
         parsed = feedparser.parse(response_text)
         entry = parsed.entries[0]
         user = entry['author']
-        if 'published_parsed' in entry:
-            best_date = struct_time_to_datetime(entry['published_parsed'])
-        else:
-            best_date = struct_time_to_datetime(entry['updated_parsed'])
+        best_date = struct_time_to_datetime(entry['published_parsed'])
         data = {
             'link': entry['links'][0]['href'].split('&', 1)[0],
             'title': entry['title'],

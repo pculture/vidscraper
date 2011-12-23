@@ -121,8 +121,11 @@ allowFullScreen></iframe>""" % video_id
                     'uploader_display_name', 'isHD', 'embed_code',
                     'request_signature', 'request_signature_expires',
                     'nodeId'):
-            xml_data[key] = doc.getElementsByTagName(
-                key).item(0).firstChild.data.decode('utf8')
+            str_data = doc.getElementsByTagName(key).item(0).firstChild.data
+            if isinstance(str_data, unicode):
+                xml_data[key] = str_data # actually Unicode
+            else:
+                xml_data[key] = str_data.decode('utf8')
 
         data = {
             'link': xml_data['url'],

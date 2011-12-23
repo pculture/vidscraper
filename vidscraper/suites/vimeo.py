@@ -161,7 +161,6 @@ allowFullScreen></iframe>""" % video_id
             groups = match.groupdict()
         else:
             groups = self.feed_regex.match(feed_url).groupdict()
-        print groups
         if groups['collection'] is not None:
             path = "/".join((groups['collection'], groups['name']))
         else:

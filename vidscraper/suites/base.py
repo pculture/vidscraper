@@ -675,6 +675,16 @@ class BaseSuite(object):
         }
         return data
 
+    def parse_oembed_error(self, exc):
+        """
+        Parses a :module:`urllib` exception raised during the OEmbed request.
+        If we re-raise an exception, that's it; otherwise, the dictionary
+        returned will be used to populate the :class:`Video` object.
+
+        By default, just re-raises the given exception.
+        """
+        raise exc
+
     def get_api_url(self, video):
         """
         Returns the url for fetching API data. May be implemented by
@@ -691,6 +701,16 @@ class BaseSuite(object):
 
         """
         raise NotImplementedError
+
+    def parse_api_error(self, exc):
+        """
+        Parses a :module:`urllib` exception raised during the API request.
+        If we re-raise an exception, that's it; otherwise, the dictionary
+        returned will be used to populate the :class:`Video` object.
+
+        By default, just re-raises the given exception.
+        """
+        raise exc
 
     def get_scrape_url(self, video):
         """
@@ -709,6 +729,16 @@ class BaseSuite(object):
         """
         raise NotImplementedError
 
+    def parse_scrape_error(self, exc):
+        """
+        Parses a :module:`urllib` exception raised during the scrape request.
+        If we re-raise an exception, that's it; otherwise, the dictionary
+        returned will be used to populate the :class:`Video` object.
+
+        By default, just re-raises the given exception.
+        """
+        raise exc
+
     def _run_methods(self, video, methods):
         """
         Runs the selected methods, applies the returned data, and marks on the
@@ -717,8 +747,14 @@ class BaseSuite(object):
         """
         for method in methods:
             url = getattr(self, "get_%s_url" % method)(video)
-            response_text = urllib2.urlopen(url, timeout=5).read()
-            data = getattr(self, "parse_%s_response" % method)(response_text)
+            try:
+                response_text = urllib2.urlopen(url, timeout=5).read()
+            except Exception, exc:
+                # if an exception is raised in this method, it isn't caught and
+                # shows up to the user
+                data = getattr(self, 'parse_%s_error' % method)(exc)
+            else:
+                data = getattr(self, "parse_%s_response" % method)(response_text)
             self.apply_video_data(video, data)
 
     def load_video_data(self, video):

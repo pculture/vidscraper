@@ -26,7 +26,7 @@
 import re
 import time
 import urllib
-import urlparse 
+import urlparse
 
 from BeautifulSoup import BeautifulSoup
 
@@ -85,6 +85,12 @@ class YouTubeSuite(BaseSuite):
         if extra_params:
             url = '%s&%s' % (url, urllib.urlencode(extra_params))
         return url
+
+    def parse_oembed_error(self, exc):
+        if getattr(exc, 'code', None) == 401: # Unauthorized
+            return {'is_embeddable': False}
+        else:
+            raise exc
 
     def parse_feed_entry(self, entry):
         """
@@ -168,6 +174,10 @@ class YouTubeSuite(BaseSuite):
 
     def parse_scrape_response(self, response_text):
         params = urlparse.parse_qs(response_text)
+        if params['status'][0] == 'fail':
+            if params['errorcode'][0] == '150': # unembedable
+                return {'is_embeddable': False}
+            return {}
         data = {
             'title': params['title'][0].decode('utf8'),
             'user': params['author'][0].decode('utf8'),
@@ -202,7 +212,14 @@ class YouTubeSuite(BaseSuite):
                 data['file_url_expires'] = struct_time_to_datetime(
                     time.gmtime(int(file_url_qs['expire'][0])))
         return data
-            
+
+    def parse_scrape_error(self, exc):
+        if getattr(exc, 'code', None) == 402:
+            # can happen when we make too many requests
+            # XXX re-raise, or just ignore?
+            return {}
+        raise exc
+
     def get_search_url(self, search, order_by=None, extra_params=None):
         params = {
             'vq': search.query,

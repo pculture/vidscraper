@@ -27,6 +27,7 @@ import datetime
 import os
 import unittest
 import urllib
+import urllib2
 import urlparse
 
 import feedparser
@@ -165,6 +166,14 @@ class YouTubeOembedTestCase(YouTubeTestCase):
         }
         self.assertEqual(data, expected_data)
 
+    def test_parse_oembed_error_401(self):
+        exc = urllib2.HTTPError(None, 401, 'Unauthorized', None, None)
+        self.assertEqual(self.suite.parse_oembed_error(exc),
+                         {'is_embeddable': False})
+
+    def test_parse_oembed_error_other(self):
+        self.assertRaises(RuntimeError,
+                          self.suite.parse_oembed_error, RuntimeError())
 
 class YouTubeApiTestCase(YouTubeTestCase):
     def test_get_api_url(self):
@@ -178,7 +187,6 @@ class YouTubeApiTestCase(YouTubeTestCase):
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2")
-                         
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'api.atom'))
@@ -223,7 +231,29 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         for field in self.suite.scrape_fields:
             self.assertEqual(data[field], expected[field])
 
-        
+    def test_parse_scrape_response_fail_150(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data, {'is_embeddable': False})
+
+    def test_parse_scrape_response_fail_other(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
+        scrape_data = scrape_file.read().replace('150', 'other')
+        data = self.suite.parse_scrape_response(scrape_data)
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data, {})
+
+    def test_parse_scrape_error_402(self):
+        exc = urllib2.HTTPError(None, 402, 'Payment Required', None, None)
+        self.assertEqual(self.suite.parse_scrape_error(exc),
+                         {})
+
+    def test_parse_scrape_error_other(self):
+        self.assertRaises(RuntimeError,
+                          self.suite.parse_scrape_error, RuntimeError())
+
+
 class YouTubeFeedTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
@@ -320,7 +350,6 @@ class YouTubeSearchTestCase(YouTubeTestCase):
                                       order_by='latest'),
             ('http://gdata.youtube.com/feeds/api/videos?'
              'orderby=published&vq=query'))
-            
 
     def test_next_search_page_url(self):
         response = {

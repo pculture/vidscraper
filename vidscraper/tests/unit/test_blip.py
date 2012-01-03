@@ -159,6 +159,16 @@ class BlipFeedTestCase(BlipTestCase):
         self.feed.handle_first_response(self.suite.get_feed_response(
                 self.feed, self.feed_data))
 
+    def test_get_feed_url(self):
+        self.assertEqual(self.suite.get_feed_url(self.feed_url),
+                         'http://blip.tv/djangocon/rss')
+        self.assertEqual(self.suite.get_feed_url(
+                'http://blip.tv/djangocon/rss'),
+                         'http://blip.tv/djangocon/rss')
+        self.assertEqual(self.suite.get_feed_url(
+                'http://blip.tv/djangocon'),
+                         'http://blip.tv/djangocon/rss')
+
     def test_get_feed_entries(self):
         response = self.suite.get_feed_response(self.feed, self.feed_data)
         entries = self.suite.get_feed_entries(self.feed, response)

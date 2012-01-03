@@ -47,6 +47,14 @@ class BlipSuite(BaseSuite):
     oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
             'title'])
 
+    def get_feed_url(self, url):
+        if not url.endswith('/rss'):
+            if url.endswith('/'):
+                return url + 'rss'
+            else:
+                return url + '/rss'
+        return url
+
     def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a blip rss feed into

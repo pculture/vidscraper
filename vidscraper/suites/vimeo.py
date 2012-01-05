@@ -116,12 +116,19 @@ allowFullScreen></iframe>""" % video_id
 
     def parse_scrape_response(self, response_text):
         doc = minidom.parseString(response_text)
+        error_id = doc.getElementsByTagName('error_id').item(0)
+        if (error_id is not None and
+            error_id.firstChild.data == 'embed_blocked'):
+            return {
+                'is_embedable': False
+                }
         xml_data = {}
         for key in ('url', 'caption', 'thumbnail', 'uploader_url',
                     'uploader_display_name', 'isHD', 'embed_code',
                     'request_signature', 'request_signature_expires',
                     'nodeId'):
-            str_data = doc.getElementsByTagName(key).item(0).firstChild.data
+            item = doc.getElementsByTagName(key).item(0)
+            str_data = item.firstChild.data
             if isinstance(str_data, unicode):
                 xml_data[key] = str_data # actually Unicode
             else:

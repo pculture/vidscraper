@@ -131,6 +131,12 @@ class VimeoScrapeTestCase(VimeoTestCase):
         for key in data:
             self.assertEqual(data[key], expected_data[key])
 
+    def test_parse_scrape_response_noembed(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape_noembed.xml'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        self.assertEqual(data, {
+                'is_embedable': False})
+
 class VimeoFeedTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)

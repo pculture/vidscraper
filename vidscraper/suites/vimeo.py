@@ -243,12 +243,12 @@ allowFullScreen></iframe>""" % video_id
     def parse_feed_entry(self, entry):
         return self._data_from_api_video(entry)
 
-    def get_next_feed_page_url(self, last_url, feed_response):
+    def get_next_feed_page_url(self, feed, feed_response):
         # TODO: Vimeo only lets the first 3 pages of 20 results each be fetched
         # with the simple API. If an api key and secret are passed in, this
         # should use the advanced API instead. (Also, it should be possible to
         # pass those in.
-        parsed = urlparse.urlparse(last_url)
+        parsed = urlparse.urlparse(feed.url)
         params = urlparse.parse_qs(parsed.query)
         try:
             page = int(params.get('page', ['1'])[0])

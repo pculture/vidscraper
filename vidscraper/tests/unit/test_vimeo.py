@@ -272,14 +272,14 @@ class VimeoFeedTestCase(VimeoTestCase):
         self.assertEqual(data, expected_data)
 
     def test_next_feed_url(self):
-        this_url = "http://vimeo.com/nothing/here/?page=1"
-        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.feed.url = "http://vimeo.com/nothing/here/?page=1"
+        next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
-        this_url = "http://vimeo.com/nothing/here/"
-        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.feed.url = "http://vimeo.com/nothing/here/"
+        next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
-        this_url = "http://vimeo.com/nothing/here/?page=notanumber"
-        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.feed.url = "http://vimeo.com/nothing/here/?page=notanumber"
+        next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
 

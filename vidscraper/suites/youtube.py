@@ -165,6 +165,10 @@ class YouTubeSuite(BaseSuite):
             # got a crummy version; increase the resolution
             data['thumbnail_url'] = data['thumbnail_url'].replace(
                 '/default.jpg', '/hqdefault.jpg')
+        if (data['description'].startswith(data['user']) and
+            data['description'].endswith('youtube')):
+            # description looks like "USERNAME[real description]youtube"
+            data['description'] = data['description'][len(data['user']):-7]
         return data
 
     def get_scrape_url(self, video):
@@ -184,8 +188,9 @@ class YouTubeSuite(BaseSuite):
             'user_url': u'http://www.youtube.com/user/%s' % (
                 params['author'][0].decode('utf8')),
             'thumbnail_url': params['thumbnail_url'][0],
-            'tags': params['keywords'][0].decode('utf8').split(',')
             }
+        if 'keywords' in params:
+            data['tags'] = params['keywords'][0].decode('utf8').split(',')
         if data['thumbnail_url'].endswith('/default.jpg'):
             # got a crummy version; increase the resolution
             data['thumbnail_url'] = data['thumbnail_url'].replace(

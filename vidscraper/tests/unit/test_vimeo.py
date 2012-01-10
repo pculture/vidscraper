@@ -29,7 +29,7 @@ import unittest
 import urlparse
 
 from vidscraper.compat import json
-from vidscraper.suites.vimeo import VimeoSuite
+from vidscraper.suites.vimeo import VimeoSuite, LAST_URL_CACHE
 
 
 class VimeoTestCase(unittest.TestCase):
@@ -275,9 +275,13 @@ class VimeoFeedTestCase(VimeoTestCase):
         self.feed.url = "http://vimeo.com/nothing/here/?page=1"
         next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+
+        delattr(self.feed, LAST_URL_CACHE)
         self.feed.url = "http://vimeo.com/nothing/here/"
         next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+
+        delattr(self.feed, LAST_URL_CACHE)
         self.feed.url = "http://vimeo.com/nothing/here/?page=notanumber"
         next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")

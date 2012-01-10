@@ -40,6 +40,9 @@ from vidscraper.compat import json
 from vidscraper.suites import BaseSuite, registry
 
 from vidscraper.utils.feedparser import struct_time_to_datetime
+from vidscraper.utils.http import open_url_while_lying_about_agent
+
+LAST_URL_CACHE = "_vidscraper_last_url"
 
 class VimeoSuite(BaseSuite):
     """
@@ -184,8 +187,20 @@ allowFullScreen></iframe>""" % video_id
         return self._get_user_api_url(path, type_)
 
     def get_feed_response(self, feed, feed_url):
-        response_text = urllib2.urlopen(feed_url, timeout=5).read()
-        return json.loads(response_text)
+        # NB: for urllib2, Vimeo always returns the first page, so use the
+        # lying agent when requesting pages.
+
+        # XXX: we could use the lying agent for everything, but I'd rather let
+        # them know that people are using Python to access their API.
+        if '?page=' in feed_url:
+            response = open_url_while_lying_about_agent(feed_url)
+        else:
+            response = urllib2.urlopen(feed_url, timeout=5)
+        response_text = response.read()
+        try:
+            return json.loads(response_text)
+        except ValueError:
+            return None
 
     def get_feed_info_response(self, feed, response):
         info_url = self.get_feed_url(feed.original_url, type_override='info')
@@ -238,6 +253,8 @@ allowFullScreen></iframe>""" % video_id
         return None
 
     def get_feed_entries(self, feed, feed_response):
+        if feed_response is None: # no more data
+            return []
         return feed_response
 
     def parse_feed_entry(self, entry):
@@ -248,15 +265,23 @@ allowFullScreen></iframe>""" % video_id
         # with the simple API. If an api key and secret are passed in, this
         # should use the advanced API instead. (Also, it should be possible to
         # pass those in.
-        parsed = urlparse.urlparse(feed.url)
+
+        # NB: LAST_URL_CACHE is a hack since the current page URL isn't
+        # available in the feed_response.  feed.url isn't updated when we're
+        # iterating through the feed, so we keep track of it ourselves.
+        url = getattr(feed, LAST_URL_CACHE, feed.url)
+        parsed = urlparse.urlparse(url)
         params = urlparse.parse_qs(parsed.query)
         try:
             page = int(params.get('page', ['1'])[0])
         except ValueError:
             page = 1
         params['page'] = unicode(page + 1)
-        return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None,)),
+        next_url = "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None,)),
                           urllib.urlencode(params, True))
+        setattr(feed, LAST_URL_CACHE, next_url)
+        return next_url
+
 
     def get_search_url(self, search, order_by=None, extra_params=None):
         if search.api_keys is None or not search.api_keys.get('vimeo_key'):

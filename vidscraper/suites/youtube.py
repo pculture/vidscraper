@@ -37,7 +37,7 @@ import feedparser
 feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 
-from vidscraper.suites import BaseSuite, Enclosure, registry
+from vidscraper.suites import BaseSuite, VideoDownload, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
 
@@ -62,8 +62,7 @@ class YouTubeSuite(BaseSuite):
                       'flash_enclosure_url', 'user', 'user_url', 'license'])
 
     scrape_fields = set(['title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                         'file_url', 'file_url_mimetype', 'file_url_expires',
-                         'enclosures'])
+                         'downloads'])
 
     # the ordering of fmt codes we prefer to download
     preferred_fmt_types = [
@@ -218,18 +217,12 @@ class YouTubeSuite(BaseSuite):
             file_url_expires = struct_time_to_datetime(
                 time.gmtime(int(file_url_qs['expire'][0])))
             return file_url, file_url_expires
-            
-        for fmt, mime_type, width, height in self.preferred_fmt_types:
-            if fmt in fmt_url_map:
-                data['file_url'], data['file_url_expires'] = _parse_fmt(fmt)
-                data['file_url_mimetype'] = mime_type
-                break
-        data['enclosures'] = enclosures = []
+        data['downloads'] = downloads = []
         for fmt, mime_type, width, height in itertools.chain(
             self.preferred_fmt_types, self.other_fmt_types):
             if fmt in fmt_url_map:
                 file_url, file_url_expires = _parse_fmt(fmt)
-                enclosures.append(Enclosure(
+                downloads.append(VideoDownload(
                         url=file_url,
                         url_expires=file_url_expires,
                         mime_type=mime_type,

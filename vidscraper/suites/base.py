@@ -129,11 +129,10 @@ class Video(object):
     """
     # FIELDS
     _all_fields = (
-        'title', 'description', 'publish_datetime', 'file_url',
-        'file_url_mimetype', 'file_url_length', 'file_url_expires',
+        'title', 'description', 'publish_datetime',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
-        'index', 'license', 'enclosures'
+        'index', 'license', 'downloads'
     )
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -148,18 +147,34 @@ class Video(object):
     description = None
     #: A python datetime indicating when the video was published.
     publish_datetime = None
-    #: The url to the actual video file.
-    file_url = None
-    #: The MIME type for the actual video file
-    file_url_mimetype = None
-    #: The length of the actual video file
-    file_url_length = None
+    #: The url to the actual video file. Just maps to the URL in the first
+    #: item in ``downloads``.
+    @property
+    def file_url(self):
+        if self.downloads:
+            return self.downloads[0].url
+    #: The MIME type for the actual video file.  Just maps to the MIME type in
+    #: the first item in ``downloads``.
+    @property
+    def file_url_mimetype(self):
+        if self.downloads:
+            return self.downloads[0].mime_type
     #: a datetime.datetime() representing when we think the file URL is no
-    #: longer valid
-    file_url_expires = None
-    #: a list of L{Enclosure} objects representing all the possible downloads
-    #: for this video
-    enclosures = None
+    #: longer valid.  Just maps to the expiration of the first item in
+    #: ``downloads``
+    @property
+    def file_url_expires(self):
+        if self.downloads:
+            return self.downloads[0].url_expires
+    #: The length of the actual video file.  Just maps to the length of the
+    #: first item in ``downloads``.
+    @property
+    def file_url_length(self):
+        if self.downloads:
+            return self.downloads[0].length
+    #: a list of L{VideoDownload} objects representing all the possible
+    #: downloads for this video
+    downloads = None
     #: "Crappy enclosure link that doesn't actually point to a url.. the kind
     #: crappy flash video sites give out when they don't actually want their
     #: enclosures to point to video files."
@@ -232,7 +247,7 @@ class Video(object):
         return self._loaded
 
 
-class Enclosure(object):
+class VideoDownload(object):
     """
     Represents a single downloadable URL for a URL.
     """
@@ -254,13 +269,13 @@ class Enclosure(object):
             setattr(self, k, v)
 
     def __repr__(self):
-        return u'<vidscraper.suites.base.Enclosure: %s>' % unicode(self)
+        return u'<vidscraper.suites.base.VideoDownload: %s>' % unicode(self)
 
     def __unicode__(self):
         return u', '.join(u'%s=%r' % (k, v) for k, v in self.__dict__.items())
 
     def __eq__(self, other):
-        if not isinstance(other, Enclosure):
+        if not isinstance(other, VideoDownload):
             return NotImplemented
         return self.__dict__ == other.__dict__
 

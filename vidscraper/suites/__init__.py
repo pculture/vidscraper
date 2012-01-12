@@ -25,7 +25,7 @@
 
 
 from vidscraper.suites.base import (registry, Video, VideoFeed, VideoSearch,
-                                    BaseSuite, Enclosure)
+                                    BaseSuite, VideoDownload)
 
 # Force loading of these files so that the default suites get registered.
 from vidscraper.suites import blip, fora, google, ustream, vimeo, youtube, feed

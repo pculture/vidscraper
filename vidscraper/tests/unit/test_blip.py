@@ -48,6 +48,7 @@ class BlipTestCase(unittest.TestCase):
 
     def _check_disqus_data(self, data):
         """Check that data for a specific post is parsed as expected."""
+        self.assertEqual(data['guid'], u'4809E60A-C2AB-11DF-BBAC-A6337D0214E0')
         self.assertEqual(data['link'], "http://blip.tv/file/4135225")
         self.assertEqual(data['title'],
                         "Scaling the World's Largest Django Application")

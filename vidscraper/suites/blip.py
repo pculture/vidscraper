@@ -39,9 +39,9 @@ class BlipSuite(BaseSuite):
     video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?(?<!.mp4)$'
     feed_regex = video_regex
 
-    api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
-            'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url',
-                      'license'])
+    api_fields = set(['guid', 'link', 'title', 'description', 'file_url',
+                      'embed_code', 'thumbnail_url', 'tags',
+                      'publish_datetime', 'user', 'user_url', 'license'])
 
     oembed_endpoint = u"http://blip.tv/oembed/"
     oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
@@ -64,6 +64,7 @@ class BlipSuite(BaseSuite):
         enclosure = get_first_accepted_enclosure(entry)
 
         data = {
+            'guid': entry['id'],
             'link': entry['link'],
             'title': entry['title'],
             'description': clean_description_html(

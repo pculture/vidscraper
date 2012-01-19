@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+  <error>
+    <error_id>embed_blocked</error_id>
+    <title>Sorry</title>
+    <message>The creator of this video has not given you permission to embed it on this domain.
+
+This is a &lt;a href=&quot;http://vimeo.com/plus&quot; target=&quot;_blank&quot;&gt;Vimeo Plus&lt;/a&gt; feature.</message>
+    <link>http://vimeo.com/16036327</link>
+  </error>
+</xml>

@@ -27,7 +27,7 @@ import itertools
 import re
 import time
 import urllib
-import urlparse 
+import urlparse
 
 from BeautifulSoup import BeautifulSoup
 
@@ -100,6 +100,12 @@ class YouTubeSuite(BaseSuite):
             url = '%s&%s' % (url, urllib.urlencode(extra_params))
         return url
 
+    def parse_oembed_error(self, exc):
+        if getattr(exc, 'code', None) == 401: # Unauthorized
+            return {'is_embeddable': False}
+        else:
+            raise exc
+
     def parse_feed_entry(self, entry):
         """
         Reusable method to parse a feedparser entry from a youtube rss feed.
@@ -153,10 +159,7 @@ class YouTubeSuite(BaseSuite):
         parsed = feedparser.parse(response_text)
         entry = parsed.entries[0]
         user = entry['author']
-        if 'published_parsed' in entry:
-            best_date = struct_time_to_datetime(entry['published_parsed'])
-        else:
-            best_date = struct_time_to_datetime(entry['updated_parsed'])
+        best_date = struct_time_to_datetime(entry['published_parsed'])
         data = {
             'link': entry['links'][0]['href'].split('&', 1)[0],
             'title': entry['title'],
@@ -176,6 +179,10 @@ class YouTubeSuite(BaseSuite):
             # got a crummy version; increase the resolution
             data['thumbnail_url'] = data['thumbnail_url'].replace(
                 '/default.jpg', '/hqdefault.jpg')
+        if (data['description'].startswith(data['user']) and
+            data['description'].endswith('youtube')):
+            # description looks like "USERNAME[real description]youtube"
+            data['description'] = data['description'][len(data['user']):-7]
         return data
 
     def get_scrape_url(self, video):
@@ -185,14 +192,19 @@ class YouTubeSuite(BaseSuite):
 
     def parse_scrape_response(self, response_text):
         params = urlparse.parse_qs(response_text)
+        if params['status'][0] == 'fail':
+            if params['errorcode'][0] == '150': # unembedable
+                return {'is_embeddable': False}
+            return {}
         data = {
             'title': params['title'][0].decode('utf8'),
             'user': params['author'][0].decode('utf8'),
             'user_url': u'http://www.youtube.com/user/%s' % (
                 params['author'][0].decode('utf8')),
             'thumbnail_url': params['thumbnail_url'][0],
-            'tags': params['keywords'][0].decode('utf8').split(',')
             }
+        if 'keywords' in params:
+            data['tags'] = params['keywords'][0].decode('utf8').split(',')
         if data['thumbnail_url'].endswith('/default.jpg'):
             # got a crummy version; increase the resolution
             data['thumbnail_url'] = data['thumbnail_url'].replace(
@@ -229,7 +241,14 @@ class YouTubeSuite(BaseSuite):
                         width=width,
                         height=height))
         return data
-            
+
+    def parse_scrape_error(self, exc):
+        if getattr(exc, 'code', None) == 402:
+            # can happen when we make too many requests
+            # XXX re-raise, or just ignore?
+            return {}
+        raise exc
+
     def get_search_url(self, search, order_by=None, extra_params=None):
         params = {
             'vq': search.query,

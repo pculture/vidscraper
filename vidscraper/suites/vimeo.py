@@ -40,6 +40,9 @@ from vidscraper.compat import json
 from vidscraper.suites import BaseSuite, registry, VideoDownload
 
 from vidscraper.utils.feedparser import struct_time_to_datetime
+from vidscraper.utils.http import open_url_while_lying_about_agent
+
+LAST_URL_CACHE = "_vidscraper_last_url"
 
 class VimeoSuite(BaseSuite):
     """
@@ -52,6 +55,10 @@ class VimeoSuite(BaseSuite):
                   r'(?:(?P<collection>channel|group)s/)?'
                   r'(?P<name>\w+)'
                   r'(?:/(?P<type>videos|likes))?')
+    api_regex = (r'http://(?:www\.)?vimeo.com/api/v./'
+                 r'(?:(?P<collection>channel|group)s/)?'
+                 r'(?P<name>\w+)'
+                 r'(?:/(?P<type>videos|likes))\.json')
     _tag_re = re.compile(r'>([\w ]+)</a>')
 
     api_fields = set(['link', 'title', 'description', 'tags', 'guid',
@@ -60,6 +67,10 @@ class VimeoSuite(BaseSuite):
     scrape_fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
                          'embed_code', 'downloads'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
+
+    def __init__(self, *args, **kwargs):
+        super(VimeoSuite, self).__init__(*args, **kwargs)
+        self.api_regex = re.compile(self.api_regex)
 
     def _embed_code_from_id(self, video_id):
         return u"""<iframe src="http://player.vimeo.com/video/%s" \
@@ -107,13 +118,23 @@ allowFullScreen></iframe>""" % video_id
 
     def parse_scrape_response(self, response_text):
         doc = minidom.parseString(response_text)
+        error_id = doc.getElementsByTagName('error_id').item(0)
+        if (error_id is not None and
+            error_id.firstChild.data == 'embed_blocked'):
+            return {
+                'is_embedable': False
+                }
         xml_data = {}
         for key in ('url', 'caption', 'thumbnail', 'uploader_url',
                     'uploader_display_name', 'isHD', 'embed_code',
                     'request_signature', 'request_signature_expires',
                     'nodeId'):
-            xml_data[key] = doc.getElementsByTagName(
-                key).item(0).firstChild.data.decode('utf8')
+            item = doc.getElementsByTagName(key).item(0)
+            str_data = item.firstChild.data
+            if isinstance(str_data, unicode):
+                xml_data[key] = str_data # actually Unicode
+            else:
+                xml_data[key] = str_data.decode('utf8')
 
         data = {
             'link': xml_data['url'],
@@ -142,25 +163,45 @@ allowFullScreen></iframe>""" % video_id
 
     def _get_user_api_url(self, user, type):
         return 'http://vimeo.com/api/v2/%s/%s.json' % (user, type)
-        
+
     def get_feed_url(self, feed_url, type_override=None):
         """
         Rewrites a feed url into an api request url so that crawl can work, and
         because more information can be retrieved from the api.
 
         """
-        groups = self.feed_regex.match(feed_url).groupdict()
+        match = self.api_regex.match(feed_url)
+        if match:
+            groups = match.groupdict()
+        else:
+            groups = self.feed_regex.match(feed_url).groupdict()
         if groups['collection'] is not None:
             path = "/".join((groups['collection'], groups['name']))
         else:
             path = groups['name']
-        return self._get_user_api_url(path,
-                                      groups['type']
-                                      if not type_override else type_override)
+        if type_override:
+            type_ = type_override
+        elif groups['type']:
+            type_ = groups['type']
+        else:
+            type_ = 'videos'
+        return self._get_user_api_url(path, type_)
 
     def get_feed_response(self, feed, feed_url):
-        response_text = urllib2.urlopen(feed_url, timeout=5).read()
-        return json.loads(response_text)
+        # NB: for urllib2, Vimeo always returns the first page, so use the
+        # lying agent when requesting pages.
+
+        # XXX: we could use the lying agent for everything, but I'd rather let
+        # them know that people are using Python to access their API.
+        if '?page=' in feed_url:
+            response = open_url_while_lying_about_agent(feed_url)
+        else:
+            response = urllib2.urlopen(feed_url, timeout=5)
+        response_text = response.read()
+        try:
+            return json.loads(response_text)
+        except ValueError:
+            return None
 
     def get_feed_info_response(self, feed, response):
         info_url = self.get_feed_url(feed.original_url, type_override='info')
@@ -213,25 +254,35 @@ allowFullScreen></iframe>""" % video_id
         return None
 
     def get_feed_entries(self, feed, feed_response):
+        if feed_response is None: # no more data
+            return []
         return feed_response
 
     def parse_feed_entry(self, entry):
         return self._data_from_api_video(entry)
 
-    def get_next_feed_page_url(self, last_url, feed_response):
+    def get_next_feed_page_url(self, feed, feed_response):
         # TODO: Vimeo only lets the first 3 pages of 20 results each be fetched
         # with the simple API. If an api key and secret are passed in, this
         # should use the advanced API instead. (Also, it should be possible to
         # pass those in.
-        parsed = urlparse.urlparse(last_url)
+
+        # NB: LAST_URL_CACHE is a hack since the current page URL isn't
+        # available in the feed_response.  feed.url isn't updated when we're
+        # iterating through the feed, so we keep track of it ourselves.
+        url = getattr(feed, LAST_URL_CACHE, feed.url)
+        parsed = urlparse.urlparse(url)
         params = urlparse.parse_qs(parsed.query)
         try:
             page = int(params.get('page', ['1'])[0])
         except ValueError:
             page = 1
         params['page'] = unicode(page + 1)
-        return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None,)),
+        next_url = "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None,)),
                           urllib.urlencode(params, True))
+        setattr(feed, LAST_URL_CACHE, next_url)
+        return next_url
+
 
     def get_search_url(self, search, order_by=None, extra_params=None):
         if search.api_keys is None or not search.api_keys.get('vimeo_key'):

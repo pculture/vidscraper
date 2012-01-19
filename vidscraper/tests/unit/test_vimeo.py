@@ -30,7 +30,7 @@ import urlparse
 
 from vidscraper.compat import json
 from vidscraper.suites.base import VideoDownload
-from vidscraper.suites.vimeo import VimeoSuite
+from vidscraper.suites.vimeo import VimeoSuite, LAST_URL_CACHE
 
 
 class VimeoTestCase(unittest.TestCase):
@@ -133,6 +133,12 @@ class VimeoScrapeTestCase(VimeoTestCase):
         for key in data:
             self.assertEqual(data[key], expected_data[key])
 
+    def test_parse_scrape_response_noembed(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape_noembed.xml'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        self.assertEqual(data, {
+                'is_embedable': False})
+
 class VimeoFeedTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
@@ -152,6 +158,16 @@ class VimeoFeedTestCase(VimeoTestCase):
             self.suite.get_feed_url(
                 'http://vimeo.com/channels/whitehouse/videos/rss'),
             'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url('http://vimeo.com/jakob/videos'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url('http://vimeo.com/jakob'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
+        self.assertEqual(
+            self.suite.get_feed_url(
+                'http://vimeo.com/api/v2/jakob/videos.json'),
+            'http://vimeo.com/api/v2/jakob/videos.json')
 
     def test_get_feed_title(self):
         self.assertEqual(
@@ -258,14 +274,18 @@ class VimeoFeedTestCase(VimeoTestCase):
         self.assertEqual(data, expected_data)
 
     def test_next_feed_url(self):
-        this_url = "http://vimeo.com/nothing/here/?page=1"
-        next_url = self.suite.get_next_feed_page_url(this_url, None)
+        self.feed.url = "http://vimeo.com/nothing/here/?page=1"
+        next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
-        this_url = "http://vimeo.com/nothing/here/"
-        next_url = self.suite.get_next_feed_page_url(this_url, None)
+
+        delattr(self.feed, LAST_URL_CACHE)
+        self.feed.url = "http://vimeo.com/nothing/here/"
+        next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
-        this_url = "http://vimeo.com/nothing/here/?page=notanumber"
-        next_url = self.suite.get_next_feed_page_url(this_url, None)
+
+        delattr(self.feed, LAST_URL_CACHE)
+        self.feed.url = "http://vimeo.com/nothing/here/?page=notanumber"
+        next_url = self.suite.get_next_feed_page_url(self.feed, None)
         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
 
@@ -323,11 +343,11 @@ allowFullScreen></iframe>"""
             'method=vimeo.videos.search')
 
     def test_next_page_url(self):
-        response = {'total': '10', 'page': '1', 'per_page': '50'}
+        response = {'videos': {'total': '10', 'page': '1', 'perpage': '50'}}
         new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertTrue(new_url is None)
-        response['total'] = '100'
+        response['videos']['total'] = '100'
         new_url = self.suite.get_next_search_page_url(self.search,
                                                       response)
         self.assertFalse(new_url is None)

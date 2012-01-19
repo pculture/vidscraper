@@ -39,13 +39,21 @@ class BlipSuite(BaseSuite):
     video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?(?<!.mp4)$'
     feed_regex = video_regex
 
-    api_fields = set(['link', 'title', 'description', 'file_url', 'embed_code',
-            'thumbnail_url', 'tags', 'publish_datetime', 'user', 'user_url',
-                      'license'])
+    api_fields = set(['guid', 'link', 'title', 'description', 'file_url',
+                      'embed_code', 'thumbnail_url', 'tags',
+                      'publish_datetime', 'user', 'user_url', 'license'])
 
     oembed_endpoint = u"http://blip.tv/oembed/"
     oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
             'title'])
+
+    def get_feed_url(self, url):
+        if not url.endswith('/rss'):
+            if url.endswith('/'):
+                return url + 'rss'
+            else:
+                return url + '/rss'
+        return url
 
     def parse_feed_entry(self, entry):
         """
@@ -55,7 +63,8 @@ class BlipSuite(BaseSuite):
         """
         enclosure = get_first_accepted_enclosure(entry)
 
-        return {
+        data = {
+            'guid': entry['id'],
             'link': entry['link'],
             'title': entry['title'],
             'description': clean_description_html(
@@ -68,9 +77,11 @@ class BlipSuite(BaseSuite):
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None][1:],
             'user': entry['blip_safeusername'],
-            'user_url': entry['blip_showpage'],
-            'license': entry['license']
-            }
+            'user_url': entry['blip_showpage']
+        }
+        if 'license' in entry:
+            data['license'] = entry['license']
+        return data
 
     def get_next_feed_page_url(self, feed, feed_response):
         parsed = urlparse.urlparse(feed_response.href)

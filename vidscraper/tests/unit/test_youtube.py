@@ -27,6 +27,7 @@ import datetime
 import os
 import unittest
 import urllib
+import urllib2
 import urlparse
 
 import feedparser
@@ -70,7 +71,7 @@ CARAMELL_DANSEN_ATOM_DATA = {
 CARAMELL_DANSEN_API_DATA = {
     'link': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
     'title': u'CaramellDansen (Full Version + Lyrics)',
-    'description': u'DrunkenVukoEnglish:\ndo-do-do-oo, yeah-yeah-yeah-yeah\n\nWe wonder are you ready to join us now\nhands in the air\nwe will show you how\ncome and try\ncaramell will be your guide\n\nSo come and move your hips sing wha-a-a\nlook at hips, do it La-la-la\nyou and me can sing this melody\n\nOh-wa-a-a-a\nDance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing\n\nO-o-oa-oa\nO-o-oa-oa-a-a\nO-o-oa-oa\nO-o-oa-oa-a-a\n\nFrom Sweden to UK we will bring our song, Australia, USA and people of Hong Kong.\nThey have heard this meaning all around the world\n\nSo come and move your hips sing wha-a-a\nLook at your hips, do it La-la-la\nYou and me can sing this melody\n\nSo come and dance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing\n\n(Dance to the beat\nwave your hands together\ncome feel the heat forever and forever\nlisten and learn it is time for prancing\nnow we are here with caramel dancing)\n\nU-u-ua-ua\nU-u-ua-ua-a-a\nU-u-ua-ua\nU-u-ua-ua-a-a\n\nSo come and dance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing...\nDance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing \n\nSwedish:\nVi undrar \xe4r ni redo att vara med\nArmarna upp nu ska ni f\xe5 se\nKom igen\nVem som helst kan vara med\n\nS\xe5 r\xf6r p\xe5 era f\xf6tter\nOa-a-a\nOch vicka era h\xf6fter\nO-la-la-la\nG\xf6r som vi\nTill denna melodi\n\nDansa med oss\nKlappa era h\xe4nder\nG\xf6r som vi g\xf6r\nTa n\xe5gra steg \xe5t v\xe4nster\nLyssna och l\xe4r\nMissa inte chansen\nNu \xe4r vi h\xe4r med\nCaramelldansen\nO-o-oa-oa...\n\nDet blir en sensation \xf6verallt f\xf6rst\xe5s\nP\xe5 fester kommer alla att sl\xe4ppa loss\nKom igen\nNu tar vi stegen om igen\n\nS\xe5 r\xf6r p\xe5 era f\xf6tter\nOa-a-a\nOch vicka era h\xf6fter\nO-la-la-la\nG\xf6r som vi\nTill denna melodi\n\nS\xe5 kom och\nDansa med oss\nKlappa era h\xe4nder\nG\xf6r som vi g\xf6r\nTa n\xe5gra steg \xe5t v\xe4nster\nLyssna och l\xe4r\nMissa inte chansen\nNu \xe4r vi h\xe4r med\nCaramelldansen\n\nDansa med oss\nKlappa era h\xe4nder\nG\xf6r som vi g\xf6r\nTa n\xe5gra steg \xe5t v\xe4nster\nLyssna och l\xe4r\nMissa inte chansen\nNu \xe4r vi h\xe4r med\nCaramelldansenyoutube',
+    'description': u'English:\ndo-do-do-oo, yeah-yeah-yeah-yeah\n\nWe wonder are you ready to join us now\nhands in the air\nwe will show you how\ncome and try\ncaramell will be your guide\n\nSo come and move your hips sing wha-a-a\nlook at hips, do it La-la-la\nyou and me can sing this melody\n\nOh-wa-a-a-a\nDance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing\n\nO-o-oa-oa\nO-o-oa-oa-a-a\nO-o-oa-oa\nO-o-oa-oa-a-a\n\nFrom Sweden to UK we will bring our song, Australia, USA and people of Hong Kong.\nThey have heard this meaning all around the world\n\nSo come and move your hips sing wha-a-a\nLook at your hips, do it La-la-la\nYou and me can sing this melody\n\nSo come and dance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing\n\n(Dance to the beat\nwave your hands together\ncome feel the heat forever and forever\nlisten and learn it is time for prancing\nnow we are here with caramel dancing)\n\nU-u-ua-ua\nU-u-ua-ua-a-a\nU-u-ua-ua\nU-u-ua-ua-a-a\n\nSo come and dance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing...\nDance to the beat\nWave your hands together\nCome feel the heat forever and forever\nListen and learn it is time for prancing\nNow we are here with caramel dancing \n\nSwedish:\nVi undrar \xe4r ni redo att vara med\nArmarna upp nu ska ni f\xe5 se\nKom igen\nVem som helst kan vara med\n\nS\xe5 r\xf6r p\xe5 era f\xf6tter\nOa-a-a\nOch vicka era h\xf6fter\nO-la-la-la\nG\xf6r som vi\nTill denna melodi\n\nDansa med oss\nKlappa era h\xe4nder\nG\xf6r som vi g\xf6r\nTa n\xe5gra steg \xe5t v\xe4nster\nLyssna och l\xe4r\nMissa inte chansen\nNu \xe4r vi h\xe4r med\nCaramelldansen\nO-o-oa-oa...\n\nDet blir en sensation \xf6verallt f\xf6rst\xe5s\nP\xe5 fester kommer alla att sl\xe4ppa loss\nKom igen\nNu tar vi stegen om igen\n\nS\xe5 r\xf6r p\xe5 era f\xf6tter\nOa-a-a\nOch vicka era h\xf6fter\nO-la-la-la\nG\xf6r som vi\nTill denna melodi\n\nS\xe5 kom och\nDansa med oss\nKlappa era h\xe4nder\nG\xf6r som vi g\xf6r\nTa n\xe5gra steg \xe5t v\xe4nster\nLyssna och l\xe4r\nMissa inte chansen\nNu \xe4r vi h\xe4r med\nCaramelldansen\n\nDansa med oss\nKlappa era h\xe4nder\nG\xf6r som vi g\xf6r\nTa n\xe5gra steg \xe5t v\xe4nster\nLyssna och l\xe4r\nMissa inte chansen\nNu \xe4r vi h\xe4r med\nCaramelldansen',
     'thumbnail_url': u'http://i.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
     'user': u'DrunkenVuko',
     'user_url': u'http://www.youtube.com/user/DrunkenVuko',
@@ -125,7 +126,6 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
                  'user_url', 'thumbnail_url', 'link', 'user', 'guid',
                  'publish_datetime', 'tags', 'license', 'downloads']))
 
-
 class YouTubeOembedTestCase(YouTubeTestCase):
     def test_short_url(self):
         url = 'http://youtu.be/J_DV9b0x7v4'
@@ -165,6 +165,14 @@ class YouTubeOembedTestCase(YouTubeTestCase):
         }
         self.assertEqual(data, expected_data)
 
+    def test_parse_oembed_error_401(self):
+        exc = urllib2.HTTPError(None, 401, 'Unauthorized', None, None)
+        self.assertEqual(self.suite.parse_oembed_error(exc),
+                         {'is_embeddable': False})
+
+    def test_parse_oembed_error_other(self):
+        self.assertRaises(RuntimeError,
+                          self.suite.parse_oembed_error, RuntimeError())
 
 class YouTubeApiTestCase(YouTubeTestCase):
     def test_get_api_url(self):
@@ -178,7 +186,6 @@ class YouTubeApiTestCase(YouTubeTestCase):
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2")
-                         
 
     def test_parse_api_response(self):
         api_file = open(os.path.join(self.data_file_dir, 'api.atom'))
@@ -224,7 +231,29 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         for field in self.suite.scrape_fields:
             self.assertEqual(data[field], expected[field])
 
-        
+    def test_parse_scrape_response_fail_150(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data, {'is_embeddable': False})
+
+    def test_parse_scrape_response_fail_other(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
+        scrape_data = scrape_file.read().replace('150', 'other')
+        data = self.suite.parse_scrape_response(scrape_data)
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data, {})
+
+    def test_parse_scrape_error_402(self):
+        exc = urllib2.HTTPError(None, 402, 'Payment Required', None, None)
+        self.assertEqual(self.suite.parse_scrape_error(exc),
+                         {})
+
+    def test_parse_scrape_error_other(self):
+        self.assertRaises(RuntimeError,
+                          self.suite.parse_scrape_error, RuntimeError())
+
+
 class YouTubeFeedTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
@@ -321,7 +350,6 @@ class YouTubeSearchTestCase(YouTubeTestCase):
                                       order_by='latest'),
             ('http://gdata.youtube.com/feeds/api/videos?'
              'orderby=published&vq=query'))
-            
 
     def test_next_search_page_url(self):
         response = {

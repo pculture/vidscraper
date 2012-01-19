@@ -29,6 +29,7 @@ import os
 import unittest
 import feedparser
 
+from vidscraper.suites.base import VideoDownload
 from vidscraper.suites.feed import GenericFeedSuite
 
 class GenericFeedSuiteTestCase(unittest.TestCase):
@@ -159,9 +160,10 @@ h.264</p>""")
              'link': u'http://www.example.org/entries/1',
              'guid': u'http://www.example.org/entries/1',
              'embed_code': None,
-             'file_url': u'http://www.example.org/myvideo.ogg',
-             'file_url_length': u'1234',
-             'file_url_mimetype': u'application/ogg',
+             'downloads': [VideoDownload(
+                        url=u'http://www.example.org/myvideo.ogg',
+                        length=u'1234',
+                        mime_type=u'application/ogg')],
              'thumbnail_url': None,
              'publish_datetime': datetime.datetime(2005, 7, 15, 12, 0),
              'license': 'http://creativecommons.org/licenses/by/2.5/'})

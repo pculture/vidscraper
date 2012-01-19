@@ -37,7 +37,7 @@ except ImportError:
     oauth2 = None
 
 from vidscraper.compat import json
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, registry, VideoDownload
 
 from vidscraper.utils.feedparser import struct_time_to_datetime
 
@@ -58,8 +58,7 @@ class VimeoSuite(BaseSuite):
                       'publish_datetime', 'thumbnail_url', 'user', 'user_url',
                       'flash_enclosure_url', 'embed_code'])
     scrape_fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
-                         'embed_code', 'file_url', 'file_url_mimetype',
-                         'file_url_expires'])
+                         'embed_code', 'downloads'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def _embed_code_from_id(self, video_id):
@@ -123,18 +122,20 @@ allowFullScreen></iframe>""" % video_id
             'title': xml_data['caption'],
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
-            'file_url_expires': struct_time_to_datetime(time.gmtime(
-                    int(xml_data['request_signature_expires']))),
-            'file_url_mimetype': u'video/x-flv',
+            'downloads': [VideoDownload(
+                    url_expires=struct_time_to_datetime(time.gmtime(
+                            int(xml_data['request_signature_expires']))),
+                    mime_type=u'video/x-flv',
+                    )]
             }
         base_file_url = (
             'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
             '%(request_signature)s/%(request_signature_expires)s'
             '/?q=' % xml_data)
         if xml_data['isHD'] == '1':
-            data['file_url'] = base_file_url + 'hd'
+            data['downloads'][0].url = base_file_url + 'hd'
         else:
-            data['file_url'] = base_file_url + 'sd'
+            data['downloads'][0].url = base_file_url + 'sd'
 
         return data
 

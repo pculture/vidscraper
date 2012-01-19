@@ -1,5 +1,5 @@
 from vidscraper.errors import CantIdentifyUrl
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, VideoDownload, registry
 from vidscraper.utils.html import convert_entities, make_embed_code
 from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
                                          get_entry_thumbnail_url,
@@ -53,16 +53,21 @@ class GenericFeedSuite(BaseSuite):
             elif 'url' in player:
                 embed_code = make_embed_code(player['url'], '')
 
+        if enclosure:
+            download = VideoDownload(
+                url=enclosure.get('url'),
+                mime_type=enclosure.get('type'),
+                length=enclosure.get('filesize') or enclosure.get('length'))
+            downloads = [download]
+        else:
+            downloads = None
+
         return {
             'link': link,
             'title': convert_entities(entry['title']),
             'description': description,
             'thumbnail_url': get_entry_thumbnail_url(entry),
-            'file_url': enclosure.get('url') if enclosure else None,
-            'file_url_mimetype': enclosure.get('type') if enclosure else None,
-            'file_url_length': ((enclosure.get('filesize') or
-                                enclosure.get('length'))
-                                if enclosure else None),
+            'downloads': downloads,
             'publish_datetime': best_date,
             'guid': entry.get('id'),
             'embed_code': embed_code,

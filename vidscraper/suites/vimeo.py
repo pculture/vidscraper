@@ -303,7 +303,7 @@ allowFullScreen></iframe>""" % video_id
 
     def get_next_search_page_url(self, search, search_response,
                                  order_by=None):
-        total = int(search_response['videos']['total'])
+        total = self.get_search_total_results(search, search_response)
         page = int(search_response['videos']['page'])
         per_page = int(search_response['videos']['perpage'])
         if page * per_page > total:
@@ -330,7 +330,11 @@ allowFullScreen></iframe>""" % video_id
         return int(search_response['videos']['total'])
 
     def get_search_results(self, search, search_response):
-        return search_response['videos']['video']
+        # Vimeo only includes the 'video' key if there are actually videos on
+        # the page.
+        if int(search_response['videos']['on_this_page']) > 0:
+            return search_response['videos']['video']
+        return []
 
     def parse_search_result(self, search, result):
         # TODO: results have an embed_privacy key. What is this? Should

@@ -43,7 +43,7 @@ class GenericFeedSuite(BaseSuite):
             entry['content'][0]['value']): # Atom
             description = entry['content'][0]['value']
         else:
-            description = entry['summary'] or ''
+            description = entry.get('summary', '')
 
         embed_code = None
         if 'media_player' in entry:

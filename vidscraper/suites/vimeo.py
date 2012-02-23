@@ -37,6 +37,7 @@ except ImportError:
     oauth2 = None
 
 from vidscraper.compat import json
+from vidscraper.errors import VideoDeleted
 from vidscraper.suites import BaseSuite, registry
 
 from vidscraper.utils.feedparser import struct_time_to_datetime
@@ -326,9 +327,13 @@ allowFullScreen></iframe>""" % video_id
         return json.loads(request[1])
 
     def get_search_total_results(self, search, search_response):
+        if 'videos' not in search_response:
+            return 0
         return int(search_response['videos']['total'])
 
     def get_search_results(self, search, search_response):
+        if 'videos' not in search_response:
+            return []
         # Vimeo only includes the 'video' key if there are actually videos on
         # the page.
         if int(search_response['videos']['on_this_page']) > 0:
@@ -340,6 +345,11 @@ allowFullScreen></iframe>""" % video_id
         # vidscraper return that information? Doesn't youtube have something
         # similar?
         video_id = result['id']
+        if not result['upload_date']:
+            # deleted video
+            link = [u['_content'] for u in result['urls']['url']
+                    if u['type'] == 'video'][0]
+            raise VideoDeleted(link)
         data = {
             'title': result['title'],
             'link': [u['_content'] for u in result['urls']['url']

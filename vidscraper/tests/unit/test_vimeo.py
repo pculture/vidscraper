@@ -29,6 +29,7 @@ import unittest
 import urlparse
 
 from vidscraper.compat import json
+from vidscraper.errors import VideoDeleted
 from vidscraper.suites.vimeo import VimeoSuite, LAST_URL_CACHE
 
 
@@ -319,6 +320,20 @@ allowFullScreen></iframe>"""
         for key in expected_data:
             self.assertTrue(key in data)
             self.assertEqual(data[key], expected_data[key])
+
+    def test_get_search_with_deleted_video(self):
+        search_file = open(os.path.join(self.data_file_dir,
+                                        'search_with_deleted.json'))
+        response = json.loads(search_file.read())
+        search = self.suite.get_search(
+            'search query',
+            api_keys={'vimeo_key': 'BLANK',
+                      'vimeo_secret': 'BLANK'})
+        results = self.suite.get_search_results(search, response)
+        self.assertEqual(len(results), 50)
+        self.assertRaises(VideoDeleted,
+                          self.suite.parse_search_result,
+                          search, results[49])
 
     def test_get_search_url(self):
         extra_params = {'bar': 'baz'}

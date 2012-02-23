@@ -30,7 +30,7 @@ import urllib2
 import feedparser
 
 from vidscraper.compat import json
-from vidscraper.errors import CantIdentifyUrl
+from vidscraper.errors import CantIdentifyUrl, VideoDeleted
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)
 from vidscraper.utils.search import (search_string_from_terms,
@@ -297,7 +297,10 @@ class BaseVideoIterator(object):
             while self._max_results is None or item_count < self._max_results:
                 items = self.get_response_items(response)
                 for item in items:
-                    video = self._data_from_item(item)
+                    try:
+                        video = self._data_from_item(item)
+                    except VideoDeleted:
+                        continue
                     video.index = item_count
                     yield video
                     if self._max_results is not None:

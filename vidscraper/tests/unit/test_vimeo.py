@@ -327,15 +327,15 @@ allowFullScreen></iframe>"""
                                       extra_params=extra_params),
             'http://vimeo.com/api/rest/v2/?bar=baz&full_response=1&format=json'
             '&query=query+search&api_key=BLANK&method=vimeo.videos.search')
+        self.search.order_by = 'relevant'
         self.assertEqual(
-            self.suite.get_search_url(self.search,
-                                      order_by='relevant'),
+            self.suite.get_search_url(self.search),
             'http://vimeo.com/api/rest/v2/?sort=relevant&full_response=1&'
             'format=json&query=query+search&api_key=BLANK&'
             'method=vimeo.videos.search')
+        self.search.order_by = 'latest'
         self.assertEqual(
-            self.suite.get_search_url(self.search,
-                                      order_by='latest'),
+            self.suite.get_search_url(self.search),
             'http://vimeo.com/api/rest/v2/?sort=newest&full_response=1&'
             'format=json&query=query+search&api_key=BLANK&'
             'method=vimeo.videos.search')

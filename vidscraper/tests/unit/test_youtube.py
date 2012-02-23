@@ -340,14 +340,14 @@ class YouTubeSearchTestCase(YouTubeTestCase):
             self.suite.get_search_url(self.search,
                                       extra_params=extra_params),
             'http://gdata.youtube.com/feeds/api/videos?vq=query&bar=baz')
+        self.search.order_by = 'relevant'
         self.assertEqual(
-            self.suite.get_search_url(self.search,
-                                      order_by='relevant'),
+            self.suite.get_search_url(self.search),
             ('http://gdata.youtube.com/feeds/api/videos?'
              'orderby=relevance&vq=query'))
+        self.search.order_by = 'latest'
         self.assertEqual(
-            self.suite.get_search_url(self.search,
-                                      order_by='latest'),
+            self.suite.get_search_url(self.search),
             ('http://gdata.youtube.com/feeds/api/videos?'
              'orderby=published&vq=query'))
 

@@ -283,7 +283,7 @@ allowFullScreen></iframe>""" % video_id
         return next_url
 
 
-    def get_search_url(self, search, order_by=None, extra_params=None):
+    def get_search_url(self, search, extra_params=None):
         if search.api_keys is None or not search.api_keys.get('vimeo_key'):
             raise NotImplementedError("API Key is missing.")
         params = {
@@ -293,23 +293,22 @@ allowFullScreen></iframe>""" % video_id
             'query': search.query,
         }
         params['api_key'] = search.api_keys['vimeo_key']
-        if order_by == 'relevant':
+        if search.order_by == 'relevant':
             params['sort'] = 'relevant'
-        elif order_by == 'latest':
+        elif search.order_by == 'latest':
             params['sort'] = 'newest'
         if extra_params is not None:
             params.update(extra_params)
         return "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
 
-    def get_next_search_page_url(self, search, search_response,
-                                 order_by=None):
+    def get_next_search_page_url(self, search, search_response):
         total = self.get_search_total_results(search, search_response)
         page = int(search_response['videos']['page'])
         per_page = int(search_response['videos']['perpage'])
         if page * per_page > total:
             return None
         extra_params = {'page': page + 1}
-        return self.get_search_url(search, order_by,
+        return self.get_search_url(search,
                                    extra_params=extra_params)
 
     def get_search_response(self, search, search_url):

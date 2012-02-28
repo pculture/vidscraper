@@ -165,7 +165,8 @@ class YouTubeSuite(BaseSuite):
             # got a crummy version; increase the resolution
             data['thumbnail_url'] = data['thumbnail_url'].replace(
                 '/default.jpg', '/hqdefault.jpg')
-        if (data['description'].startswith(data['user']) and
+        if (data['description'][:len(data['user'])].lower().startswith(
+                data['user'].lower()) and
             data['description'].endswith('youtube')):
             # description looks like "USERNAME[real description]youtube"
             data['description'] = data['description'][len(data['user']):-7]

@@ -184,7 +184,7 @@ Caramelldansen""",
             'url': u'http://gdata.youtube.com/feeds/base/users/AssociatedPress/uploads?alt=rss&v=2',
             'title': u'Uploads by AssociatedPress',
             'description': u'',
-            'webpage': u'http://www.youtube.com/profile?user=AssociatedPress#p/u',
+            'webpage': u'http://www.youtube.com/user/AssociatedPress/videos',
             'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
             'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
             }

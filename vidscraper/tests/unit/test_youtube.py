@@ -171,9 +171,39 @@ class YouTubeOembedTestCase(YouTubeTestCase):
         self.assertEqual(self.suite.parse_oembed_error(exc),
                          {'is_embeddable': False})
 
+    def test_parse_oembed_error_403(self):
+        exc = urllib2.HTTPError(None, 403, 'Forbidden', None, None)
+        self.assertEqual(self.suite.parse_oembed_error(exc),
+                         {'is_embeddable': False})
+
+    def test_parse_oembed_error_404(self):
+        exc = urllib2.HTTPError(None, 404, 'Not Found', None, None)
+        self.assertEqual(self.suite.parse_oembed_error(exc),
+                         {})
+
     def test_parse_oembed_error_other(self):
         self.assertRaises(RuntimeError,
                           self.suite.parse_oembed_error, RuntimeError())
+
+    def test_parse_api_error_401(self):
+        exc = urllib2.HTTPError(None, 401, 'Unauthorized', None, None)
+        self.assertEqual(self.suite.parse_api_error(exc),
+                         {'is_embeddable': False})
+
+    def test_parse_api_error_403(self):
+        exc = urllib2.HTTPError(None, 403, 'Forbidden', None, None)
+        self.assertEqual(self.suite.parse_api_error(exc),
+                         {'is_embeddable': False})
+
+    def test_parse_api_error_404(self):
+        exc = urllib2.HTTPError(None, 404, 'Not Found', None, None)
+        self.assertEqual(self.suite.parse_api_error(exc),
+                         {})
+
+    def test_parse_api_error_other(self):
+        self.assertRaises(RuntimeError,
+                          self.suite.parse_oembed_error, RuntimeError())
+
 
 class YouTubeApiTestCase(YouTubeTestCase):
     def test_get_api_url(self):

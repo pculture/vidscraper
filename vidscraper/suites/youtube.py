@@ -86,11 +86,16 @@ class YouTubeSuite(BaseSuite):
             url = '%s&%s' % (url, urllib.urlencode(extra_params))
         return url
 
-    def parse_oembed_error(self, exc):
-        if getattr(exc, 'code', None) == 401: # Unauthorized
+    def parse_error(self, exc):
+        code = getattr(exc, 'code', None)
+        if code in (401, 403): # Unauthorized, Forbidden
             return {'is_embeddable': False}
+        elif code == 404: # Not found
+            return {}
         else:
             raise exc
+
+    parse_oembed_error = parse_api_error = parse_error
 
     def parse_feed_entry(self, entry):
         """

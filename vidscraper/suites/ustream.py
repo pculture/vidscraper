@@ -24,8 +24,8 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import json
 
-from vidscraper.compat import json
 from vidscraper.suites import BaseSuite, registry
 
 

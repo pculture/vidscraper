@@ -25,18 +25,18 @@
 
 import time
 from datetime import datetime
-from xml.dom import minidom
+import json
 import re
 import urllib
 import urllib2
 import urlparse
+from xml.dom import minidom
 
 try:
     import oauth2
 except ImportError:
     oauth2 = None
 
-from vidscraper.compat import json
 from vidscraper.errors import VideoDeleted
 from vidscraper.suites import BaseSuite, registry
 

@@ -44,7 +44,7 @@ one-off scraping.
 Requirements
 ++++++++++++
 
-* json (python2.6) or simplejson
+* Python 2.6+
 * BeautifulSoup 3.0.8 or 3.2
 * feedparser
 

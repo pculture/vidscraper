@@ -23,13 +23,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
 import re
 import urllib
 import urllib2
 
 import feedparser
 
-from vidscraper.compat import json
 from vidscraper.errors import CantIdentifyUrl, VideoDeleted
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)

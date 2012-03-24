@@ -24,11 +24,11 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import json
 import os
 import unittest
 import urlparse
 
-from vidscraper.compat import json
 from vidscraper.errors import VideoDeleted
 from vidscraper.suites.vimeo import VimeoSuite, LAST_URL_CACHE
 

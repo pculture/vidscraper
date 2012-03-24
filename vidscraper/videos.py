@@ -139,8 +139,18 @@ class Video(object):
     def load(self):
         """Uses the video's :attr:`suite` to fetch the fields for the video."""
         if not self._loaded:
-            self.suite.load_video_data(self)
+            data = self.suite.run_methods(self)
+            self._apply(data)
             self._loaded = True
+
+    def _apply(self, data):
+        """
+        Stores values from a ``data`` dictionary in the corresponding fields
+        on this instance.
+        """
+        fields = set(data) | set(self.fields)
+        for field in fields:
+            setattr(self, field, data[field])
 
     def is_loaded(self):
         return self._loaded

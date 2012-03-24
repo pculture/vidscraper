@@ -23,12 +23,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import itertools
 import json
+import operator
 import re
 import urllib
 import urllib2
 
 import feedparser
+import requests
+from requests import async
 
 from vidscraper.errors import CantIdentifyUrl
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
@@ -113,6 +117,55 @@ class SuiteRegistry(object):
 registry = SuiteRegistry()
 
 
+class SuiteMethod(object):
+    """
+    This is a base class for suite data-fetching methods (for example, oembed,
+    API, or scraping).
+
+    """
+    #: A set of fields provided by this method.
+    fields = set()
+
+    def get_url(self, video):
+        """
+        Returns the url to fetch for this method. Must be implemented by
+        subclasses.
+
+        """
+        raise NotImplementedError
+
+    def process(self, response):
+        """
+        Parse the :mod:`requests` response into a dictionary mapping
+        :class:`Video` field names to values. Must be implemented by
+        subclasses.
+
+        """
+        raise NotImplementedError
+
+
+class OEmbedMethod(object):
+    fields = set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
+
+    def __init__(self, endpoint):
+        """Takes an ``endpoint`` - a URL for an oembed API."""
+        self.endpoint = endpoint
+
+    def get_url(self, video):
+        return u"%s?url=%s" % (self.endpoint, urllib.quote_plus(video.url))
+
+    def process(self, response):
+        parsed = json.loads(response.text)
+        data = {
+            'title': parsed['title'],
+            'user': parsed['author_name'],
+            'user_url': parsed['author_url'],
+            'thumbnail_url': parsed['thumbnail_url'],
+            'embed_code': parsed['html']
+        }
+        return data
+
+
 class BaseSuite(object):
     """
     This is a base class for suites, demonstrating the API which is expected
@@ -128,31 +181,14 @@ class BaseSuite(object):
     #: feed urls to check if they can be handled by this suite.
     feed_regex = None
 
-    #: A URL which is an endpoint for an oembed API.
-    oembed_endpoint = None
-
-    @property
-    def oembed_fields(self):
-        """
-        A set of :class:`.Video` fields that this suite can supply
-        through an oembed API. By default, this will be empty if
-        :attr:`.oembed_endpoint` is ``None`` and a base set of commonly
-        available fields otherwise.
-
-        """
-        if self.oembed_endpoint is None:
-            return set()
-        return set(['title', 'user', 'user_url', 'thumbnail_url',
-                    'embed_code'])
-
-    #: A set of :class:`.Video` fields that this suite can supply
-    #through : a site-specific API. Must be supplied by subclasses for accurate
-    #: optimization.
-    api_fields = set()
-    #: A set of :class:`.Video` fields that this suite can supply
-    #through : a site-specific scrape. Must be supplied by subclasses for
-    #accurate : optimization.
-    scrape_fields = set()
+    #: A list or tuple of :class:`SuiteMethod` instances which will be used to
+    #: populate videos with data. These methods will be attempted in the order
+    #: they are given, so it's a good idea to order them by the effort they
+    #: require; for example, OEmbed should generally come first, since the
+    #: response is small and easy to parse compared to, say, a page scrape.
+    #:
+    #: .. seealso:: :meth:`BaseSuite.run_methods`
+    methods = ()
 
     def __init__(self):
         if isinstance(self.video_regex, basestring):
@@ -229,110 +265,6 @@ class BaseSuite(object):
         """Returns a video using this suite."""
         return Video(url, self, **kwargs)
 
-    def apply_video_data(self, video, data):
-        """
-        Stores values from a ``data`` dictionary on the corresponding
-        attributes of a :class:`Video` instance.
-
-        """
-        for field, value in data.iteritems():
-            if (field in video.fields):# and getattr(video, field) is None):
-                setattr(video, field, value)
-
-    def get_oembed_url(self, video):
-        """
-        Returns the url for fetching oembed data. By default, generates an
-        oembed request url based on :attr:`.oembed_endpoint` or raises
-        :exc:`NotImplementedError` if that is not defined.
-
-        """
-        endpoint = self.oembed_endpoint
-        if endpoint is None:
-            raise NotImplementedError
-        return u'%s?url=%s' % (endpoint, urllib.quote_plus(video.url))
-
-    def parse_oembed_response(self, response_text):
-        """
-        Parses oembed response text into a dictionary mapping
-        :class:`Video` field names to values. By default, this assumes
-        that the commonly-available fields ``title``, ``author_name``,
-        ``author_url``, ``thumbnail_url``, and ``html`` are available.
-
-        """
-        parsed = json.loads(response_text)
-        data = {
-            'title': parsed['title'],
-            'user': parsed['author_name'],
-            'user_url': parsed['author_url'],
-            'thumbnail_url': parsed['thumbnail_url'],
-            'embed_code': parsed['html']
-        }
-        return data
-
-    def parse_oembed_error(self, exc):
-        """
-        Parses a :module:`urllib` exception raised during the OEmbed request.
-        If we re-raise an exception, that's it; otherwise, the dictionary
-        returned will be used to populate the :class:`Video` object.
-
-        By default, just re-raises the given exception.
-        """
-        raise exc
-
-    def get_api_url(self, video):
-        """
-        Returns the url for fetching API data. May be implemented by
-        subclasses if an API is available.
-
-        """
-        raise NotImplementedError
-
-    def parse_api_response(self, response_text):
-        """
-        Parses API response text into a dictionary mapping
-        :class:`Video` field names to values. May be implemented by
-        subclasses if an API is available.
-
-        """
-        raise NotImplementedError
-
-    def parse_api_error(self, exc):
-        """
-        Parses a :module:`urllib` exception raised during the API request.
-        If we re-raise an exception, that's it; otherwise, the dictionary
-        returned will be used to populate the :class:`Video` object.
-
-        By default, just re-raises the given exception.
-        """
-        raise exc
-
-    def get_scrape_url(self, video):
-        """
-        Returns the url for fetching scrape data. May be implemented by
-        subclasses if a page scrape should be supported.
-
-        """
-        raise NotImplementedError
-
-    def parse_scrape_response(self, response_text):
-        """
-        Parses scrape response text into a dictionary mapping
-        :class:`Video` field names to values. May be implemented by
-        subclasses if a page scrape should be supported.
-
-        """
-        raise NotImplementedError
-
-    def parse_scrape_error(self, exc):
-        """
-        Parses a :module:`urllib` exception raised during the scrape request.
-        If we re-raise an exception, that's it; otherwise, the dictionary
-        returned will be used to populate the :class:`Video` object.
-
-        By default, just re-raises the given exception.
-        """
-        raise exc
-
     def _run_methods(self, video, methods):
         """
         Runs the selected methods, applies the returned data, and marks on the
@@ -351,48 +283,64 @@ class BaseSuite(object):
                 data = getattr(self, "parse_%s_response" % method)(response_text)
             self.apply_video_data(video, data)
 
-    def load_video_data(self, video):
+    def find_best_methods(self, missing_fields):
         """
-        Makes the smallest requests necessary for loading all the missing
-        fields for the ``video``. The data is immediately stored on the video
-        instance.
+        Generates a dictionary where the keys are numbers of remaining fields
+        and the values are combinations of methods that promise to yield that
+        number of remaining fields, in the order that they are encountered.
+
+        """
+        # Our initial state is that we cover none of the missing fields, and
+        # that we use none of the available methods.
+        min_remaining = len(missing_fields)
+        best_methods = []
+
+        # Loop through all combinations of any size that can be made with the
+        # available methods.
+        for size in xrange(1, len(self.methods)):
+            for methods in itertools.combinations(self.methods, size):
+                # First, build a set of the fields that are provided by the
+                # methods.
+                field_set = reduce((m.fields for m in methods), operator.or_)
+                remaining = len(missing_fields - field_set)
+
+                # If these methods fill all the missing fields, take them
+                # immediately.
+                if not remaining:
+                    return methods
+
+                # Otherwise, note the methods iff they would decrease the 
+                # number of missing fields.
+                if remaining < min_remaining:
+                    best_methods = methods
+        return best_methods
+
+
+    def run_methods(self, video):
+        """
+        Selects methods from :attr:`methods` which can be used in combination
+        to fill all missing fields on the ``video`` - or as many of them as
+        possible.
+
+        This will prefer the first listed methods and will prefer small
+        combinations of methods, so that the smallest number of smallest
+        possible responses will be fetched.
 
         """
         missing_fields = set(video.missing_fields)
         if not missing_fields:
             return
 
-        # Check if the missing fields can be supplied by a single method, a
-        # combination of two methods, or all three methods.
-        remaining_dict = {}
-        for methods in [['oembed'], ['api'], ['scrape'],
-                ['oembed', 'api'], ['oembed', 'scrape'], ['api', 'scrape'],
-                ['oembed', 'api', 'scrape']]:
-            field_set = set()
-            for method in methods:
-                field_set |= getattr(self, "%s_fields" % method)
-            remaining = len(missing_fields - field_set)
+        best_methods = self.find_best_methods(missing_fields)
 
-            # If a method fills all the missing fields, take it immediately.
-            if not remaining:
-                self._run_methods(video, methods)
-                return
+        rs = [async.get(m.get_url(video), timeout=3) for m in best_methods]
+        responses = async.map(rs)
 
-            # Otherwise only consider the method if it would reduce the number
-            # of remaining fields at all.
-            if remaining < len(missing_fields):
-                remaining_dict.setdefault(remaining, []).append(methods)
+        data = {}
+        for method, response in izip(best_methods, responses):
+            data.update(method.process(response))
 
-        # If we get here, it means that it is impossible to supply all the
-        # requested fields. So we try to get as close as possible with as few
-        # queries as possible. We run the first entry in the best-performing
-        # slot, since that will also have been the earliest in the original
-        # order. If this doesn't end up doing anything, then there is nothing
-        # to be done and we can simply return.
-        for i in xrange(len(missing_fields)):
-            if i in remaining_dict:
-                self._run_methods(video, remaining_dict[i][0])
-                return
+        return data
 
     def get_feed_response(self, feed, feed_url):
         """

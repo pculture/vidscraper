@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.5-rc'
+version = '0.6-a'
 
 setup(
     name="vidscraper",

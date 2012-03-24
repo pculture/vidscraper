@@ -30,7 +30,7 @@ import urllib
 import urlparse
 
 from vidscraper.errors import CantIdentifyUrl
-from vidscraper.suites import Video
+from vidscraper.videos import Video
 from vidscraper.suites.blip import BlipSuite
 
 

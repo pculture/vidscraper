@@ -25,7 +25,8 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from vidscraper import errors
-from vidscraper.suites import Video, registry, VideoSearch, VideoFeed
+from vidscraper.suites import registry
+from vidscraper.videos import Video, VideoSearch, VideoFeed
 
 
 __version__ = '0.6-a'

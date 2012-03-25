@@ -120,7 +120,9 @@ registry = SuiteRegistry()
 class SuiteMethod(object):
     """
     This is a base class for suite data-fetching methods (for example, oembed,
-    API, or scraping).
+    API, or scraping). Currently, all of the base functionality should be
+    overridden; however, this class should still be subclassed in case shared
+    functionality is added later.
 
     """
     #: A set of fields provided by this method.
@@ -144,7 +146,7 @@ class SuiteMethod(object):
         raise NotImplementedError
 
 
-class OEmbedMethod(object):
+class OEmbedMethod(SuiteMethod):
     fields = set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
 
     def __init__(self, endpoint):

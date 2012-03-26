@@ -93,7 +93,7 @@ class Video(object):
     license = None
 
     # These were pretty suite-specific and should perhaps be treated as such?
-    #: Whether the video is embeddable? (Youtube)
+    #: Whether the video is embeddable? (Youtube, Vimeo)
     is_embeddable = None
 
     # OTHER ATTRS

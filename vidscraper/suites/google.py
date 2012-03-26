@@ -27,22 +27,18 @@ import re
 
 from BeautifulSoup import BeautifulSoup
 
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, registry, SuiteMethod
 
 
-ID_REGEX = re.compile(r'video-title|video-description|embed-video-code')
+class GoogleScrapeMethod(SuiteMethod):
+    fields = set(['title', 'description', 'embed_code'])
+    id_regex = re.compile(r'video-title|video-description|embed-video-code')
 
-
-class GoogleSuite(BaseSuite):
-    """Suite for scraping video pages from videos.google.com"""
-    video_regex = r'^https?://video.google.com/videoplay'
-    scrape_fields = set(['title', 'description', 'embed_code'])
-
-    def get_scrape_url(self, video):
+    def get_url(self, video):
         return video.url
 
-    def parse_scrape_response(self, response_text):
-        soup = BeautifulSoup(response_text).findAll(attrs={'id': ID_REGEX})
+    def process(self, response):
+        soup = BeautifulSoup(response.text).findAll(attrs={'id': self.id_regex})
         data = {}
         for tag in soup:
             if tag['id'] == 'video-title':
@@ -54,4 +50,12 @@ class GoogleSuite(BaseSuite):
                 # but this is a scrape and liable to break anyway. KISS.
                 data['embed_code'] = unicode(tag.string).replace("&gt;", ">").replace("&lt;", "<")
         return data
+
+
+class GoogleSuite(BaseSuite):
+    """Suite for scraping video pages from videos.google.com"""
+    video_regex = r'^https?://video.google.com/videoplay'
+    methods = (GoogleScrapeMethod(),)
+
+
 registry.register(GoogleSuite)

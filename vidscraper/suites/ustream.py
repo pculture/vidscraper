@@ -26,29 +26,23 @@
 import datetime
 import json
 
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 
 
-class UstreamSuite(BaseSuite):
-    """Suite for fetching data on ustream videos."""
-    # TODO: Ustream has feeds and search functionality - add support for that!
-    video_regex = 'https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)'
+class UstreamApiMethod(SuiteMethod):
+    fields = set(['link', 'title', 'description', 'flash_enclosure_url',
+                  'embed_code', 'thumbnail_url', 'publish_date', 'tags',
+                  'user', 'user_url'])
 
-    oembed_endpoint = "http://www.ustream.tv/oembed/"
-
-    api_fields = set(['link', 'title', 'description', 'flash_enclosure_url',
-                      'embed_code', 'thumbnail_url', 'publish_date', 'tags',
-                      'user', 'user_url'])
-
-    def get_api_url(self, video):
-        video_id = self.video_regex.match(video.url).group('id')
+    def get_url(self, video):
+        video_id = UstreamSuite.video_regex.match(video.url).group('id')
         if video.api_keys is None or 'ustream_key' not in video.api_keys:
             raise ValueError("API key must be set for Ustream API requests.")
         return 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (
                                 video_id, video.api_keys['ustream_key'])
 
-    def parse_api_response(self, response_text):
-        parsed = json.loads(response_text)['results']
+    def parse_api_response(self, response):
+        parsed = json.loads(response.text)['results']
         url = parsed['embedTagSourceUrl']
         publish_date = datetime.datetime.strptime(parsed['createdAt'],
                                                  '%Y-%m-%d %H:%M:%S')
@@ -65,4 +59,14 @@ class UstreamSuite(BaseSuite):
             'user_url': parsed['user']['url']
         }
         return data
+
+
+class UstreamSuite(BaseSuite):
+    """Suite for fetching data on ustream videos."""
+    # TODO: Ustream has feeds and search functionality - add support for that!
+    video_regex = 'https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)'
+    methods = (OEmbedMethod("http://www.ustream.tv/oembed/"),
+               UstreamApiMethod())
+
+
 registry.register(UstreamSuite)

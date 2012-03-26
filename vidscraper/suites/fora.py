@@ -29,7 +29,7 @@ import urlparse
 
 from BeautifulSoup import BeautifulSoup, SoupStrainer
 
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, registry, SuiteMethod
 from vidscraper.utils.html import make_embed_code
 
 
@@ -45,17 +45,17 @@ def _strain_filter(name, attrs):
         for attr in attrs))
 
 
-class ForaSuite(BaseSuite):
-    """Suite for fora.tv. As of 19-09-2011 fora does not offer any public API, only video pages and rss feeds."""
-    video_regex = 'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+'
-    scrape_fields = set(['link', 'title', 'description', 'flash_enclosure_url', 'embed_code', 'thumbnail_url', 'publish_date', 'user', 'user_url'])
+class ForaScrapeMethod(SuiteMethod):
+    fields = set(['link', 'title', 'description', 'flash_enclosure_url',
+                  'embed_code', 'thumbnail_url', 'publish_date', 'user',
+                  'user_url'])
 
-    def get_scrape_url(self, video):
+    def get_url(self, video):
         return video.url
 
-    def parse_scrape_response(self, response_text):
+    def process(self, response):
         strainer = SoupStrainer(_strain_filter)
-        soup = BeautifulSoup(response_text, parseOnlyThese=strainer)
+        soup = BeautifulSoup(response.text, parseOnlyThese=strainer)
         data = {}
         for tag in soup:
             if tag.name == 'link':
@@ -84,4 +84,16 @@ class ForaSuite(BaseSuite):
                 date = datetime.datetime.strptime(date, "%m.%d.%y")
                 data['publish_date'] = date
         return data
+
+
+class ForaSuite(BaseSuite):
+    """
+    Suite for fora.tv. As of 25-03-2012 fora does not offer any public API,
+    only video pages and rss feeds.
+
+    """
+    video_regex = 'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+'
+    methods = (ForaScrapeMethod(),)
+
+
 registry.register(ForaSuite)

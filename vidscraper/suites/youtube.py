@@ -36,9 +36,118 @@ import feedparser
 feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
+
+
+class YouTubeApiMethod(SuiteMethod):
+    fields = set(('link', 'title', 'description', 'guid', 'thumbnail_url',
+                  'publish_datetime', 'tags', 'flash_enclosure_url', 'user',
+                  'user_url', 'license'))
+
+    def get_url(self, video):
+        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
+        return "http://gdata.youtube.com/feeds/api/videos/%s?v=2" % video_id
+
+    def process(self, response):
+        if response.status_code in (401, 403):
+            return {'is_embeddable': False}
+        parsed = feedparser.parse(response.text)
+        entry = parsed.entries[0]
+        user = entry['author']
+        best_date = struct_time_to_datetime(entry['published_parsed'])
+        data = {
+            'link': entry['links'][0]['href'].split('&', 1)[0],
+            'title': entry['title'],
+            'description': entry['media_group'],
+            'thumbnail_url': get_entry_thumbnail_url(entry),
+            'publish_datetime': best_date,
+            'tags': [t['term'] for t in entry['tags']
+                    if not t['term'].startswith('http')],
+            'user': user,
+            'user_url': u'http://www.youtube.com/user/%s' % user,
+            'guid' : 'http://gdata.youtube.com/feeds/api/videos/%s' % (
+                entry.id.split(':')[-1],),
+            'license': entry['media_license']['href'],
+            'flash_enclosure_url': entry['media_player']['url']
+        }
+        if data['thumbnail_url'].endswith('/default.jpg'):
+            # got a crummy version; increase the resolution
+            data['thumbnail_url'] = data['thumbnail_url'].replace(
+                '/default.jpg', '/hqdefault.jpg')
+        if (data['description'][:len(data['user'])].lower().startswith(
+                data['user'].lower()) and
+            data['description'].endswith('youtube')):
+            # description looks like "USERNAME[real description]youtube"
+            data['description'] = data['description'][len(data['user']):-7]
+        return data
+
+
+class YouTubeScrapeMethod(SuiteMethod):
+    fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
+                  'file_url', 'file_url_mimetype', 'file_url_expires'))
+
+    def get_url(self, video):
+        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
+        return (u"http://www.youtube.com/get_video_info?video_id=%s&"
+                "el=embedded&ps=default&eurl=" % video_id)
+
+    def parse_scrape_response(self, response):
+        if response.status_code == 402:
+            # 402: Payment required.
+            # A note in the previous code said this could happen when too many
+            # requests were made (per second?) Unclear why, though, or why
+            # this is only caught here.
+            return {}
+        params = urlparse.parse_qs(response.text)
+        if params['status'][0] == 'fail':
+            if params['errorcode'][0] == '150': # unembedable
+                return {'is_embeddable': False}
+            return {}
+        data = {
+            'title': params['title'][0].decode('utf8'),
+            'user': params['author'][0].decode('utf8'),
+            'user_url': u'http://www.youtube.com/user/%s' % (
+                params['author'][0].decode('utf8')),
+            'thumbnail_url': params['thumbnail_url'][0],
+            }
+        if 'keywords' in params:
+            data['tags'] = params['keywords'][0].decode('utf8').split(',')
+        if data['thumbnail_url'].endswith('/default.jpg'):
+            # got a crummy version; increase the resolution
+            data['thumbnail_url'] = data['thumbnail_url'].replace(
+                '/default.jpg', '/hqdefault.jpg')
+
+        # fmt_url_map is a comma separated list of pipe separated
+        # pairs of fmt, url
+        # build the format codes.
+        fmt_list = [int(x.split('/')[0])
+                    for x in params['fmt_list'][0].split(',')]
+        # build the list of available urls.
+        fmt_url_map = params["url_encoded_fmt_stream_map"][0].split(",")
+        # strip url= from url=xxxxxx, strip trailer.
+        fmt_url_map = [urllib.unquote_plus(x[4:]).split(';')[0]
+                       for x in fmt_url_map]
+        # now build the actual fmt_url_map ...
+        fmt_url_map = dict(zip(fmt_list, fmt_url_map))
+        for fmt, mimetype in self.preferred_fmt_types:
+            if fmt in fmt_url_map:
+                data['file_url'] = file_url = fmt_url_map[fmt]
+                data['file_url_mimetype'] = mimetype
+                parsed_url = urlparse.urlparse(file_url)
+                file_url_qs = urlparse.parse_qs(parsed_url.query)
+                data['file_url_expires'] = struct_time_to_datetime(
+                    time.gmtime(int(file_url_qs['expire'][0])))
+        return data
+
+
+class YouTubeOEmbedMethod(OEmbedMethod):
+    def process(self, response):
+        if response.status_code in (401, 403):
+            return {'is_embeddable': False}
+        return OEmbedMethod.process(self, response)
+
 
 class YouTubeSuite(BaseSuite):
     video_regex = r'^https?://(' +\
@@ -55,13 +164,8 @@ class YouTubeSuite(BaseSuite):
     feed_url_base = ('http://gdata.youtube.com/feeds/base/users/%s/'
                     'uploads?alt=rss&v=2')
 
-    oembed_endpoint = "http://www.youtube.com/oembed"
-    api_fields = set(['link', 'title', 'description', 'guid',
-                      'thumbnail_url', 'publish_datetime', 'tags',
-                      'flash_enclosure_url', 'user', 'user_url', 'license'])
-
-    scrape_fields = set(['title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                         'file_url', 'file_url_mimetype', 'file_url_expires'])
+    methods = (YouYubeOEmbedMethod("http://www.youtube.com/oembed"),
+               YouTubeApiMethod(), YouTubeScrapeMethod())
 
     # the ordering of fmt codes we prefer to download
     preferred_fmt_types = [
@@ -85,17 +189,6 @@ class YouTubeSuite(BaseSuite):
         if extra_params:
             url = '%s&%s' % (url, urllib.urlencode(extra_params))
         return url
-
-    def parse_error(self, exc):
-        code = getattr(exc, 'code', None)
-        if code in (401, 403): # Unauthorized, Forbidden
-            return {'is_embeddable': False}
-        elif code == 404: # Not found
-            return {}
-        else:
-            raise exc
-
-    parse_oembed_error = parse_api_error = parse_error
 
     def parse_feed_entry(self, entry):
         """
@@ -141,95 +234,6 @@ class YouTubeSuite(BaseSuite):
     def get_feed_entry_count(self, feed, feed_response):
         return int(feed_response.feed.get('opensearch_totalresults',
                                           len(feed_response.entries)))
-
-    def get_api_url(self, video):
-        video_id = self.video_regex.match(video.url).group('video_id')
-        return "http://gdata.youtube.com/feeds/api/videos/%s?v=2" % video_id
-
-    def parse_api_response(self, response_text):
-        parsed = feedparser.parse(response_text)
-        entry = parsed.entries[0]
-        user = entry['author']
-        best_date = struct_time_to_datetime(entry['published_parsed'])
-        data = {
-            'link': entry['links'][0]['href'].split('&', 1)[0],
-            'title': entry['title'],
-            'description': entry['media_group'],
-            'thumbnail_url': get_entry_thumbnail_url(entry),
-            'publish_datetime': best_date,
-            'tags': [t['term'] for t in entry['tags']
-                    if not t['term'].startswith('http')],
-            'user': user,
-            'user_url': u'http://www.youtube.com/user/%s' % user,
-            'guid' : 'http://gdata.youtube.com/feeds/api/videos/%s' % (
-                entry.id.split(':')[-1],),
-            'license': entry['media_license']['href'],
-            'flash_enclosure_url': entry['media_player']['url']
-        }
-        if data['thumbnail_url'].endswith('/default.jpg'):
-            # got a crummy version; increase the resolution
-            data['thumbnail_url'] = data['thumbnail_url'].replace(
-                '/default.jpg', '/hqdefault.jpg')
-        if (data['description'][:len(data['user'])].lower().startswith(
-                data['user'].lower()) and
-            data['description'].endswith('youtube')):
-            # description looks like "USERNAME[real description]youtube"
-            data['description'] = data['description'][len(data['user']):-7]
-        return data
-
-    def get_scrape_url(self, video):
-        video_id = self.video_regex.match(video.url).group('video_id')
-        return (u"http://www.youtube.com/get_video_info?video_id=%s&"
-                "el=embedded&ps=default&eurl=" % video_id)
-
-    def parse_scrape_response(self, response_text):
-        params = urlparse.parse_qs(response_text)
-        if params['status'][0] == 'fail':
-            if params['errorcode'][0] == '150': # unembedable
-                return {'is_embeddable': False}
-            return {}
-        data = {
-            'title': params['title'][0].decode('utf8'),
-            'user': params['author'][0].decode('utf8'),
-            'user_url': u'http://www.youtube.com/user/%s' % (
-                params['author'][0].decode('utf8')),
-            'thumbnail_url': params['thumbnail_url'][0],
-            }
-        if 'keywords' in params:
-            data['tags'] = params['keywords'][0].decode('utf8').split(',')
-        if data['thumbnail_url'].endswith('/default.jpg'):
-            # got a crummy version; increase the resolution
-            data['thumbnail_url'] = data['thumbnail_url'].replace(
-                '/default.jpg', '/hqdefault.jpg')
-
-        # fmt_url_map is a comma separated list of pipe separated
-        # pairs of fmt, url
-        # build the format codes.
-        fmt_list = [int(x.split('/')[0])
-                    for x in params['fmt_list'][0].split(',')]
-        # build the list of available urls.
-        fmt_url_map = params["url_encoded_fmt_stream_map"][0].split(",")
-        # strip url= from url=xxxxxx, strip trailer.
-        fmt_url_map = [urllib.unquote_plus(x[4:]).split(';')[0]
-                       for x in fmt_url_map]
-        # now build the actual fmt_url_map ...
-        fmt_url_map = dict(zip(fmt_list, fmt_url_map))
-        for fmt, mimetype in self.preferred_fmt_types:
-            if fmt in fmt_url_map:
-                data['file_url'] = file_url = fmt_url_map[fmt]
-                data['file_url_mimetype'] = mimetype
-                parsed_url = urlparse.urlparse(file_url)
-                file_url_qs = urlparse.parse_qs(parsed_url.query)
-                data['file_url_expires'] = struct_time_to_datetime(
-                    time.gmtime(int(file_url_qs['expire'][0])))
-        return data
-
-    def parse_scrape_error(self, exc):
-        if getattr(exc, 'code', None) == 402:
-            # can happen when we make too many requests
-            # XXX re-raise, or just ignore?
-            return {}
-        raise exc
 
     def get_search_url(self, search, extra_params=None):
         params = {

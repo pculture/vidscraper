@@ -38,93 +38,45 @@ except ImportError:
     oauth2 = None
 
 from vidscraper.errors import VideoDeleted
-from vidscraper.suites import BaseSuite, registry
+from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.utils.http import open_url_while_lying_about_agent
 
+
 LAST_URL_CACHE = "_vidscraper_last_url"
 
-class VimeoSuite(BaseSuite):
-    """
-    Suite for vimeo.com. Currently supports their oembed api and simple api. No
-    API key is required for this level of access.
 
-    """
-    video_regex = r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)'
-    feed_regex = (r'http://(?:www\.)?vimeo\.com/'
-                  r'(?:(?P<collection>channel|group)s/)?'
-                  r'(?P<name>\w+)'
-                  r'(?:/(?P<type>videos|likes))?')
-    api_regex = (r'http://(?:www\.)?vimeo.com/api/v./'
-                 r'(?:(?P<collection>channel|group)s/)?'
-                 r'(?P<name>\w+)'
-                 r'(?:/(?P<type>videos|likes))\.json')
-    _tag_re = re.compile(r'>([\w ]+)</a>')
+class VimeoApiMethod(SuiteMethod):
+    fields = set(['link', 'title', 'description', 'tags', 'guid',
+                  'publish_datetime', 'thumbnail_url', 'user', 'user_url',
+                  'flash_enclosure_url', 'embed_code'])
 
-    api_fields = set(['link', 'title', 'description', 'tags', 'guid',
-                      'publish_datetime', 'thumbnail_url', 'user', 'user_url',
-                      'flash_enclosure_url', 'embed_code'])
-    scrape_fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
-                         'embed_code', 'file_url', 'file_url_mimetype',
-                         'file_url_expires'])
-    oembed_endpoint = u"http://vimeo.com/api/oembed.json"
-
-    def __init__(self, *args, **kwargs):
-        super(VimeoSuite, self).__init__(*args, **kwargs)
-        self.api_regex = re.compile(self.api_regex)
-
-    def _embed_code_from_id(self, video_id):
-        return u"""<iframe src="http://player.vimeo.com/video/%s" \
-width="320" height="240" frameborder="0" webkitAllowFullScreen \
-allowFullScreen></iframe>""" % video_id
-
-    def _flash_enclosure_url_from_id(self, video_id):
-        return u'http://vimeo.com/moogaloop.swf?clip_id=%s' % video_id
-
-    def get_api_url(self, video):
-        video_id = self.video_regex.match(video.url).group('video_id')
+    def get_url(self, video):
+        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
         return u"http://vimeo.com/api/v2/video/%s.json" % video_id
 
-    def parse_api_response(self, response_text):
-        parsed = json.loads(response_text)[0]
-        return self._data_from_api_video(parsed)
+    def process(self, response):
+        parsed = json.loads(response.text)[0]
+        return VimeoSuite.api_video_to_data(parsed)
 
-    def _data_from_api_video(self, video):
-        """
-        Takes a video dictionary from a vimeo API response and returns a
-        dictionary mapping field names to values.
 
-        """
-        video_id = video['id']
-        data = {
-            'title': video['title'],
-            'link': video['url'],
-            'description': video['description'],
-            'thumbnail_url': video['thumbnail_medium'],
-            'user': video['user_name'],
-            'user_url': video['user_url'],
-            'publish_datetime': datetime.strptime(video['upload_date'],
-                                             '%Y-%m-%d %H:%M:%S'),
-            'tags': [tag for tag in video['tags'].split(', ') if tag],
-            'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
-            'embed_code': self._embed_code_from_id(video_id),
-            'guid': 'tag:vimeo,%s:clip%i' % (video['upload_date'][:10],
-                                             video['id'])
-        }
-        return data
+class VimeoScrapeMethod(SuiteMethod):
+    fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
+                  'embed_code', 'file_url', 'file_url_mimetype',
+                  'file_url_expires'])
 
-    def get_scrape_url(self, video):
-        video_id = self.video_regex.match(video.url).group('video_id')
+    def get_url(self, video):
+        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
         return u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id
 
-    def parse_scrape_response(self, response_text):
-        doc = minidom.parseString(response_text)
+    def process(self, response):
+        doc = minidom.parseString(response.text)
         error_id = doc.getElementsByTagName('error_id').item(0)
         if (error_id is not None and
             error_id.firstChild.data == 'embed_blocked'):
             return {
-                'is_embedable': False
+                'is_embeddable': False
                 }
         xml_data = {}
         for key in ('url', 'caption', 'thumbnail', 'uploader_url',
@@ -158,6 +110,62 @@ allowFullScreen></iframe>""" % video_id
         else:
             data['file_url'] = base_file_url + 'sd'
 
+        return data
+
+
+class VimeoSuite(BaseSuite):
+    """
+    Suite for vimeo.com. Currently supports their oembed api and simple api. No
+    API key is required for this level of access.
+
+    """
+    video_regex = r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)'
+    feed_regex = (r'http://(?:www\.)?vimeo\.com/'
+                  r'(?:(?P<collection>channel|group)s/)?'
+                  r'(?P<name>\w+)'
+                  r'(?:/(?P<type>videos|likes))?')
+    api_regex = re.compile((r'http://(?:www\.)?vimeo.com/api/v./'
+                            r'(?:(?P<collection>channel|group)s/)?'
+                            r'(?P<name>\w+)'
+                            r'(?:/(?P<type>videos|likes))\.json'))
+    _tag_re = re.compile(r'>([\w ]+)</a>')
+
+
+    methods = (OEmbedMethod(u"http://vimeo.com/api/oembed.json"),
+               VimeoApiMethod(), VimeoScrapeMethod())
+
+    @classmethod
+    def api_video_embed_code(cls, api_video):
+        return u"""<iframe src="http://player.vimeo.com/video/%s" \
+width="320" height="240" frameborder="0" webkitAllowFullScreen \
+allowFullScreen></iframe>""" % api_video['id']
+
+    @classmethod
+    def api_video_flash_enclosure(cls, api_video):
+        return u'http://vimeo.com/moogaloop.swf?clip_id=%s' % api_video['id']
+
+    @classmethod
+    def api_video_to_data(cls, api_video):
+        """
+        Takes a video dictionary from a vimeo API response and returns a
+        dictionary mapping field names to values.
+
+        """
+        data = {
+            'title': api_video['title'],
+            'link': api_video['url'],
+            'description': api_video['description'],
+            'thumbnail_url': api_video['thumbnail_medium'],
+            'user': api_video['user_name'],
+            'user_url': api_video['user_url'],
+            'publish_datetime': datetime.strptime(api_video['upload_date'],
+                                             '%Y-%m-%d %H:%M:%S'),
+            'tags': [tag for tag in api_video['tags'].split(', ') if tag],
+            'flash_enclosure_url': cls.api_video_flash_enclosure(api_video),
+            'embed_code': cls.api_video_embed_code(api_video),
+            'guid': 'tag:vimeo,%s:clip%i' % (api_video['upload_date'][:10],
+                                             api_video['id'])
+        }
         return data
 
 
@@ -259,7 +267,7 @@ allowFullScreen></iframe>""" % video_id
         return feed_response
 
     def parse_feed_entry(self, entry):
-        return self._data_from_api_video(entry)
+        return VimeoSuite.api_video_to_data(entry)
 
     def get_next_feed_page_url(self, feed, feed_response):
         # TODO: Vimeo only lets the first 3 pages of 20 results each be fetched

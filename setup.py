@@ -9,9 +9,9 @@ setup(
     license='BSD',
     packages=find_packages(),
     install_requires=[
-        'lxml',
-        'oauth2',
-        'feedparser>5.1',
+        'lxml>=2.3.4',
+        'oauth2>=1.5.211',
+        'feedparser>=5.1.1',
         'BeautifulSoup==3.2.0'
     ],
     test_suite='vidscraper.tests',

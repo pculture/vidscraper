@@ -11,7 +11,7 @@ setup(
     install_requires=[
         'lxml',
         'oauth2',
-        'feedparser',
+        'feedparser>5.1',
         'BeautifulSoup==3.2.0'
     ],
     test_suite='vidscraper.tests',

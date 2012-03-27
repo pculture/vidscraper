@@ -24,15 +24,17 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import os
-import unittest
 import urllib
 import urllib2
 import urlparse
 
 import feedparser
+import requests
 
-from vidscraper.suites.youtube import YouTubeSuite
+from vidscraper.suites.youtube import (YouTubeSuite, YouTubeApiMethod,
+                                       YouTubeScrapeMethod,
+                                       YouTubeOEmbedMethod)
+from vidscraper.tests.base import BaseTestCase
 
 
 CARAMELL_DANSEN_ATOM_DATA = {
@@ -103,19 +105,12 @@ CARAMELL_DANSEN_API_DATA = {
 CARAMELL_DANSEN_SEARCH_DESCRIPTION = u"English: do-do-do-oo, yeah-yeah-yeah-yeah We wonder are you ready to join us now hands in the air we will show you how come and try caramell will be your guide So come and move your hips sing wha-aa look at hips, do it La-la-la you and me can sing this melody Oh-wa-aaa Dance to the beat Wave your hands together Come feel the heat forever and forever Listen and learn it is time for prancing Now we are here with caramel dancing Oo-oa-oa Oo-oa-oa-aa Oo-oa-oa Oo-oa-oa-aa From Sweden to UK we will bring our song, Australia, USA and people of Hong Kong. They have heard this meaning all around the world So come and move your hips sing wha-aa Look at your hips, do it La-la-la You and me can sing this melody So come and dance to the beat Wave your hands together Come feel the heat forever and forever Listen and learn it is time for prancing Now we are here with caramel dancing (Dance to the beat wave your hands together come feel the heat forever and forever listen and learn it is time for prancing now we are here with caramel dancing) Uu-ua-ua Uu-ua-ua-aa Uu-ua-ua Uu-ua-ua-aa So come and dance to the beat Wave your hands together Come feel the heat forever and forever Listen and learn it is time for prancing Now we are here with caramel dancing... Dance to the beat Wave your hands together Come feel the heat forever and forever Listen and learn it is time for prancing Now we are here with caramel dancing Swedish: Vi undrar \xe4r ni redo att vara med Armarna upp nu ska ni f\xe5 se Kom <b>...</b>"
 
 
-class YouTubeTestCase(unittest.TestCase):
+class YouTubeTestCase(BaseTestCase):
     def setUp(self):
         self.suite = YouTubeSuite()
         self.base_url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
         self.video = self.suite.get_video(url=self.base_url)
 
-    @property
-    def data_file_dir(self):
-        if not hasattr(self, '_data_file_dir'):
-            test_dir = os.path.abspath(os.path.dirname(
-                                                os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'youtube')
-        return self._data_file_dir
 
 class YouTubeSuiteTestCase(YouTubeTestCase):
     def test_available_fields(self):
@@ -126,8 +121,6 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
                  'thumbnail_url', 'link', 'user', 'guid',
                  'publish_datetime', 'tags', 'file_url_expires', 'license']))
 
-
-class YouTubeOembedTestCase(YouTubeTestCase):
     def test_short_url(self):
         url = 'http://youtu.be/J_DV9b0x7v4'
         self.assertTrue(self.suite.handles_video_url(url))
@@ -136,116 +129,86 @@ class YouTubeOembedTestCase(YouTubeTestCase):
         url = 'http://www.youtube.com/watch?feature=youtu.be&v=J_DV9b0x7v4'
         self.assertTrue(self.suite.handles_video_url(url))
 
-    def test_get_oembed_url(self):
-        escaped_url = urllib.quote_plus(self.video.url)
-        expected = "http://www.youtube.com/oembed?url=%s" % escaped_url
-        oembed_url = self.suite.get_oembed_url(self.video)
-        self.assertEqual(oembed_url, expected)
 
-    def test_parse_oembed_response(self):
-        oembed_file = open(os.path.join(
-                            self.data_file_dir, 'oembed.json'))
-        data = self.suite.parse_oembed_response(oembed_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.oembed_fields)
-        expected_data = {
-            'embed_code': u'<object width="459" height="344"><param '
-                            'name="movie" value="http://www.youtube.com/v/'
-                            'J_DV9b0x7v4?version=3"></param><param '
-                            'name="allowFullScreen" value="true"></param>'
-                            '<param name="allowscriptaccess" '
-                            'value="always"></param><embed src="http://www.'
-                            'youtube.com/v/J_DV9b0x7v4?version=3" '
-                            'type="application/x-shockwave-flash" width="459" '
-                            'height="344" allowscriptaccess="always" '
-                            'allowfullscreen="true"></embed></object>',
-            'user_url': u'http://www.youtube.com/user/DrunkenVuko',
-            'thumbnail_url': u'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
-            'user': u'DrunkenVuko',
-            'title': u'CaramellDansen (Full Version + Lyrics)'
-        }
-        self.assertEqual(data, expected_data)
+class YouTubeOembedTestCase(YouTubeTestCase):
+    def setUp(self):
+        YouTubeTestCase.setUp(self)
+        self.method = YouTubeOEmbedMethod("http://www.youtube.com/oembed")
 
-    def test_parse_oembed_error_401(self):
-        exc = urllib2.HTTPError(None, 401, 'Unauthorized', None, None)
-        self.assertEqual(self.suite.parse_oembed_error(exc),
-                         {'is_embeddable': False})
+    def test_process_forbidden(self):
+        expected_data = {'is_embeddable': False}
+        response = self.get_response('', code=requests.codes.forbidden)
+        data = self.method.process(response)
+        self.assertDictEqual(data, expected_data)
 
-    def test_parse_oembed_error_403(self):
-        exc = urllib2.HTTPError(None, 403, 'Forbidden', None, None)
-        self.assertEqual(self.suite.parse_oembed_error(exc),
-                         {'is_embeddable': False})
+    def test_process_unauthorized(self):
+        expected_data = {'is_embeddable': False}
+        response = self.get_response('', code=requests.codes.unauthorized)
+        data = self.method.process(response)
+        self.assertDictEqual(data, expected_data)
 
-    def test_parse_oembed_error_404(self):
-        exc = urllib2.HTTPError(None, 404, 'Not Found', None, None)
-        self.assertEqual(self.suite.parse_oembed_error(exc),
-                         {})
-
-    def test_parse_oembed_error_other(self):
-        self.assertRaises(RuntimeError,
-                          self.suite.parse_oembed_error, RuntimeError())
-
-    def test_parse_api_error_401(self):
-        exc = urllib2.HTTPError(None, 401, 'Unauthorized', None, None)
-        self.assertEqual(self.suite.parse_api_error(exc),
-                         {'is_embeddable': False})
-
-    def test_parse_api_error_403(self):
-        exc = urllib2.HTTPError(None, 403, 'Forbidden', None, None)
-        self.assertEqual(self.suite.parse_api_error(exc),
-                         {'is_embeddable': False})
-
-    def test_parse_api_error_404(self):
-        exc = urllib2.HTTPError(None, 404, 'Not Found', None, None)
-        self.assertEqual(self.suite.parse_api_error(exc),
-                         {})
-
-    def test_parse_api_error_other(self):
-        self.assertRaises(RuntimeError,
-                          self.suite.parse_oembed_error, RuntimeError())
+    def test_process_404(self):
+        response = self.get_response('', code=404)
+        data = self.method.process(response)
+        self.assertEqual(data, {})
 
 
 class YouTubeApiTestCase(YouTubeTestCase):
-    def test_get_api_url(self):
-        api_url = self.suite.get_api_url(self.video)
+    def setUp(self):
+        YouTubeTestCase.setUp(self)
+        self.method = YouTubeApiMethod()
+
+    def test_get_url(self):
+        api_url = self.method.get_url(self.video)
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2")
         video = self.suite.get_video(
             url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
-        api_url = self.suite.get_api_url(video)
+        api_url = self.method.get_url(video)
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2")
 
-    def test_parse_api_response(self):
-        api_file = open(os.path.join(self.data_file_dir, 'api.atom'))
-        data = self.suite.parse_api_response(api_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.api_fields)
+    def test_process(self):
+        api_file = self.get_data_file('youtube/api.atom')
+        response = self.get_response(api_file.read())
+        data = self.method.process(response)
+        self.assertEqual(set(data), self.method.fields)
         data['tags'] = set(data['tags'])
-        expected_data = CARAMELL_DANSEN_API_DATA
-        self.assertEqual(set(expected_data), self.suite.api_fields)
-        for field in self.suite.api_fields:
-            self.assertEqual(data[field], expected_data[field],
-                             'field %s not equal:\n%r != %r' % (
-                    field, data[field], expected_data[field]))
+        self.assertDictEqual(data, CARAMELL_DANSEN_API_DATA)
+
+    def test_process_forbidden(self):
+        expected_data = {'is_embeddable': False}
+        response = self.get_response('', code=requests.codes.forbidden)
+        data = self.method.process(response)
+        self.assertDictEqual(data, expected_data)
+
+    def test_process_unauthorized(self):
+        expected_data = {'is_embeddable': False}
+        response = self.get_response('', code=requests.codes.unauthorized)
+        data = self.method.process(response)
+        self.assertDictEqual(data, expected_data)
 
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
-    def test_get_scrape_url(self):
-        scrape_url = self.suite.get_scrape_url(self.video)
+    def setUp(self):
+        YouTubeTestCase.setUp(self)
+        self.method = YouTubeScrapeMethod()
+
+    def test_get_url(self):
+        scrape_url = self.method.get_url(self.video)
         self.assertEqual(
             scrape_url,
             ('http://www.youtube.com/get_video_info?video_id=J_DV9b0x7v4&'
              'el=embedded&ps=default&eurl='))
 
-    def test_parse_scrape_response(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.txt'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.scrape_fields)
-        expected = {
+    def test_process(self):
+        scrape_file = self.get_data_file('youtube/scrape.txt')
+        response = self.get_response(scrape_file.read())
+        data = self.method.process(response)
+        self.assertEqual(set(data), self.method.fields)
+        expected_data = {
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
             'user': u'DrunkenVuko',
@@ -257,31 +220,26 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
             'file_url_expires': datetime.datetime(2011, 11, 30, 1, 0),
             'file_url_mimetype': u'video/x-flv',
             'file_url': 'http://o-o.preferred.comcast-lga1.v6.lscache7.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Calgorithm%2Cburst%2Cfactor%2Ccp&fexp=914999%2C908425&algorithm=throttle-factor&itag=5&ip=71.0.0.0&burst=40&sver=3&signature=67657D04EC6665D74BD0B736A9C3C3305B41A72B.48096D7D9D9D1DB4BEDF185A14B15AA19DE2A9C6&source=youtube&expire=1322614800&key=yt1&ipbits=8&factor=1.25&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=small&fallback_host=tc.v6.cache7.c.youtube.com&type=video/x-flv&itag=5',
-            }
-        for field in self.suite.scrape_fields:
-            self.assertEqual(data[field], expected[field])
+        }
+        self.assertDictEqual(data, expected_data)
 
     def test_parse_scrape_response_fail_150(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(data, {'is_embeddable': False})
+        scrape_file = self.get_data_file('youtube/scrape2.txt')
+        response = self.get_response(scrape_file.read())
+        data = self.method.process(response)
+        self.assertDictEqual(data, {'is_embeddable': False})
 
     def test_parse_scrape_response_fail_other(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
+        scrape_file = self.get_data_file('youtube/scrape2.txt')
         scrape_data = scrape_file.read().replace('150', 'other')
-        data = self.suite.parse_scrape_response(scrape_data)
-        self.assertTrue(isinstance(data, dict))
+        response = self.get_response(scrape_data)
+        data = self.method.process(response)
         self.assertEqual(data, {})
 
-    def test_parse_scrape_error_402(self):
-        exc = urllib2.HTTPError(None, 402, 'Payment Required', None, None)
-        self.assertEqual(self.suite.parse_scrape_error(exc),
-                         {})
-
-    def test_parse_scrape_error_other(self):
-        self.assertRaises(RuntimeError,
-                          self.suite.parse_scrape_error, RuntimeError())
+    def test_process_402(self):
+        response = self.get_response('', code=402)
+        data = self.method.process(response)
+        self.assertEqual(data, {})
 
 
 class YouTubeFeedTestCase(YouTubeTestCase):
@@ -290,8 +248,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         self.feed_url = ('http://gdata.youtube.com/feeds/base/users/'
                          'AssociatedPress/uploads?alt=rss&v=2')
         self.feed = self.suite.get_feed(self.feed_url)
-        self.feed_data = open(
-            os.path.join(self.data_file_dir, 'feed.atom')).read()
+        self.feed_data = self.get_data_file('youtube/feed.atom').read()
 
     def test_get_feed_url(self):
         self.assertEqual(self.suite.get_feed_url(self.feed_url), self.feed_url)
@@ -345,7 +302,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
 class YouTubeSearchTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        search_file = open(os.path.join(self.data_file_dir, 'search.atom'))
+        search_file = self.get_data_file('youtube/search.atom')
         response = feedparser.parse(search_file.read())
         self.search = self.suite.get_search('query')
         self.results = self.suite.get_search_results(self.search, response)

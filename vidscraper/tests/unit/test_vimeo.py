@@ -25,27 +25,20 @@
 
 import datetime
 import json
-import os
-import unittest
 import urlparse
 
 from vidscraper.errors import VideoDeleted
-from vidscraper.suites.vimeo import VimeoSuite, LAST_URL_CACHE
+from vidscraper.suites.vimeo import (VimeoSuite, LAST_URL_CACHE,
+                                     VimeoApiMethod, VimeoScrapeMethod)
+from vidscraper.tests.base import BaseTestCase
 
 
-class VimeoTestCase(unittest.TestCase):
+class VimeoTestCase(BaseTestCase):
     def setUp(self):
         self.suite = VimeoSuite()
         self.base_url = "http://vimeo.com/2"
         self.video = self.suite.get_video(self.base_url)
 
-    @property
-    def data_file_dir(self):
-        if not hasattr(self, '_data_file_dir'):
-            test_dir = os.path.abspath(os.path.dirname(
-                                                os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'vimeo')
-        return self._data_file_dir
 
 class VimeoSuiteTestCase(VimeoTestCase):
     def test_available_fields(self):
@@ -56,40 +49,17 @@ class VimeoSuiteTestCase(VimeoTestCase):
                  'file_url', 'thumbnail_url', 'link',
                  'user', 'guid', 'tags', 'file_url_expires']))
 
-class VimeoOembedTestCase(VimeoTestCase):
-    def test_get_oembed_url(self):
-        url = self.suite.get_oembed_url(self.video)
-        self.assertEqual(url, "http://vimeo.com/api/oembed.json?url=http%3A%2F%2Fvimeo.com%2F2")
-
-    def test_parse_oembed_response(self):
-        oembed_file = open(os.path.join(self.data_file_dir, 'oembed.json'))
-        data = self.suite.parse_oembed_response(oembed_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.oembed_fields)
-        expected_data = {
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/2" '
-                           'width="320" height="240" frameborder="0" '
-                           'webkitAllowFullScreen allowFullScreen></iframe>',
-            'user_url': u'http://vimeo.com/jakob',
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
-            'user': u'Jake Lodwick',
-            'title': u'Good morning, universe'
-        }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
-
     
 class VimeoApiTestCase(VimeoTestCase):
-    def test_get_api_url(self):
-        api_url = self.suite.get_api_url(self.video)
+    def setUp(self):
+        VimeoTestCase.setUp(self)
+        self.method = VimeoApiMethod()
+
+    def test_get_url(self):
+        api_url = self.method.get_url(self.video)
         self.assertEqual(api_url, 'http://vimeo.com/api/v2/video/2.json')
 
-    def test_parse_api_response(self):
-        api_file = open(os.path.join(self.data_file_dir, 'api.json'))
-        data = self.suite.parse_api_response(api_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.api_fields)
+    def test_process(self):
         expected_data = {
             'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
             'link': u'http://vimeo.com/2',
@@ -106,18 +76,22 @@ class VimeoApiTestCase(VimeoTestCase):
                            'width="320" height="240" frameborder="0" '
                            'webkitAllowFullScreen allowFullScreen></iframe>',
         }
-        self.assertEqual(data, expected_data)
+        api_file = self.get_data_file('vimeo/api.json')
+        response = self.get_response(api_file.read())
+        data = self.method.process(response)
+        self.assertEqual(set(data), self.method.fields)
+        self.assertDictEqual(data, expected_data)
 
 class VimeoScrapeTestCase(VimeoTestCase):
-    def get_scrape_url(self):
-        scrape_url = self.suite.get_scrape_url(self.video)
-        self.assertEqual(scrape_url, 'http://vimeo.com/moogaloop/load/clip:2')
+    def setUp(self):
+        VimeoTestCase.setUp(self)
+        self.method = VimeoScrapeMethod()
 
-    def test_parse_scrape_response(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.xml'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.scrape_fields)
+    def test_get_url(self):
+        scrape_url = self.method.get_url(self.video)
+        self.assertEqual(scrape_url, u'http://www.vimeo.com/moogaloop/load/clip:2')
+
+    def test_process(self):
         expected_data = {
             'title': u'Good morning, universe',
             'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
@@ -129,24 +103,27 @@ class VimeoScrapeTestCase(VimeoTestCase):
             'file_url_mimetype': u'video/x-flv',
             'file_url': 'http://www.vimeo.com/moogaloop/play/clip:2/e82cb5d075e82a8cd790a1710e8b1d2f/1322593900/?q=sd'
         }
-        for key in data:
-            self.assertEqual(data[key], expected_data[key])
+        scrape_file = self.get_data_file('vimeo/scrape.xml')
+        response = self.get_response(scrape_file.read())
+        data = self.method.process(response)
+        self.assertEqual(set(data), self.method.fields)
+        self.assertDictEqual(data, expected_data)
 
-    def test_parse_scrape_response_noembed(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape_noembed.xml'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
-        self.assertEqual(data, {
-                'is_embedable': False})
+    def test_process_noembed(self):
+        scrape_file = self.get_data_file('vimeo/scrape_noembed.xml')
+        response = self.get_response(scrape_file.read())
+        data = self.method.process(response)
+        self.assertEqual(data, {'is_embeddable': False})
 
 class VimeoFeedTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
-        feed_file = open(os.path.join(self.data_file_dir, 'feed.json'))
+        feed_file = self.get_data_file('vimeo/feed.json')
         response = json.loads(feed_file.read())
         self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
         self.feed._first_response = response
         self.entries = self.suite.get_feed_entries(self.feed, response)
-        info_file = open(os.path.join(self.data_file_dir, 'info.json'))
+        info_file = self.get_data_file('vimeo/info.json')
         self.info_response = json.load(info_file)
 
     def test_get_feed_url(self):
@@ -291,7 +268,7 @@ class VimeoFeedTestCase(VimeoTestCase):
 class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
-        search_file = open(os.path.join(self.data_file_dir, 'search.json'))
+        search_file = self.get_data_file('vimeo/search.json')
         response = json.loads(search_file.read())
         self.search = self.suite.get_search(
             'search query',
@@ -301,7 +278,6 @@ class VimeoSearchTestCase(VimeoTestCase):
 
     def test_parse_search_result_1(self):
         data = self.suite.parse_search_result(self.search, self.results[0])
-        self.assertTrue(isinstance(data, dict))
         expected_data = {
             'title': u'Dancing Pigeons - Ritalin',
             'link': 'http://vimeo.com/13639493',
@@ -317,13 +293,10 @@ class VimeoSearchTestCase(VimeoTestCase):
 13639493" width="320" height="240" frameborder="0" webkitAllowFullScreen \
 allowFullScreen></iframe>"""
         }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
+        self.assertDictEqual(data, expected_data)
 
     def test_get_search_with_deleted_video(self):
-        search_file = open(os.path.join(self.data_file_dir,
-                                        'search_with_deleted.json'))
+        search_file = self.get_data_file('vimeo/search_with_deleted.json')
         response = json.loads(search_file.read())
         search = self.suite.get_search(
             'search query',

@@ -28,7 +28,7 @@ import unittest
 
 from vidscraper import auto_scrape, auto_search, auto_feed
 
-class AutoFunctionalTestCase(unittest.TestCase):
+class AutoIntegrationTestCase(unittest.TestCase):
     def test_auto_scrape(self):
         video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
         self.assertEqual(video.title,

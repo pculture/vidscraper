@@ -29,7 +29,7 @@ import unittest
 from vidscraper.suites.youtube import YouTubeSuite
 
 
-class YouTubeFunctionalTestCase(unittest.TestCase):
+class YouTubeIntegrationTestCase(unittest.TestCase):
 
     def setUp(self):
         self.suite = YouTubeSuite()

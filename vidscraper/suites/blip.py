@@ -88,7 +88,7 @@ class BlipApiMethod(SuiteMethod):
         return urlparse.urlunsplit(new_parsed_url)
 
     def process(self, response):
-        parsed = feedparser.parse(response.text)
+        parsed = feedparser.parse(response.text.encode('utf-8'))
         return parse_blip_feed_entry(parsed.entries[0])
 
 

@@ -54,7 +54,9 @@ class YouTubeApiMethod(SuiteMethod):
     def process(self, response):
         if response.status_code in (401, 403):
             return {'is_embeddable': False}
-        parsed = feedparser.parse(response.text)
+        parsed = feedparser.parse(response.text.encode('utf-8'))
+        if parsed.bozo == 1:
+            raise parsed.bozo_exception
         entry = parsed.entries[0]
         user = entry['author']
         best_date = struct_time_to_datetime(entry['published_parsed'])
@@ -101,7 +103,7 @@ class YouTubeScrapeMethod(SuiteMethod):
             # requests were made (per second?) Unclear why, though, or why
             # this is only caught here.
             return {}
-        params = urlparse.parse_qs(response.text)
+        params = urlparse.parse_qs(response.text.encode('utf-8'))
         if params['status'][0] == 'fail':
             if params['errorcode'][0] == '150': # unembedable
                 return {'is_embeddable': False}

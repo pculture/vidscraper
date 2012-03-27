@@ -32,7 +32,10 @@ import urllib2
 
 import feedparser
 import requests
-from requests import async
+try:
+    from requests import async
+except RuntimeError:
+    async = None
 
 from vidscraper.errors import CantIdentifyUrl
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
@@ -218,10 +221,10 @@ class BaseSuite(object):
     @property
     def available_fields(self):
         """
-        Returns a set of all of the fields we could possible get from this
+        Returns a set of all of the fields we could possibly get from this
         suite.
         """
-        return self.oembed_fields | self.api_fields | self.scrape_fields
+        return reduce(operator.or_, (m.fields for m in self.methods))
 
     def handles_video_url(self, url):
         """
@@ -303,7 +306,7 @@ class BaseSuite(object):
             for methods in itertools.combinations(self.methods, size):
                 # First, build a set of the fields that are provided by the
                 # methods.
-                field_set = reduce((m.fields for m in methods), operator.or_)
+                field_set = reduce(operator.or_, (m.fields for m in methods))
                 remaining = len(missing_fields - field_set)
 
                 # If these methods fill all the missing fields, take them
@@ -335,11 +338,15 @@ class BaseSuite(object):
 
         best_methods = self.find_best_methods(missing_fields)
 
-        rs = [async.get(m.get_url(video), timeout=3) for m in best_methods]
-        responses = async.map(rs)
+        if async is None:
+            responses = [requests.get(m.get_url(video), timeout=3)
+                         for m in best_methods]
+        else:
+            responses = async.map([async.get(m.get_url(video), timeout=3)
+                                   for m in best_methods])
 
         data = {}
-        for method, response in izip(best_methods, responses):
+        for method, response in itertools.izip(best_methods, responses):
             data.update(method.process(response))
 
         return data

@@ -85,7 +85,7 @@ class BlipApiMethod(SuiteMethod):
             # We shouldn't ever get here, so raise an exception.
             raise CantIdentifyUrl("Unhandled video url: %s" % video.url)
 
-        return urlparse.urlunparse(new_parsed_url)
+        return urlparse.urlunsplit(new_parsed_url)
 
     def process(self, response):
         parsed = feedparser.parse(response.text)

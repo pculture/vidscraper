@@ -53,7 +53,7 @@ class VimeoApiMethod(SuiteMethod):
                   'flash_enclosure_url', 'embed_code'])
 
     def get_url(self, video):
-        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
+        video_id = video.suite.video_regex.match(video.url).group('video_id')
         return u"http://vimeo.com/api/v2/video/%s.json" % video_id
 
     def process(self, response):
@@ -67,7 +67,7 @@ class VimeoScrapeMethod(SuiteMethod):
                   'file_url_expires'])
 
     def get_url(self, video):
-        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
+        video_id = video.suite.video_regex.match(video.url).group('video_id')
         return u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id
 
     def process(self, response):
@@ -370,8 +370,8 @@ allowFullScreen></iframe>""" % api_video['id']
                                              '%Y-%m-%d %H:%M:%S'),
             'tags': [t['_content']
                             for t in result.get('tags', {}).get('tag', [])],
-            'flash_enclosure_url': self._flash_enclosure_url_from_id(video_id),
-            'embed_code': self._embed_code_from_id(video_id)
+            'flash_enclosure_url': VimeoSuite.api_video_flash_enclosure(result),
+            'embed_code': VimeoSuite.api_video_embed_code(result)
         }
         return data
 registry.register(VimeoSuite)

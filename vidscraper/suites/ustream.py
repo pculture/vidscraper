@@ -35,13 +35,13 @@ class UstreamApiMethod(SuiteMethod):
                   'user', 'user_url'])
 
     def get_url(self, video):
-        video_id = UstreamSuite.video_regex.match(video.url).group('id')
+        video_id = video.suite.video_regex.match(video.url).group('id')
         if video.api_keys is None or 'ustream_key' not in video.api_keys:
             raise ValueError("API key must be set for Ustream API requests.")
         return 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (
                                 video_id, video.api_keys['ustream_key'])
 
-    def parse_api_response(self, response):
+    def process(self, response):
         parsed = json.loads(response.text)['results']
         url = parsed['embedTagSourceUrl']
         publish_date = datetime.datetime.strptime(parsed['createdAt'],

@@ -148,7 +148,7 @@ class Video(object):
         Stores values from a ``data`` dictionary in the corresponding fields
         on this instance.
         """
-        fields = set(data) | set(self.fields)
+        fields = set(data) & set(self.fields)
         for field in fields:
             setattr(self, field, data[field])
 
@@ -211,7 +211,7 @@ class BaseVideoIterator(object):
         video = self.suite.get_video(data['link'],
                                      fields=self.fields,
                                      api_keys=self.api_keys)
-        self.suite.apply_video_data(video, data)
+        video._apply(data)
         return video
 
     def __iter__(self):

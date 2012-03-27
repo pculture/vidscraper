@@ -35,6 +35,7 @@ import feedparser
 # http://code.google.com/p/feedparser/issues/detail?id=55
 feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
+import requests
 
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
@@ -47,7 +48,7 @@ class YouTubeApiMethod(SuiteMethod):
                   'user_url', 'license'))
 
     def get_url(self, video):
-        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
+        video_id = video.suite.video_regex.match(video.url).group('video_id')
         return "http://gdata.youtube.com/feeds/api/videos/%s?v=2" % video_id
 
     def process(self, response):
@@ -89,11 +90,11 @@ class YouTubeScrapeMethod(SuiteMethod):
                   'file_url', 'file_url_mimetype', 'file_url_expires'))
 
     def get_url(self, video):
-        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
+        video_id = video.suite.video_regex.match(video.url).group('video_id')
         return (u"http://www.youtube.com/get_video_info?video_id=%s&"
                 "el=embedded&ps=default&eurl=" % video_id)
 
-    def parse_scrape_response(self, response):
+    def process(self, response):
         if response.status_code == 402:
             # 402: Payment required.
             # A note in the previous code said this could happen when too many
@@ -144,8 +145,11 @@ class YouTubeScrapeMethod(SuiteMethod):
 
 class YouTubeOEmbedMethod(OEmbedMethod):
     def process(self, response):
-        if response.status_code in (401, 403):
+        if response.status_code in (requests.codes.unauthorized,
+                                    requests.codes.forbidden):
             return {'is_embeddable': False}
+        if response.status_code == 404:
+            return {}
         return OEmbedMethod.process(self, response)
 
 
@@ -164,7 +168,7 @@ class YouTubeSuite(BaseSuite):
     feed_url_base = ('http://gdata.youtube.com/feeds/base/users/%s/'
                     'uploads?alt=rss&v=2')
 
-    methods = (YouYubeOEmbedMethod("http://www.youtube.com/oembed"),
+    methods = (YouTubeOEmbedMethod("http://www.youtube.com/oembed"),
                YouTubeApiMethod(), YouTubeScrapeMethod())
 
     # the ordering of fmt codes we prefer to download

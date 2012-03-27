@@ -28,7 +28,7 @@ import time
 import urllib
 import urlparse
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 import feedparser
 # add the OpenSearch namespace to FeedParser

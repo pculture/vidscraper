@@ -25,7 +25,7 @@
 
 import re
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 from vidscraper.suites import BaseSuite, registry, SuiteMethod
 
@@ -38,7 +38,7 @@ class GoogleScrapeMethod(SuiteMethod):
         return video.url
 
     def process(self, response):
-        soup = BeautifulSoup(response.text).findAll(attrs={'id': self.id_regex})
+        soup = BeautifulSoup(response.text).findAll(id=self.id_regex)
         data = {}
         for tag in soup:
             if tag['id'] == 'video-title':

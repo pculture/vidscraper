@@ -23,16 +23,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from BeautifulSoup import BeautifulStoneSoup
+import re
+
+from bs4.dammit import EntitySubstitution
+
+
+HTML_ENTITY_TO_CHARACTER = EntitySubstitution.HTML_ENTITY_TO_CHARACTER
+HTML_ENTITY_TO_CHARACTER_RE = re.compile("|".join(("&%s;" % e
+                                         for e in HTML_ENTITY_TO_CHARACTER)))
+
+
+def _substitute_character(matchobj):
+    character = HTML_ENTITY_TO_CHARACTER.get(matchobj.group(0)[1:-1])
+    return character
+
 
 def convert_entities(text):
     """
-    Uses :mod:`BeautifulSoup` to convert the HTML entities in some text into
-    the appropriate characters.
+    Converts HTML entities from the given code to the appropriate characters.
     """
-    return unicode(
-        BeautifulStoneSoup(text,
-                           convertEntities=BeautifulStoneSoup.HTML_ENTITIES))
+    return unicode(HTML_ENTITY_TO_CHARACTER_RE.sub(_substitute_character,
+                                                   text))
+
 
 def make_embed_code(video_url, flash_qs, width=400, height=264):
     """Generates embed code from a flash enclosure."""

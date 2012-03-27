@@ -45,8 +45,8 @@ Requirements
 ++++++++++++
 
 * Python 2.6+
-* BeautifulSoup 3.0.8 or 3.2
-* feedparser
+* BeautifulSoup 4.0.2
+* feedparser 5.1.1
 
 Optional
 --------

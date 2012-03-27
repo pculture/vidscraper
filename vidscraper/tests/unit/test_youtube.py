@@ -207,7 +207,7 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         scrape_file = self.get_data_file('youtube/scrape.txt')
         response = self.get_response(scrape_file.read())
         data = self.method.process(response)
-        self.assertEqual(set(data), self.suite.scrape_fields)
+        self.assertEqual(set(data), self.method.fields)
         expected_data = {
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',

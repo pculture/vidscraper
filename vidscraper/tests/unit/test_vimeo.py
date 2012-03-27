@@ -110,7 +110,7 @@ class VimeoScrapeTestCase(VimeoTestCase):
         self.assertDictEqual(data, expected_data)
 
     def test_process_noembed(self):
-        scrape_file = self.get_data_file('vimeo/scrape.xml')
+        scrape_file = self.get_data_file('vimeo/scrape_noembed.xml')
         response = self.get_response(scrape_file.read())
         data = self.method.process(response)
         self.assertEqual(data, {'is_embeddable': False})

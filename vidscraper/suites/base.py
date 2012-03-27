@@ -284,7 +284,7 @@ class BaseSuite(object):
 
         # Loop through all combinations of any size that can be made with the
         # available methods.
-        for size in xrange(1, len(self.methods)):
+        for size in xrange(1, len(self.methods) + 1):
             for methods in itertools.combinations(self.methods, size):
                 # First, build a set of the fields that are provided by the
                 # methods.
@@ -300,6 +300,7 @@ class BaseSuite(object):
                 # number of missing fields.
                 if remaining < min_remaining:
                     best_methods = methods
+                    min_remaining = remaining
         return best_methods
 
 

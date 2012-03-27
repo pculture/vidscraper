@@ -101,7 +101,7 @@ class BlipFeedTestCase(BlipTestCase):
         BlipTestCase.setUp(self)
         self.feed_url = 'http://blip.tv/djangocon'
         self.feed = self.suite.get_feed(self.feed_url)
-        self.feed_data = self.get_data_file('blip/feed.rss')
+        self.feed_data = self.get_data_file('blip/feed.rss').read()
         self.feed.handle_first_response(self.suite.get_feed_response(
                 self.feed, self.feed_data))
 

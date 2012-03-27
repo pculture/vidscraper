@@ -91,6 +91,18 @@ class YouTubeScrapeMethod(SuiteMethod):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
                   'file_url', 'file_url_mimetype', 'file_url_expires'))
 
+    # the ordering of fmt codes we prefer to download
+    preferred_fmt_types = [
+        (38, u'video/mp4'), # 4096x3072
+        (37, u'video/mp4'), # 1920x1080
+        (22, u'video/mp4'), # 1280x720
+        (18, u'video/mp4'), # 640x360
+        (35, u'video/x-flv'), # 854x480, MPEG-4 encoded
+        (34, u'video/x-flv'), # 640x360, MPEG-4 encoded
+        (6, u'video/x-flv'), # 480x270
+        (5, u'video/x-flv'), # 400x240
+        ]
+
     def get_url(self, video):
         video_id = video.suite.video_regex.match(video.url).group('video_id')
         return (u"http://www.youtube.com/get_video_info?video_id=%s&"
@@ -172,18 +184,6 @@ class YouTubeSuite(BaseSuite):
 
     methods = (YouTubeOEmbedMethod("http://www.youtube.com/oembed"),
                YouTubeApiMethod(), YouTubeScrapeMethod())
-
-    # the ordering of fmt codes we prefer to download
-    preferred_fmt_types = [
-        (38, u'video/mp4'), # 4096x3072
-        (37, u'video/mp4'), # 1920x1080
-        (22, u'video/mp4'), # 1280x720
-        (18, u'video/mp4'), # 640x360
-        (35, u'video/x-flv'), # 854x480, MPEG-4 encoded
-        (34, u'video/x-flv'), # 640x360, MPEG-4 encoded
-        (6, u'video/x-flv'), # 480x270
-        (5, u'video/x-flv'), # 400x240
-        ]
 
     def get_feed_url(self, url, extra_params=None):
         for regex in self.feed_regexes:

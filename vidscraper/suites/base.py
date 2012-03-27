@@ -892,9 +892,11 @@ class BaseSuite(object):
         a value based on that.
 
         """
-        struct_time = feed_response.feed.get('updated_parsed')
-        return (struct_time_to_datetime(struct_time)
-                if struct_time is not None else None)
+        if 'updated_parsed' in feed_response.feed:
+            return struct_time_to_datetime(feed_response.feed.updated_parsed)
+        if 'published_parsed' in feed_response.feed:
+            return struct_time_to_datetime(feed_response.feed.published_parsed)
+        return None
 
     def get_feed_etag(self, feed, feed_response):
         """

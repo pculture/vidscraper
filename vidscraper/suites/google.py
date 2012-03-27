@@ -25,7 +25,7 @@
 
 import re
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 from vidscraper.suites import BaseSuite, registry
 
@@ -42,7 +42,7 @@ class GoogleSuite(BaseSuite):
         return video.url
 
     def parse_scrape_response(self, response_text):
-        soup = BeautifulSoup(response_text).findAll(attrs={'id': ID_REGEX})
+        soup = BeautifulSoup(response_text).find_all(id=ID_REGEX)
         data = {}
         for tag in soup:
             if tag['id'] == 'video-title':

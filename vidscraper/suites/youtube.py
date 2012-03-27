@@ -28,7 +28,7 @@ import time
 import urllib
 import urlparse
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 import feedparser
 # add the OpenSearch namespace to FeedParser
@@ -111,7 +111,7 @@ class YouTubeSuite(BaseSuite):
         if ('summary_detail' in entry and
             entry['summary_detail']['type'] == 'text/html'):
             # HTML-ified description in RSS feeds
-            soup = BeautifulSoup(entry['summary']).findAll('span')[0]
+            soup = BeautifulSoup(entry['summary']).find_all('span')[0]
             description = unicode(soup.string)
         else:
             description = entry['summary']

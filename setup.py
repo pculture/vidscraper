@@ -12,7 +12,7 @@ setup(
         'lxml>=2.3.4',
         'oauth2>=1.5.211',
         'feedparser>=5.1.1',
-        'BeautifulSoup==3.2.0'
+        'beautifulsoup4>=4.0.2'
     ],
     test_suite='vidscraper.tests',
     classifiers=(

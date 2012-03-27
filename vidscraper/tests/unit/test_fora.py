@@ -67,7 +67,7 @@ class ForaScrapeTestCase(ForaTestCase):
             'description': u"Historian Christopher Heaney relates how 100 "
                             "years ago Hiram Bingham stepped into the "
                             "astounding ruins of Machu Picchu, the lost city "
-                            "of the Incas.<br />",
+                            "of the Incas.<br/>",
             'flash_enclosure_url': u'http://fora.tv/embedded_player?webhost=fora.tv&clipid=13996&cliptype=clip&ie=f',
             'title': u'Cradle of Gold: Hiram Bingham and Machu Picchu',
             'user_url': u'/partner/National_Geographic_Live',

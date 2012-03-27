@@ -270,24 +270,6 @@ class BaseSuite(object):
         """Returns a video using this suite."""
         return Video(url, self, **kwargs)
 
-    def _run_methods(self, video, methods):
-        """
-        Runs the selected methods, applies the returned data, and marks on the
-        video that they have been run.
-
-        """
-        for method in methods:
-            url = getattr(self, "get_%s_url" % method)(video)
-            try:
-                response_text = urllib2.urlopen(url, timeout=5).read()
-            except Exception, exc:
-                # if an exception is raised in this method, it isn't caught and
-                # shows up to the user
-                data = getattr(self, 'parse_%s_error' % method)(exc)
-            else:
-                data = getattr(self, "parse_%s_response" % method)(response_text)
-            self.apply_video_data(video, data)
-
     def find_best_methods(self, missing_fields):
         """
         Generates a dictionary where the keys are numbers of remaining fields

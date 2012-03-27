@@ -290,7 +290,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
             data,
             {'guid': u'http://gdata.youtube.com/feeds/api/videos/w_eGBcd--HU',
              'link': u'http://www.youtube.com/watch?v=w_eGBcd--HU',
-             'publish_datetime': datetime.datetime(2011, 10, 19, 16, 50, 10),
+             'publish_datetime': datetime.datetime(2011, 10, 19, 16, 48, 31),
              'tags': [],
              'thumbnail_url':
                  u'http://i.ytimg.com/vi/w_eGBcd--HU/hqdefault.jpg',

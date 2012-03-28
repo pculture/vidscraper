@@ -23,30 +23,28 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#TODO: Rename this to VidscraperError
-class Error(Exception):
-    """Base error for :mod:`vidscraper`."""
-    pass
+from BeautifulSoup import BeautifulStoneSoup
 
-class BaseUrlLoadFailure(Error):
-    """Raised if you can't even load the base url."""
-    pass
-
-class ParsingError(Error):
-    """Raised if parsing a document with lxml fails."""
-    pass
-
-class FieldNotFound(Error):
-    """Raised if a specific field is not found."""
-    pass
-
-class CantIdentifyUrl(Error):
+def convert_entities(text):
     """
-    Raised if a url can't be handled by any known :doc:`suite </api/suites>`, or
-    if a :class:`.Video` is initialized with an incorrect suite.
-
+    Uses :mod:`BeautifulSoup` to convert the HTML entities in some text into
+    the appropriate characters.
     """
+    return unicode(
+        BeautifulStoneSoup(text,
+                           convertEntities=BeautifulStoneSoup.HTML_ENTITIES))
 
-class VideoDeleted(Error):
-    """Raised if the remote server has deleted the video being scraped."""
-    pass
+def make_embed_code(video_url, flash_qs, width=400, height=264):
+    """Generates embed code from a flash enclosure."""
+    return u"""<object width="%(width)s" height="%(height)s">
+    <param name="flashvars" value="%(flashvars)s">
+    <param name="movie" value="%(url)s">
+    <param name="allowFullScreen" value="true">
+    <param name="allowscriptaccess" value="always">
+    <embed src="%(url)s" flashvars="%(flashvars)s" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="%(width)s" height="%(height)s>
+</object>""" % {
+        'width': width,
+        'height': height,
+        'flashvars': flash_qs,
+        'url': video_url
+    }

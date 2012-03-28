@@ -23,30 +23,35 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#TODO: Rename this to VidscraperError
-class Error(Exception):
-    """Base error for :mod:`vidscraper`."""
-    pass
+import re
 
-class BaseUrlLoadFailure(Error):
-    """Raised if you can't even load the base url."""
-    pass
+from BeautifulSoup import BeautifulSoup
 
-class ParsingError(Error):
-    """Raised if parsing a document with lxml fails."""
-    pass
+from vidscraper.suites import BaseSuite, registry
 
-class FieldNotFound(Error):
-    """Raised if a specific field is not found."""
-    pass
 
-class CantIdentifyUrl(Error):
-    """
-    Raised if a url can't be handled by any known :doc:`suite </api/suites>`, or
-    if a :class:`.Video` is initialized with an incorrect suite.
+ID_REGEX = re.compile(r'video-title|video-description|embed-video-code')
 
-    """
 
-class VideoDeleted(Error):
-    """Raised if the remote server has deleted the video being scraped."""
-    pass
+class GoogleSuite(BaseSuite):
+    """Suite for scraping video pages from videos.google.com"""
+    video_regex = r'^https?://video.google.com/videoplay'
+    scrape_fields = set(['title', 'description', 'embed_code'])
+
+    def get_scrape_url(self, video):
+        return video.url
+
+    def parse_scrape_response(self, response_text):
+        soup = BeautifulSoup(response_text).findAll(attrs={'id': ID_REGEX})
+        data = {}
+        for tag in soup:
+            if tag['id'] == 'video-title':
+                data['title'] = unicode(tag.string)
+            elif tag['id'] == 'video-description':
+                data['description'] = ''.join((unicode(t) for t in tag)).strip()
+            elif tag['id'] == 'embed-video-code':
+                # This isn't the cleanest way of handling the gt/lt problem,
+                # but this is a scrape and liable to break anyway. KISS.
+                data['embed_code'] = unicode(tag.string).replace("&gt;", ">").replace("&lt;", "<")
+        return data
+registry.register(GoogleSuite)

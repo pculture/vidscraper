@@ -1,0 +1,49 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:creativeCommons="http://backend.userland.com/creativeCommonsRssModule" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <link>http://www.archive.org/details/movies</link>
+    <title>Internet Archive - Mediatype: movies</title>
+    <description>The most recent additions to the Internet Archive collections.  This RSS feed is generated dynamically</description>
+    <webMaster>info@archive.org (Info Box)</webMaster>
+    <pubDate>Thu, 20 Oct 2011 14:36:01 GMT</pubDate>
+    <image>
+      <url>http://www.archive.org/images/glogo.png</url>
+      <title>Internet Archive - Mediatype: movies</title>
+      <link>http://www.archive.org/details/movies</link>
+    </image>
+    <item>
+      <title>SFGTV : October 20, 2011 6:00am-6:30am PDT</title>
+      <media:title>SFGTV : October 20, 2011 6:00am-6:30am PDT</media:title>
+      <media:license href="http://creativecommons.org/licenses/by/2.5/">Creative Commons Attribution 2.5 License</media:license>
+      <description>&lt;img width="160" style="padding-right:3px;float:left;" src="http://www.archive.org/services/get-item-image.php?identifier=SFGTV_20111020_130000&amp;mediatype=movies&amp;collection=TV-SFGTV"/&gt;&lt;p&gt;No description available.&lt;/p&gt;&lt;p&gt;This item belongs to: movies/TV-SFGTV.&lt;/p&gt;&lt;p&gt;This item has files of the following types: Animated GIF, Closed Caption Text, MP3, MPEG2, Metadata, SubRip, Thumbnail, Video Index, h.264&lt;/p&gt;</description>
+      <link>http://www.archive.org/details/SFGTV_20111020_130000</link>
+      <guid>http://www.archive.org/details/SFGTV_20111020_130000</guid>
+      <pubDate>Thu, 20 Oct 2011 14:14:14 GMT</pubDate>
+      <category>movies/TV-SFGTV</category>
+      <media:thumbnail url="http://www.archive.org/download/SFGTV_20111020_130000/format=Thumbnail"/>
+      <media:group>
+        <media:content url="http://www.archive.org/download/SFGTV_20111020_130000/format=h.264" type="video/h264" medium="video" expression="full" isDefault="true" bitrate="700"/>
+        <media:content url="http://www.archive.org/download/SFGTV_20111020_130000/format=MPEG2" type="video/mpeg" medium="video" expression="full" bitrate="4000"/>
+      </media:group>
+      <enclosure url="http://www.archive.org/download/SFGTV_20111020_130000/format=h.264" type="video/h264" length="111111"/>
+      <media:keywords>Television Program</media:keywords>
+    </item>
+    <item>
+      <title>مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 "</title>
+      <media:title>مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 "</media:title>
+      <description>&lt;img width="160" style="padding-right:3px;float:left;" src="http://www.archive.org/services/get-item-image.php?identifier=forsan2011-2196&amp;mediatype=movies&amp;collection=opensource_movies"/&gt;&lt;p&gt;منتدى فرسان السنة - فرسان الحقـ www.forsanelhaq.com ____________________ مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 ".&lt;/p&gt;&lt;p&gt;This item belongs to: movies/opensource_movies.&lt;/p&gt;&lt;p&gt;This item has files of the following types: Animated GIF, Cinepack, Metadata, Ogg Video, Ogg Vorbis, Thumbnail, VBR MP3, Windows Media Audio, h.264&lt;/p&gt;</description>
+      <link>http://www.archive.org/details/forsan2011-2196</link>
+      <guid>http://www.archive.org/details/forsan2011-2196</guid>
+      <pubDate>Thu, 20 Oct 2011 14:17:44 GMT</pubDate>
+      <category>movies/opensource_movies</category>
+      <media:thumbnail url="http://www.archive.org/download/forsan2011-2196/format=Thumbnail"/>
+      <media:group>
+        <media:content url="http://www.archive.org/download/forsan2011-2196/format=h.264" type="video/h264" medium="video" expression="full" isDefault="true" bitrate="700"/>
+        <media:content url="http://www.archive.org/download/forsan2011-2196/format=VBR+MP3" type="audio/mpeg" medium="audio" expression="full" bitrate="128"/>
+      </media:group>
+      <enclosure url="http://www.archive.org/download/forsan2011-2196/format=h.264" type="video/h264" length="111111"/>
+      <media:keywords>مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 "</media:keywords>
+    </item>
+  </channel>
+</rss>

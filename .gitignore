@@ -1,1 +1,4 @@
-*.pyc
+*.py[co]
+*~
+/.coverage
+/vidscraper.egg-info

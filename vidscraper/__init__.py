@@ -25,88 +25,90 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from vidscraper import errors
-from vidscraper import metasearch # MC uses 'vidscraper.metasearch'
-from vidscraper.sites import (
-    vimeo, google_video, youtube, blip, ustream, fora)
-
-AUTOSCRAPE_SUITES = [
-    vimeo.SUITE, google_video.SUITE, youtube.SUITE,
-    blip.SUITE, ustream.SUITE, fora.SUITE]
+from vidscraper.suites import Video, registry, VideoSearch, VideoFeed
 
 
-def scrape_suite(url, suite, fields=None):
-    """Scrapes a specified url using the recipe for the specified
-    suite.  Returns a dict of data which can be constricted by the
-    fields argument.
+__version__ = '0.5'
 
-    :returns: dict of scraped data
 
-    :raises errors.VideoDeleted: if the video no longer exists
+def handles_video_url(url):
     """
-    scraped_data = {}
-
-    funcs_map = suite['funcs']
-    fields = fields or funcs_map.keys()
-    order = suite.get('order')
-
-    if order:
-        # remove items in the order that are not in the fields
-        order = order[:] # don't want to modify the one from the suite
-        for field in set(order).difference(fields):
-            order.remove(field)
-
-        # add items that may have been missing from the order but
-        # which are in the fields
-        order.extend(set(fields).difference(order))
-        fields = order
-
-    shortmem = {}
-    for field in fields:
-        try:
-            func = funcs_map[field]
-        except KeyError:
-            continue
-        try:
-            scraped_data[field] = func(url, shortmem=shortmem)
-        except errors.VideoDeleted:
-            raise
-        except errors.Error:
-            # ignore vidscraper errors
-            pass
-
-    return scraped_data
-
-
-def is_scrapable(url):
-    """Returns True if vidscraper can scrape this url, and False if
+    Returns True if vidscraper can scrape this url, and False if
     it can't.
+
     """
-    for suite in AUTOSCRAPE_SUITES:
-        if suite['regex'].match(url):
-            return True
+    return any((suite.handles_video_url(url) for suite in registry.suites))
 
-    # If we get here that means that none of the regexes matched, so
-    # we can't scrape it.
-    return False
 
-def auto_scrape(url, fields=None):
-    """Scrapes the given url for the specified fields and returns them.
+def handles_feed_url(url):
+    """
+    Returns True if vidscraper can treat this url as a feed, and False if
+    it can't.
 
-    :returns: dict of scraped data
+    """
+    return any((suite.handles_feed_url(url) for suite in registry.suites))
+
+
+def auto_scrape(url, fields=None, api_keys=None):
+    """
+    Automatically determines which suite to use and scrapes ``url`` with that
+    suite.
+
+    :returns: :class:`.Video` instance.
 
     :raises errors.CantIdentifyUrl: if this is not a url that can be
-        scraped
-    """
-    for suite in AUTOSCRAPE_SUITES:
-        if suite['regex'].match(url):
-            try:
-                return scrape_suite(url, suite, fields)
-            except IOError:
-                raise errors.ParsingError(
-                    "We failed to parse the page and got an IOError. " +
-                    "Likely this is because the video was deleted, honestly.")
+        scraped.
 
-    # If we get here that means that none of the regexes matched, so
-    # throw an error
-    raise errors.CantIdentifyUrl(
-        "No video scraping suite was found that can scrape that url")
+    """
+    video = Video(url, fields=fields, api_keys=api_keys)
+    video.load()
+    return video
+
+
+def auto_feed(url, fields=None, crawl=False, max_results=None, api_keys=None,
+              last_modified=None, etag=None):
+    """
+    Automatically determines which suite to use and scrapes ``feed_url`` with
+    that suite. This will return a :class:`VideoFeed` instance instantiated
+    using the determined suite. When iterated over, the :class:`VideoFeed`
+    will yield :class:`.Video` instances which have been initialized with
+    the given ``fields`` and ``api_keys``. If ``crawl`` is ``True`` (not the
+    default) then :mod:`vidscraper` will return results from multiple pages of
+    the feed, if the suite supports it.
+
+    .. note:: Crawling will only initiate a new HTTP request after it has
+              exhausted the results on the current page.
+
+    :returns: A :class:`VideoFeed` instance which yields
+              :class:`.Video` instances for the items in the feed.
+
+    :raises errors.CantIdentifyUrl: if this is a url which none of the suites
+                                    know how to handle.
+
+    """
+    return VideoFeed(url, fields=fields, crawl=crawl, max_results=max_results,
+                       api_keys=api_keys, last_modified=last_modified,
+                       etag=etag)
+
+
+def auto_search(query, fields=None, order_by=None, crawl=False,
+                max_results=None, api_keys=None):
+    """
+    Returns a dictionary mapping each registered suite to a
+    :class:`.VideoSearch` instance which has been instantiated for that suite
+    and the given arguments.
+
+    """
+    suites = {}
+    for suite in registry.suites:
+        search = VideoSearch(query, suite, fields, order_by, crawl,
+                               max_results, api_keys)
+        try:
+            search.get_first_url()
+        except NotImplementedError:
+            # suite doesn't implement search
+            pass
+        else:
+            suites[suite] = search
+        
+    return suites

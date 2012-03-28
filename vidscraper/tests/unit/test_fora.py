@@ -24,39 +24,32 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import os
-import unittest
 
-from vidscraper.suites.fora import ForaSuite
+from vidscraper.suites.fora import ForaSuite, ForaScrapeMethod
+from vidscraper.tests.base import BaseTestCase
 
 
-class ForaTestCase(unittest.TestCase):
+class ForaTestCase(BaseTestCase):
     def setUp(self):
         self.suite = ForaSuite()
-
-    @property
-    def data_file_dir(self):
-        if not hasattr(self, '_data_file_dir'):
-            test_dir = os.path.abspath(os.path.dirname(
-                                                os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'fora')
-        return self._data_file_dir
 
 
 class ForaScrapeTestCase(ForaTestCase):
     def setUp(self):
         ForaTestCase.setUp(self)
+        self.method = ForaScrapeMethod()
         self.base_url = "http://fora.tv/2011/08/08/Cradle_of_Gold_Hiram_Bingham_and_Machu_Picchu"
         self.video = self.suite.get_video(url=self.base_url)
 
-    def test_get_scrape_url(self):
-        self.assertEqual(self.suite.get_scrape_url(self.video), self.base_url)
+    def test_get_url(self):
+        self.assertEqual(self.method.get_url(self.video), self.base_url)
 
-    def test_parse_scrape_response(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.html'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
+    def test_process(self):
+        scrape_file = self.get_data_file('fora/scrape.html')
+        response = self.get_response(scrape_file.read())
+        data = self.method.process(response)
         self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.scrape_fields)
+        self.assertEqual(set(data), self.method.fields)
         expected_data = {'embed_code': u"""<object width="400" height="264">
     <param name="flashvars" value="cliptype=full&clipid=%5Bu%2713996%27%5D&ie=%5Bu%27f%27%5D&webhost=%5Bu%27fora.tv%27%5D">
     <param name="movie" value="http://fora.tv/embedded_player">
@@ -76,13 +69,12 @@ class ForaScrapeTestCase(ForaTestCase):
             'user': u'National Geographic Live',
             'publish_date': datetime.datetime(2011, 8, 8)
         }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
+        self.assertDictEqual(data, expected_data)
 
-    def test_parse_scrape_response_description_html(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.html'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
+    def test_process_description_html(self):
+        scrape_file = self.get_data_file('fora/scrape2.html')
+        response = self.get_response(scrape_file.read())
+        data = self.method.process(response)
         self.assertEqual(data['description'], "Join Cornel West, Leith "
             "Mullings, Stanley Aronowitz, and Gary Younge as they discuss "
             "Manning Marable's new biography, <i>Malcolm X: A Life of "

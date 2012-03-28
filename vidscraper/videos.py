@@ -93,7 +93,7 @@ class Video(object):
     license = None
 
     # These were pretty suite-specific and should perhaps be treated as such?
-    #: Whether the video is embeddable? (Youtube)
+    #: Whether the video is embeddable? (Youtube, Vimeo)
     is_embeddable = None
 
     # OTHER ATTRS
@@ -139,8 +139,18 @@ class Video(object):
     def load(self):
         """Uses the video's :attr:`suite` to fetch the fields for the video."""
         if not self._loaded:
-            self.suite.load_video_data(self)
+            data = self.suite.run_methods(self)
+            self._apply(data)
             self._loaded = True
+
+    def _apply(self, data):
+        """
+        Stores values from a ``data`` dictionary in the corresponding fields
+        on this instance.
+        """
+        fields = set(data) & set(self.fields)
+        for field in fields:
+            setattr(self, field, data[field])
 
     def is_loaded(self):
         return self._loaded
@@ -201,7 +211,7 @@ class BaseVideoIterator(object):
         video = self.suite.get_video(data['link'],
                                      fields=self.fields,
                                      api_keys=self.api_keys)
-        self.suite.apply_video_data(video, data)
+        video._apply(data)
         return video
 
     def __iter__(self):

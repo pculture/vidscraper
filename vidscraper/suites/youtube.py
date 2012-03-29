@@ -151,10 +151,15 @@ class YouTubeSuite(BaseSuite):
         entry = parsed.entries[0]
         user = entry['author']
         best_date = struct_time_to_datetime(entry['published_parsed'])
+        if 'description' in entry:
+            # updated versions of Feedparser
+            description = entry['description']
+        else:
+            description = entry['media_group']
         data = {
             'link': entry['links'][0]['href'].split('&', 1)[0],
             'title': entry['title'],
-            'description': entry['media_group'],
+            'description': description,
             'thumbnail_url': get_entry_thumbnail_url(entry),
             'publish_datetime': best_date,
             'tags': [t['term'] for t in entry['tags']
@@ -170,17 +175,18 @@ class YouTubeSuite(BaseSuite):
             # got a crummy version; increase the resolution
             data['thumbnail_url'] = data['thumbnail_url'].replace(
                 '/default.jpg', '/hqdefault.jpg')
-        if (data['description'][:len(data['user'])].lower().startswith(
-                data['user'].lower()) and
-            'youtube' in data['description']):
-            # description looks like "USERNAME[real
-            # description]youtube[optional country codes]". Eventually, we
-            # should be able to get the codes directly from feedparser, but
-            # they don't include them at the moment
-            # (http://code.google.com/p/feedparser/issues/detail?id=334).
+        if 'description' not in entry:
             description = data['description']
-            youtube_index = description.rfind('youtube')
-            data['description'] = description[len(data['user']):youtube_index]
+            if (description[:len(data['user'])].lower().startswith(
+                    data['user'].lower()) and
+                'youtube' in description):
+                # description looks like "USERNAME[real
+                # description]youtube[optional country codes]". Feedparser
+                # broke when <media:group> wrapped the description and combined
+                # all the content.
+                youtube_index = description.rfind('youtube')
+                data['description'] = description[
+                    len(data['user']):youtube_index]
         return data
 
     def get_scrape_url(self, video):

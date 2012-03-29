@@ -172,9 +172,12 @@ class YouTubeSuite(BaseSuite):
                 '/default.jpg', '/hqdefault.jpg')
         if (data['description'][:len(data['user'])].lower().startswith(
                 data['user'].lower()) and
-            data['description'].endswith('youtube')):
-            # description looks like "USERNAME[real description]youtube"
-            data['description'] = data['description'][len(data['user']):-7]
+            'youtube' in data['description']):
+            # description looks like "USERNAME[real
+            # description]youtube[optional country codes]"
+            description = data['description']
+            youtube_index = description.rfind('youtube')
+            data['description'] = description[len(data['user']):youtube_index]
         return data
 
     def get_scrape_url(self, video):

@@ -231,6 +231,15 @@ class YouTubeApiTestCase(YouTubeTestCase):
                              'field %s not equal:\n%r != %r' % (
                     field, data[field], expected_data[field]))
 
+    def test_parse_api_response_restricted(self):
+        api_file = open(os.path.join(self.data_file_dir,
+                                        'restricted_api.atom'))
+        data = self.suite.parse_api_response(api_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data['description'],
+                         "Like dolphins, whales communicate using sound. \
+Humpbacks especially have extremely complex communication systems.")
+
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def test_get_scrape_url(self):

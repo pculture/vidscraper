@@ -174,7 +174,10 @@ class YouTubeSuite(BaseSuite):
                 data['user'].lower()) and
             'youtube' in data['description']):
             # description looks like "USERNAME[real
-            # description]youtube[optional country codes]"
+            # description]youtube[optional country codes]". Eventually, we
+            # should be able to get the codes directly from feedparser, but
+            # they don't include them at the moment
+            # (http://code.google.com/p/feedparser/issues/detail?id=334).
             description = data['description']
             youtube_index = description.rfind('youtube')
             data['description'] = description[len(data['user']):youtube_index]

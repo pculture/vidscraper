@@ -195,6 +195,14 @@ class BaseSuite(object):
     #: .. seealso:: :meth:`BaseSuite.run_methods`
     methods = ()
 
+    #: A :class:`VideoFeed` subclass that will be used to parse feeds for this
+    #: suite.
+    feed_class = None
+
+    #: A :class:`VideoFeed` subclass that will be used to run searches for
+    #: this suite.
+    search_class = None
+
     def __init__(self):
         if isinstance(self.video_regex, basestring):
             self.video_regex = re.compile(self.video_regex)
@@ -247,10 +255,9 @@ class BaseSuite(object):
         that is not possible.
 
         """
-        try:
-            return bool(self.feed_regex.match(url))
-        except AttributeError:
-            raise NotImplementedError
+        if self.feed_class is None:
+            return False
+        return self.feed_class.handles_url(url)
 
     def get_feed_url(self, url):
         """
@@ -262,13 +269,17 @@ class BaseSuite(object):
         """
         return url
 
-    def get_feed(self, url, **kwargs):
-        """Returns a feed using this suite."""
-        return VideoFeed(url, self, **kwargs)
-
     def get_video(self, url, **kwargs):
         """Returns a video using this suite."""
         return Video(url, self, **kwargs)
+
+    def get_feed(self, *args, **kwargs):
+        """Returns an instance of :attr:`feed_class`."""
+        return self.feed_class(*args, **kwargs)
+
+    def get_search(self, *args, **kwargs):
+        """Returns an instance of :attr:`search_class`."""
+        return self.search_class(*args, **kwargs)
 
     def find_best_methods(self, missing_fields):
         """
@@ -333,210 +344,3 @@ class BaseSuite(object):
             data.update(method.process(response))
 
         return data
-
-    def get_feed_response(self, feed, feed_url):
-        """
-        Returns a parsed response for this ``feed``. By default, this uses
-        :mod:`feedparser` to get a response for the ``feed_url`` and returns
-        the resulting structure.
-
-        """
-        response = feedparser.parse(feed_url)
-        # Don't let feedparser silence connection problems.
-        if isinstance(response.get('bozo_exception', None), urllib2.URLError):
-            raise response.bozo_exception
-        return response
-
-    def get_feed_info_response(self, feed, response):
-        """
-        In case the response for the given ``feed`` needs to do other work on
-        ``reponse`` to get feed information (title, &c), suites can override
-        this method to do that work.  By default, this method just returns the
-        ``response`` it was given.
-        """
-        return response
-
-    def get_feed_title(self, feed, feed_response):
-        """
-        Returns a title for the feed based on the ``feed_response``, or
-        ``None`` if no title can be determined. By default, assumes that the
-        response is a :mod:`feedparser` structure and returns a value based on
-        that.
-
-        """
-        return feed_response.feed.get('title')
-
-    def get_feed_entry_count(self, feed, feed_response):
-        """
-        Returns an estimate of the total number of entries in this feed, or
-        ``None`` if that cannot be determined. By default, returns the number
-        of entries in the feed.
-
-        """
-        return len(feed_response.entries)
-
-    def get_feed_description(self, feed, feed_response):
-        """
-        Returns a description of the feed based on the ``feed_response``, or
-        ``None`` if no description can be determined. By default, assumes that
-        the response is a :mod:`feedparser` structure and returns a value based
-        on that.
-
-        """
-        return feed_response.feed.get('subtitle')
-
-    def get_feed_webpage(self, feed, feed_response):
-        """
-        Returns the url for an HTML version of the ``feed_response``, or
-        ``None`` if no such url can be determined. By default, assumes that
-        the response is a :mod:`feedparser` structure and returns a value based
-        on that.
-
-        """
-        return feed_response.feed.get('link')
-
-    def get_feed_guid(self, feed, feed_response):
-        """
-        Returns the guid of the ``feed_response``, or ``None`` if no guid can
-        be determined. By default, assumes that the response is a
-        :mod:`feedparser` structure and returns a value based on that.
-
-        """
-        return feed_response.feed.get('id')
-
-    def get_feed_thumbnail_url(self, feed, feed_response):
-        """
-        Returns the thumbnail URL of the ``feed_response``, or ``None`` if no
-        thumbnail can be found.  By default, assumes that the response is a
-        :mod:`feedparser` structur4e and returns a value based on that.
-        """
-        try:
-            return get_item_thumbnail_url(feed_response.feed)
-        except KeyError:
-            return None
-
-    def get_feed_last_modified(self, feed, feed_response):
-        """
-        Returns the last modification date for the ``feed_response`` as a
-        python datetime, or ``None`` if no date can be determined. By default,
-        assumes that the response is a :mod:`feedparser` structure and returns
-        a value based on that.
-
-        """
-        if 'updated_parsed' in feed_response.feed:
-            return struct_time_to_datetime(feed_response.feed.updated_parsed)
-        if 'published_parsed' in feed_response.feed:
-            return struct_time_to_datetime(feed_response.feed.published_parsed)
-        return None
-
-    def get_feed_etag(self, feed, feed_response):
-        """
-        Returns the etag for a ``feed_response``, or ``None`` if no such url
-        can be determined. By default, assumes that the response is a
-        :mod:`feedparser` structure and returns a value based on that.
-
-        """
-        return feed_response.feed.get('etag')
-
-    def get_feed_entries(self, feed, feed_response):
-        """
-        Returns an iterable of feed entries for a ``feed_response`` as returned
-        from :meth:`get_feed_response`. By default, this assumes that the
-        response is a :mod:`feedparser` structure and tries to return its
-        entries.
-
-        """
-        return feed_response.entries
-
-    def parse_feed_entry(self, entry):
-        """
-        Given a feed entry (as returned by :meth:`.get_feed_entries`), creates
-        and returns a dictionary containing data from the feed entry, suitable
-        for application via :meth:`apply_video_data`. Must be implemented by
-        subclasses.
-
-        """
-        raise NotImplementedError
-
-    def get_next_feed_page_url(self, feed, feed_response):
-        """
-        Based on a ``feed_response`` and a :class:`VideoFeed` instance,
-        generates and returns a url for the next page of the feed, or returns
-        ``None`` if that is not possible. By default, simply returns ``None``.
-        Subclasses must override this method to have a meaningful feed crawl.
-
-        """
-        return None
-
-    def get_search_url(self, search):
-        """
-        Returns a url which this suite can use to fetch search results for the
-        given string. Must be implemented by subclasses.
-
-        """
-        raise NotImplementedError
-
-    def get_search(self, query, **kwargs):
-        """
-        Returns a search using this suite.
-        """
-        return VideoSearch(query, self, **kwargs)
-
-    def get_search_response(self, search, search_url):
-        """
-        Returns a parsed response for the given ``search_url``. By default,
-        assumes that the url references a feed and passes the work off to
-        :meth:`.get_feed_response`.
-
-        """
-        return self.get_feed_response(search, search_url)
-
-    def get_search_total_results(self, search, search_response):
-        """
-        Returns an estimate for the total number of search results based on the
-        first response returned by :meth:`get_search_response` for the
-        :class:`VideoSearch`. By default, assumes that the url references a
-        feed and passes the work off to :meth:`.get_feed_entry_count`.
-        """
-        return self.get_feed_entry_count(search, search_response)
-
-    def get_search_time(self, search, search_response):
-        """
-        Returns the amount of time required by the service provider for the
-        suite to execute the search. By default, simply returns ``None``.
-
-        """
-        return None
-
-    def get_search_results(self, search, search_response):
-        """
-        Returns an iterable of search results for a :class:`VideoSearch` and
-        a ``search_response`` as returned by :meth:`.get_search_response`. By
-        default, assumes that the ``search_response`` is a :mod:`feedparser`
-        structure and passes the work off to :meth:`.get_feed_entries`.
-
-        """
-        return self.get_feed_entries(search, search_response)
-
-    def parse_search_result(self, search, result):
-        """
-        Given a :class:`VideoSearch` instance and a search result (as
-        returned by :meth:`.get_search_results`), returns a dictionary
-        containing data from the search result, suitable for application via
-        :meth:`apply_video_data`. By default, assumes that the ``result`` is a
-        :mod:`feedparser` entry and passes the work off to
-        :meth:`.parse_feed_entry`.
-
-        """
-        return self.parse_feed_entry(result)
-
-    def get_next_search_page_url(self, search, search_response):
-        """
-        Based on a :class:`VideoSearch` and a ``search_response``, generates
-        and returns a url for the next page of the search, or returns ``None``
-        if that is not possible. By default, simply returns
-        ``None``. Subclasses must override this method to have a meaningful
-        search crawl.
-
-        """
-        return None

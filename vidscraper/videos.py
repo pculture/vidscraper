@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import urllib
 
 from vidscraper.errors import CantIdentifyUrl, VideoDeleted
 from vidscraper.utils.search import (search_string_from_terms,
@@ -162,29 +163,82 @@ class BaseVideoIterator(object):
     :class:`Video` instances. :class:`VideoFeed` and
     :class:`VideoSearch` both subclass :class:`BaseVideoIterator`.
     """
-    _first_response = None
-    _max_results = None
+    per_page = None
+    page_url_format = None
 
-    @property
-    def max_results(self):
-        """
-        The maximum number of results for this iterator, or ``None`` if there
-        is no maximum.
+    def __init__(self, start_index=1, max_results=None, video_fields=None,
+                 api_keys=None):
+        self.start_index = start_index
+        self.max_results = max_results
+        self.video_fields = video_fields
+        self.api_keys = api_keys if api_keys is not None else {}
+        self._loaded = False
 
-        """
-        return self._max_results
+        self.item_count = 0
+        self._page_videos_iter = None
+        self._response = None
 
-    def get_first_url(self):
-        """
-        Returns the first url which this iterator is expected to handle.
-        """
-        raise NotImplementedError
+    def __iter__(self):
+        return self
 
-    def get_url_response(self, url):
-        raise NotImplementedError
+    def next(self):
+        if (self.max_results is not None and
+            self.item_count >= self.max_results):
+            raise StopIteration
 
-    def handle_first_response(self, response):
-        self._first_response = response 
+        if self._response is None:
+            self._next_page()
+
+        try:
+            video = self._page_videos_iter.next()
+        except StopIteration:
+            # We're done with this page; try the next one.
+            self._response = None
+            self._page_videos_iter = None
+            return self.next()
+        else:
+            self.item_count += 1
+            return video
+
+    def _next_page(self):
+        page_start = self.start_index + self.item_count
+        if self.max_results is None:
+            page_max = self.per_page
+        else:
+            page_max = self.max_results - self.item_count
+            if self.per_page is not None:
+                page_max = min(page_max, self.per_page)
+
+        r = self.get_page(page_start, page_max)
+        self._response = r
+        self._page_videos_iter = self._page_videos(r, page_max)
+
+    def _page_videos(self, response, max_results=None):
+        items = self.get_response_items(response)
+        item_count = 0
+        for item in items:
+            data = self.get_item_data(item)
+            video = Video(data['link'], fields=self.video_fields,
+                          api_keys=self.api_keys)
+
+            video._apply(data)
+            item_count += 1
+            yield video
+            if max_results is not None and item_count >= max_results:
+                raise StopIteration
+
+    def load(self):
+        if not self._loaded:
+            if self._response is None:
+                self._next_page()
+            data = self.data_from_response(self._response)
+            self._apply(data)
+            self._loaded = True
+
+    def _apply(self, data):
+        fields = set(data) & set(self._all_fields)
+        for field in fields:
+            setattr(self, field, data[field])
 
     def get_response_items(self, response):
         raise NotImplementedError
@@ -192,62 +246,59 @@ class BaseVideoIterator(object):
     def get_item_data(self, item):
         raise NotImplementedError
 
-    def get_next_url(self, response):
+    def get_page_url(self, page_start, page_max):
+        if self.page_url_format is None:
+            raise NotImplementedError
+        format_data = self.get_page_url_data()
+        format_data.update({
+            'page_start': page_start,
+            'page_max': page_max
+        })
+        return self.page_url_format % format_data
+
+    def get_page_url_data(self):
+        return {}
+
+    def get_page(self, page_start, page_max):
         raise NotImplementedError
 
-    def load(self):
-        if self._first_response:
-            return self._first_response
-        url = self.get_first_url()
-        response = self.get_url_response(url)
-        self.handle_first_response(response)
+    def data_from_response(self, response):
+        raise NotImplementedError
+
+
+class FeedparserVideoIteratorMixin(object):
+    def get_page(self, start_index, max_results):
+        url = self.get_page_url(start_index, max_results)
+        response = feedparser.parse(url, etag=self.etag, modified=self.modified)
+        # Don't let feedparser silence connection problems.
+        if isinstance(response.get('bozo_exception', None), urllib2.URLError):
+            raise response.bozo_exception
         return response
 
-    def _data_from_item(self, item):
-        """
-        Returns a :class:`Video` given some data from a feed.
-        """
-        data = self.get_item_data(item)
-        video = self.suite.get_video(data['link'],
-                                     fields=self.fields,
-                                     api_keys=self.api_keys)
-        video._apply(data)
-        return video
-
-    def __iter__(self):
+    def data_from_response(self, response):
+        feed = response.feed
+        data = {
+            'title': feed.get('title'),
+            'video_count': len(response.entries),
+            'description': feed.get('subtitle'),
+            'webpage': feed.get('link'),
+            'guid': feed.get('id'),
+            'etag': response.get('etag'),
+        }
         try:
-            response = self.load()
-            item_count = 1
-            # decrease the index as we count down through the entries.  doesn't
-            # quite work for feeds where we don't know the /total/ number of
-            # items; then it'll just index the video within the one feed
-            while self._max_results is None or item_count < self._max_results:
-                items = self.get_response_items(response)
-                for item in items:
-                    try:
-                        video = self._data_from_item(item)
-                    except VideoDeleted:
-                        continue
-                    video.index = item_count
-                    yield video
-                    if self._max_results is not None:
-                        if item_count >= self._max_results:
-                            raise StopIteration
-                    item_count += 1
-
-                # We haven't hit the limit yet. Continue to the next page if:
-                # - crawl is enabled
-                # - the current page was not empty
-                # - a url can be calculated for the next page.
-                url = None
-                if self.crawl and items:
-                    url = self.get_next_url(response)
-                if url is None:
-                    break
-                response = self.get_url_response(url)
-        except NotImplementedError:
+            data['thumbnail_url'] = get_item_thumbnail_url(feed)
+        except KeyError:
             pass
-        raise StopIteration
+
+        # Should this be using response.modified?
+        parsed = feed.get('updated_parsed') or feed.get('published_parsed')
+        if parsed:
+            data['last_modified'] = struct_time_to_datetime(parsed)
+
+        return data
+
+    def get_response_items(self, response):
+        return response.entries
 
 
 class VideoFeed(BaseVideoIterator):
@@ -310,64 +361,37 @@ class VideoFeed(BaseVideoIterator):
         A unique identifier for the feed.
 
     """
+    _all_fields = ('video_count', 'last_modified', 'etag', 'description',
+                   'webpage', 'title', 'thumbnail_url', 'guid')
 
-    def __init__(self, url, suite=None, fields=None, crawl=False,
-                 max_results=None, api_keys=None, last_modified=None,
-                 etag=None):
-        from vidscraper.suites import registry
-        self.original_url = url
-        if suite is None:
-            suite = registry.suite_for_feed_url(url)
-        elif not suite.handles_feed_url(url):
-            raise CantIdentifyUrl
-        self.url = suite.get_feed_url(url)
-        self.suite = suite
-        self.fields = fields
-        self.crawl = crawl
-        self._max_results = max_results
-        self.api_keys = api_keys if api_keys is not None else {}
+    video_count = None
+    description = None
+    webpage = None
+    title = None
+    thumbnail_url = None
+    guid = None
+
+    def __init__(self, url, last_modified=None, etag=None, **kwargs):
+        super(VideoFeed, self).__init__(**kwargs)
+
+        self.url = url
+        self.url_data = self.get_url_data(url)
         self.last_modified = last_modified
         self.etag = etag
 
-        self.entry_count = None
-        self.description = None
-        self.webpage = None
-        self.title = None
-        self.thumbnail_url = None
-        self.guid = None
+    def get_url_data(self, url):
+        """
+        Parses the url into data which can be used to construct page urls.
 
-    @property
-    def parsed_feed(self):
-        if not self._first_response:
-            self.load()
-        return self._first_response
+        """
+        return {'url': url}
 
-    def get_first_url(self):
-        return self.url
+    def get_page_url_data(self):
+        return self.url_data.copy()
 
-    def get_url_response(self, url):
-        return self.suite.get_feed_response(self, url)
 
-    def handle_first_response(self, response):
-        super(VideoFeed, self).handle_first_response(response)
-        response = self.suite.get_feed_info_response(self, response)
-        self.title = self.suite.get_feed_title(self, response)
-        self.entry_count = self.suite.get_feed_entry_count(self, response)
-        self.description = self.suite.get_feed_description(self, response)
-        self.webpage = self.suite.get_feed_webpage(self, response)
-        self.thumbnail_url = self.suite.get_feed_thumbnail_url(self, response)
-        self.guid = self.suite.get_feed_guid(self, response)
-        self.last_modified = self.suite.get_feed_last_modified(self, response)
-        self.etag = self.suite.get_feed_etag(self, response)
-
-    def get_response_items(self, response):
-        return self.suite.get_feed_entries(self, response)
-
-    def get_item_data(self, item):
-        return self.suite.parse_feed_entry(item)
-
-    def get_next_url(self, response):
-        return self.suite.get_next_feed_page_url(self, response)
+class FeedparserVideoFeed(FeedparserVideoIteratorMixin, VideoFeed):
+    pass
 
 
 class VideoSearch(BaseVideoIterator):
@@ -406,45 +430,25 @@ class VideoSearch(BaseVideoIterator):
         if supported by the suite. Otherwise, ``None``.
 
     """
+    _all_fields = ('video_count',)
+    video_count = None
 
-    @property
-    def max_results(self):
-        return self._max_results
-
-    def __init__(self, query, suite, fields=None, order_by=None,
-                 crawl=False, max_results=None, api_keys=None):
+    def __init__(self, query, order_by=None, **kwargs):
+        super(VideoSearch, self).__init__(**kwargs)
+        # Normalize the search
         self.include_terms, self.exclude_terms = terms_from_search_string(
             query)
         self.query = search_string_from_terms(self.include_terms,
                                               self.exclude_terms)
         self.raw_query = query
-        self.suite = suite
-        self.fields = fields
         self.order_by = order_by
-        self.crawl = crawl
-        self._max_results = max_results
-        self.api_keys = api_keys if api_keys is not None else {}
 
-        self.total_results = None
-        self.time = None
+    def get_page_url_data(self):
+        return {
+            'query': urllib.quote_plus(self.query),
+            'order_by': self.order_by
+        }
 
-    def get_first_url(self):
-        return self.suite.get_search_url(self)
 
-    def get_url_response(self, url):
-        return self.suite.get_search_response(self, url)
-
-    def handle_first_response(self, response):
-        super(VideoSearch, self).handle_first_response(response)
-        self.total_results = self.suite.get_search_total_results(self,
-                                                                 response)
-        self.time = self.suite.get_search_time(self, response)
-
-    def get_response_items(self, response):
-        return self.suite.get_search_results(self, response)
-
-    def get_item_data(self, item):
-        return self.suite.parse_search_result(self, item)
-
-    def get_next_url(self, response):
-        return self.suite.get_next_search_page_url(self, response)
+class FeedparserVideoSearch(FeedparserVideoIteratorMixin, VideoSearch):
+    pass

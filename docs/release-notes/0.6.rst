@@ -32,3 +32,6 @@
   :mod:`vidscraper.videos`.
 * :class:`SuiteMethods <.SuiteMethod>` were introduced as a more generic way
   to represent getting data for a single video.
+* :mod:`vidscraper.errors` was renamed to :mod:`vidscraper.exceptions`, and
+  unused exceptions were removed. :exc:`.CantIdentifyUrl` is now called
+  :exc:`.UnhandledURL`, and :exc:`Error` is now :exc:`.VidscraperError`.

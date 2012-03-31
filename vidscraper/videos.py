@@ -159,11 +159,25 @@ class Video(object):
 
 class BaseVideoIterator(object):
     """
-    Generic base class for url-based iterators which rely on suites to yield
-    :class:`Video` instances. :class:`VideoFeed` and
-    :class:`VideoSearch` both subclass :class:`BaseVideoIterator`.
+    Generic base class for iterating over groups of videos spread across
+    multiple urls - for example, an rss feed, an api response, or a video list
+    page.
+
+    :param start_index: The index of the first video to return. Default: 1.
+    :type start_index: integer >= 1
+    :param max_results: The maximum number of videos to return. If this is
+                        ``None``, as many videos as possible will be returned.
+    :param video_fields: Fields to be passed to any created :class:`Video`
+                         instances.
+    :param api_keys: A dictionary of api keys.
+
     """
+    #: Describes the number of videos expected on each page. This should be
+    #: set whether or not the number of videos per page can be controlled.
     per_page = None
+
+    #: A format string which will be used to build page urls for this
+    #: iterator.
     page_url_format = None
 
     def __init__(self, start_index=1, max_results=None, video_fields=None,
@@ -178,9 +192,11 @@ class BaseVideoIterator(object):
         self._page_videos_iter = None
         self._response = None
 
+    # Act as a generator
     def __iter__(self):
         return self
 
+    # Act as a generator
     def next(self):
         if (self.max_results is not None and
             self.item_count >= self.max_results):
@@ -188,6 +204,8 @@ class BaseVideoIterator(object):
 
         if self._response is None:
             self._next_page()
+            #: We could check _loaded first, but why bother?
+            self.load()
 
         try:
             video = self._page_videos_iter.next()
@@ -228,6 +246,11 @@ class BaseVideoIterator(object):
                 raise StopIteration
 
     def load(self):
+        """
+        Loads a response if one is not already loaded and tries to extract
+        data from it with :meth:`data_from_response`.
+
+        """
         if not self._loaded:
             if self._response is None:
                 self._next_page()
@@ -241,32 +264,66 @@ class BaseVideoIterator(object):
             setattr(self, field, data[field])
 
     def get_response_items(self, response):
+        """Returns an iterable of unparsed items for the response."""
         raise NotImplementedError
 
     def get_item_data(self, item):
-        raise NotImplementedError
+        """
+        Parses a single item for the feed and returns a data dictionary for
+        populating a :class:`Video` instance. By default, returns an empty
+        dictionary.
 
-    def get_page_url(self, page_start, page_max):
-        if self.page_url_format is None:
-            raise NotImplementedError
-        format_data = self.get_page_url_data()
-        format_data.update({
-            'page_start': page_start,
-            'page_max': page_max
-        })
-        return self.page_url_format % format_data
-
-    def get_page_url_data(self):
+        """
         return {}
 
+    def get_page_url(self, page_start, page_max):
+        """
+        Builds and returns a url for a page of the source by putting the
+        results of :meth:`get_page_url_data` into :attr:`page_url_format`.
+
+        """
+        if self.page_url_format is None:
+            raise NotImplementedError
+        format_data = self.get_page_url_data(page_start, page_max)
+        return self.page_url_format % format_data
+
+    def get_page_url_data(self, page_start, page_max):
+        """
+        Returns a dictionary which will be combined with
+        :attr:`page_url_format` to build a page url.
+
+        """
+        return {
+            'page_start': page_start,
+            'page_max': page_max
+        }
+
     def get_page(self, page_start, page_max):
+        """
+        Given a start and maximum size for a page, fetches and returns a
+        response for that page. The response could be a feedparser dict, a
+        parsed json response, or even just an html page.
+
+        """
         raise NotImplementedError
 
     def data_from_response(self, response):
-        raise NotImplementedError
+        """
+        Given a response as returned from :meth:`get_page`, returns a
+        dictionary of metadata about this iterator. By default, returns an
+        empty dictionary.
+
+        """
+        return {}
 
 
 class FeedparserVideoIteratorMixin(object):
+    """
+    Overrides the :meth:`get_page`, :meth:`data_from_response` and
+    :meth:`get_response_items` to use :mod:`feedparser`. :meth:`get_item_data`
+    must still be implemented by subclasses.
+
+    """
     def get_page(self, start_index, max_results):
         url = self.get_page_url(start_index, max_results)
         response = feedparser.parse(url, etag=self.etag, modified=self.modified)
@@ -279,7 +336,6 @@ class FeedparserVideoIteratorMixin(object):
         feed = response.feed
         data = {
             'title': feed.get('title'),
-            'video_count': len(response.entries),
             'description': feed.get('subtitle'),
             'webpage': feed.get('link'),
             'guid': feed.get('id'),
@@ -295,6 +351,10 @@ class FeedparserVideoIteratorMixin(object):
         if parsed:
             data['last_modified'] = struct_time_to_datetime(parsed)
 
+        # If there are more entries than page length, don't guess.
+        if self.per_page is None or len(response.entries) < self.per_page:
+            data['video_count'] = len(response.entries)
+
         return data
 
     def get_response_items(self, response):
@@ -303,47 +363,41 @@ class FeedparserVideoIteratorMixin(object):
 
 class VideoFeed(BaseVideoIterator):
     """
-    Represents a feed that has been scraped from a website. Note that the term
-    "feed" in this context simply means a list of videos which can be found at
-    a certain url. The source could as easily be an API, a search result rss
-    feed, or a video list page which is literally scraped.
-    
-    :param url: The url to be scraped.
-    :param suite: The suite to use for the scraping. If none is provided, one
-                  will be selected based on the url.
-    :param fields: Passed on to the :class:`Video` instances which are
-                   created by this feed.
-    :param crawl: If ``True``, then the scrape will continue onto subsequent
-                  pages of the feed if that is supported by the suite. The
-                  request for the next page will only be executed once the
-                  current page is exhausted. Default: ``False``.
-    :param max_results: The maximum number of results to return from iteration.
-                        Default: ``None`` (as many as possible.)
-    :param api_keys: A dictionary of any API keys which may be required for the
-                     suite used by this feed.
-    :param last_modified: A last-modified date which may be sent to the service
-                          provider to try to short-circuit fetching a feed
-                          whose contents are already known.
-    :param etag: An etag which may be sent to the service provider to try to
+    Represents a list of videos which can be found at a certain url. The
+    source could easily be an RSS feed, an API response, or a video list page.
+
+    In addition to the parameters for :class:`BaseVideoIterator`, this class
+    takes the following arguments:
+
+    :param url: A url representing a feed page.
+    :param last_modified: The last known modification date for the feed. This
+                          can be sent to the service provider to try to
+                          short-circuit fetching and/or loading a feed whose
+                          contents are already known.
+    :param etag: An etag which can be sent to the service provider to try to
                  short-circuit fetching a feed whose contents are already
                  known.
 
-    Additionally, :class:`VideoFeed` populates the following attributes after
-    fetching its first response. Attributes which are not supported by the
-    feed's suite or which have not been populated will be ``None``.
+                 .. seealso:: http://en.wikipedia.org/wiki/HTTP_ETag
+    :raises: :exc:`CantIdentifyUrl` if the url can't be handled by the class
+             being instantiated.
 
-    .. attr:: entry_count
-        The estimated number of entries for this search.
+    :class:`VideoFeed` also supports the following "fields", which are
+    populated with :meth:`data_from_response`. Fields which have not been
+    populated will be ``None``.
+
+    .. attr:: video_count
+        The estimated number of videos for the feed.
 
     .. attr:: last_modified
         A python datetime representing when the feed was last changed. Before
-        fetching the first response, this will be equal to the
-        ``last_modified`` date the :class:`VideoFeed` was instantiated with.
+        loading the feed, this will be equal to the ``last_modified`` date the
+        :class:`VideoFeed` was instantiated with.
 
     .. attr:: etag
-        A marker representing a feed's current state. Before fetching the first
-        response, this will be equal to the ``etag`` the :class:`VideoFeed`
-        was instantiated with.
+        A marker representing a feed's current state. Before loading the feed,
+        this will be equal to the ``etag`` the :class:`VideoFeed` was
+        instantiated with.
 
     .. attr:: description
         A description of the feed.
@@ -383,6 +437,8 @@ class VideoFeed(BaseVideoIterator):
         """
         Parses the url into data which can be used to construct page urls.
 
+        :raises: :exc:`CantIdentifyUrl` if the url isn't handled by this feed.
+
         """
         return {'url': url}
 
@@ -396,38 +452,23 @@ class FeedparserVideoFeed(FeedparserVideoIteratorMixin, VideoFeed):
 
 class VideoSearch(BaseVideoIterator):
     """
-    Represents a search against a suite. Iterating over a
-    :class:`VideoSearch` instance will execute the search and yield
-    :class:`Video` instances for the results of the search.
+    Represents a search on a video site. In addition to the parameters for
+    :class:`BaseVideoIterator`, this class takes the following arguments:
 
     :param query: The raw string for the search.
-    :param suite: Suite to use for this search.
-    :param fields: Passed on to the :class:`Video` instances which are
-                   created by this search.
     :param order_by: The ordering to apply to the search results. If a suite
                      does not support the given ordering, it will return an
                      empty list. Possible values: ``relevant``, ``latest``,
                      ``popular``, ``None`` (use the default ordering of the
                      suite's service provider). Values may be prefixed with a
                      "-" to indicate descending ordering. Default: ``None``.
-    :param crawl: If ``True``, then the search will continue on to subsequent
-                  pages if the suite supports it. The request for the next page
-                  will only be executed once the current page is exhausted.
-                  Default: ``False``.
-    :param max_results: The maximum number of results to return from iteration.
-                        Default: ``None`` (as many as possible).
-    :param api_keys: A dictionary of any API keys which may be required for the
-                     suite used by this search.
 
-    Additionally, VideoSearch supports the following attributes:
+    :class:`VideoSearch` also supports the following "fields", which are
+    populated with :meth:`data_from_response`. Fields which have not been
+    populated will be ``None``.
 
-    .. attr:: total_results
-        The estimated number of total results for this search, if supported by
-        the suite. Otherwise, ``None``.
-
-    .. attr:: time
-        The amount of time required by the remote service to execute the query,
-        if supported by the suite. Otherwise, ``None``.
+    .. attr:: video_count
+        The estimated number of total videos for this search.
 
     """
     _all_fields = ('video_count',)

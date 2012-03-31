@@ -37,7 +37,7 @@ try:
 except ImportError:
     oauth2 = None
 
-from vidscraper.errors import VideoDeleted
+from vidscraper.exceptions import VideoDeleted
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 
 from vidscraper.utils.feedparser import struct_time_to_datetime

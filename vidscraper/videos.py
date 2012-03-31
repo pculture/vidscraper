@@ -24,7 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from vidscraper.errors import CantIdentifyUrl, VideoDeleted
+from vidscraper.exceptions import UnhandledURL, VideoDeleted
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
@@ -108,7 +108,7 @@ class Video(object):
         if suite is None:
             suite = registry.suite_for_video_url(url)
         elif not suite.handles_video_url(url):
-            raise CantIdentifyUrl
+            raise UnhandledURL
         if fields is None:
             self.fields = list(self._all_fields)
         else:
@@ -319,7 +319,7 @@ class VideoFeed(BaseVideoIterator):
         if suite is None:
             suite = registry.suite_for_feed_url(url)
         elif not suite.handles_feed_url(url):
-            raise CantIdentifyUrl
+            raise UnhandledURL
         self.url = suite.get_feed_url(url)
         self.suite = suite
         self.fields = fields

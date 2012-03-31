@@ -1,4 +1,4 @@
-from vidscraper.errors import CantIdentifyUrl
+from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import convert_entities, make_embed_code
 from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
@@ -18,10 +18,10 @@ class GenericFeedSuite(BaseSuite):
         if response.entries or not response.bozo_exception: # good feed
             return response
         if response.bozo_exception:
-            raise CantIdentifyUrl('exception during response',
+            raise UnhandledURL('exception during response',
                                   response.bozo_exception)
         else:
-            raise CantIdentifyUrl
+            raise UnhandledURL
 
     def parse_feed_entry(self, entry):
         enclosure = get_first_accepted_enclosure(entry)

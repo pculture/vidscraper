@@ -28,6 +28,8 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+.. module:: vidscraper
+
 Welcome to Vidscraper's documentation!
 ======================================
 
@@ -63,7 +65,7 @@ Contents
    topics/getting-started
    exceptions
    api/suites
-   api/scrapedvideo
+   api/videos
 
 Release notes
 +++++++++++++

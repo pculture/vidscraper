@@ -26,5 +26,5 @@
 Exceptions
 ==========
 
-.. automodule:: vidscraper.errors
+.. automodule:: vidscraper.exceptions
     :members:

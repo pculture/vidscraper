@@ -281,32 +281,32 @@ class VideoFeed(BaseVideoIterator):
     fetching its first response. Attributes which are not supported by the
     feed's suite or which have not been populated will be ``None``.
 
-    .. attr:: entry_count
+    .. attribute:: entry_count
         The estimated number of entries for this search.
 
-    .. attr:: last_modified
+    .. attribute:: last_modified
         A python datetime representing when the feed was last changed. Before
         fetching the first response, this will be equal to the
         ``last_modified`` date the :class:`VideoFeed` was instantiated with.
 
-    .. attr:: etag
+    .. attribute:: etag
         A marker representing a feed's current state. Before fetching the first
         response, this will be equal to the ``etag`` the :class:`VideoFeed`
         was instantiated with.
 
-    .. attr:: description
+    .. attribute:: description
         A description of the feed.
 
-    .. attr:: webpage
+    .. attribute:: webpage
         The url for an html, human-readable version of the feed.
 
-    .. attr:: title
+    .. attribute:: title
         The title of the feed.
 
-    .. attr:: thumbnail_url
+    .. attribute:: thumbnail_url
         A URL for a thumbnail representing the whole feed.
 
-    .. attr:: guid
+    .. attribute:: guid
         A unique identifier for the feed.
 
     """
@@ -397,11 +397,11 @@ class VideoSearch(BaseVideoIterator):
 
     Additionally, VideoSearch supports the following attributes:
 
-    .. attr:: total_results
+    .. attribute:: total_results
         The estimated number of total results for this search, if supported by
         the suite. Otherwise, ``None``.
 
-    .. attr:: time
+    .. attribute:: time
         The amount of time required by the remote service to execute the query,
         if supported by the suite. Otherwise, ``None``.
 

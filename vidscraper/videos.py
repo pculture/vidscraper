@@ -282,32 +282,40 @@ class VideoFeed(BaseVideoIterator):
     feed's suite or which have not been populated will be ``None``.
 
     .. attribute:: entry_count
-        The estimated number of entries for this search.
+
+       The estimated number of entries for this search.
 
     .. attribute:: last_modified
-        A python datetime representing when the feed was last changed. Before
-        fetching the first response, this will be equal to the
-        ``last_modified`` date the :class:`VideoFeed` was instantiated with.
+
+       A python datetime representing when the feed was last changed. Before
+       fetching the first response, this will be equal to the
+       ``last_modified`` date the :class:`VideoFeed` was instantiated with.
 
     .. attribute:: etag
-        A marker representing a feed's current state. Before fetching the first
-        response, this will be equal to the ``etag`` the :class:`VideoFeed`
-        was instantiated with.
+
+       A marker representing a feed's current state. Before fetching the first
+       response, this will be equal to the ``etag`` the :class:`VideoFeed`
+       was instantiated with.
 
     .. attribute:: description
-        A description of the feed.
+
+       A description of the feed.
 
     .. attribute:: webpage
-        The url for an html, human-readable version of the feed.
+
+       The url for an html, human-readable version of the feed.
 
     .. attribute:: title
-        The title of the feed.
+
+       The title of the feed.
 
     .. attribute:: thumbnail_url
-        A URL for a thumbnail representing the whole feed.
+
+       A URL for a thumbnail representing the whole feed.
 
     .. attribute:: guid
-        A unique identifier for the feed.
+
+       A unique identifier for the feed.
 
     """
 
@@ -398,12 +406,14 @@ class VideoSearch(BaseVideoIterator):
     Additionally, VideoSearch supports the following attributes:
 
     .. attribute:: total_results
-        The estimated number of total results for this search, if supported by
-        the suite. Otherwise, ``None``.
+
+       The estimated number of total results for this search, if supported by
+       the suite. Otherwise, ``None``.
 
     .. attribute:: time
-        The amount of time required by the remote service to execute the query,
-        if supported by the suite. Otherwise, ``None``.
+
+       The amount of time required by the remote service to execute the query,
+       if supported by the suite. Otherwise, ``None``.
 
     """
 

@@ -40,7 +40,7 @@ from vidscraper.utils.http import clean_description_html
 def parse_blip_feed_entry(entry):
     """
     Parses a feedparser entry from a blip rss feed into a dictionary mapping
-    :class:`Video` fields to values. This is used for blip feeds and blip API
+    :class:`.Video` fields to values. This is used for blip feeds and blip API
     requests (since those can also be done with feeds.)
 
     """

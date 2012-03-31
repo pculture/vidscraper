@@ -144,7 +144,7 @@ class SuiteMethod(object):
     def process(self, response):
         """
         Parse the :mod:`requests` response into a dictionary mapping
-        :class:`Video` field names to values. Must be implemented by
+        :class:`.Video` field names to values. Must be implemented by
         subclasses.
 
         """
@@ -152,10 +152,15 @@ class SuiteMethod(object):
 
 
 class OEmbedMethod(SuiteMethod):
+    """
+    Basic OEmbed support for any suite.
+
+    :param endpoint: The endpoint url for this suite's oembed API.
+
+    """
     fields = set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
 
     def __init__(self, endpoint):
-        """Takes an ``endpoint`` - a URL for an oembed API."""
         self.endpoint = endpoint
 
     def get_url(self, video):

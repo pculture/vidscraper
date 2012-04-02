@@ -27,7 +27,6 @@ import datetime
 import urllib
 import urlparse
 
-from vidscraper.errors import CantIdentifyUrl
 from vidscraper.videos import Video
 from vidscraper.suites import OEmbedMethod
 from vidscraper.suites.blip import BlipSuite, BlipApiMethod

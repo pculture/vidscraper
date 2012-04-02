@@ -5,7 +5,9 @@ version = '0.6-a'
 setup(
     name="vidscraper",
     version=version,
-    author='Participatory Culture Foundation',
+    maintainer='Participatory Culture Foundation',
+    maintainer_email='dev@mirocommunity.org',
+    url='https://github.com/pculture/vidscraper',
     license='BSD',
     packages=find_packages(),
     install_requires=[
@@ -17,7 +19,6 @@ setup(
     ],
     test_suite='vidscraper.tests',
     classifiers=(
-        'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

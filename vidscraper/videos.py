@@ -25,7 +25,7 @@
 
 import urllib
 
-from vidscraper.errors import CantIdentifyUrl, VideoDeleted
+from vidscraper.exceptions import UnhandledURL, VideoDeleted
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
@@ -109,7 +109,7 @@ class Video(object):
         if suite is None:
             suite = registry.suite_for_video_url(url)
         elif not suite.handles_video_url(url):
-            raise CantIdentifyUrl
+            raise UnhandledURL
         if fields is None:
             self.fields = list(self._all_fields)
         else:
@@ -399,20 +399,25 @@ class VideoFeed(BaseVideoIterator):
         this will be equal to the ``etag`` the :class:`VideoFeed` was
         instantiated with.
 
-    .. attr:: description
-        A description of the feed.
+    .. attribute:: description
 
-    .. attr:: webpage
-        The url for an html, human-readable version of the feed.
+       A description of the feed.
 
-    .. attr:: title
-        The title of the feed.
+    .. attribute:: webpage
 
-    .. attr:: thumbnail_url
-        A URL for a thumbnail representing the whole feed.
+       The url for an html, human-readable version of the feed.
 
-    .. attr:: guid
-        A unique identifier for the feed.
+    .. attribute:: title
+
+       The title of the feed.
+
+    .. attribute:: thumbnail_url
+
+       A URL for a thumbnail representing the whole feed.
+
+    .. attribute:: guid
+
+       A unique identifier for the feed.
 
     """
     _all_fields = ('video_count', 'last_modified', 'etag', 'description',

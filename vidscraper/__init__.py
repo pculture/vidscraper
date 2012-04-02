@@ -24,7 +24,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from vidscraper import errors
 from vidscraper.suites import registry
 from vidscraper.videos import Video, VideoSearch, VideoFeed
 
@@ -57,8 +56,7 @@ def auto_scrape(url, fields=None, api_keys=None):
 
     :returns: :class:`.Video` instance.
 
-    :raises errors.CantIdentifyUrl: if this is not a url that can be
-        scraped.
+    :raises UnhandledURL: if no registered suites know how to handle this url.
 
     """
     video = Video(url, fields=fields, api_keys=api_keys)
@@ -83,8 +81,7 @@ def auto_feed(url, fields=None, crawl=False, max_results=None, api_keys=None,
     :returns: A :class:`VideoFeed` instance which yields
               :class:`.Video` instances for the items in the feed.
 
-    :raises errors.CantIdentifyUrl: if this is a url which none of the suites
-                                    know how to handle.
+    :raises UnhandledURL: if no registered suites know how to handle this url.
 
     """
     return VideoFeed(url, fields=fields, crawl=crawl, max_results=max_results,

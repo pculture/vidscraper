@@ -30,7 +30,7 @@ import urlparse
 
 import feedparser
 
-from vidscraper.errors import CantIdentifyUrl
+from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
                                         get_first_accepted_enclosure
@@ -40,7 +40,7 @@ from vidscraper.utils.http import clean_description_html
 def parse_blip_feed_entry(entry):
     """
     Parses a feedparser entry from a blip rss feed into a dictionary mapping
-    :class:`Video` fields to values. This is used for blip feeds and blip API
+    :class:`.Video` fields to values. This is used for blip feeds and blip API
     requests (since those can also be done with feeds.)
 
     """
@@ -83,7 +83,7 @@ class BlipApiMethod(SuiteMethod):
             new_parsed_url = parsed_url[:3] + ("skin=rss", None)
         else:
             # We shouldn't ever get here, so raise an exception.
-            raise CantIdentifyUrl("Unhandled video url: %s" % video.url)
+            raise UnhandledURL("Unhandled video url: %s" % video.url)
 
         return urlparse.urlunsplit(new_parsed_url)
 

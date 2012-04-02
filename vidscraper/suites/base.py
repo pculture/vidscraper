@@ -37,7 +37,7 @@ try:
 except RuntimeError:
     async = None
 
-from vidscraper.errors import CantIdentifyUrl
+from vidscraper.exceptions import UnhandledURL
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)
 from vidscraper.videos import Video, VideoFeed, VideoSearch
@@ -70,9 +70,11 @@ class SuiteRegistry(object):
             self._suites.append(self._suite_dict[suite])
 
     def register_fallback(self, suite):
-        """Registers a fallback suite, which used only if no other suite
-        succeeds.  If no fallback is registered, then CantIdentifyUrl will be
-        raised for unknown videos/feeds.
+        """
+        Registers a fallback suite, which used only if no other suite
+        succeeds. If no fallback is registered, then :exc:`.UnhandledURL` will
+        be raised for unknown videos/feeds.
+
         """
         self._fallback = suite()
 
@@ -85,7 +87,7 @@ class SuiteRegistry(object):
     def suite_for_video_url(self, url):
         """
         Returns the first registered suite which can handle the ``url`` as a
-        video or raises :exc:`.CantIdentifyUrl` if no such suite is found.
+        video or raises :exc:`.UnhandledURL` if no such suite is found.
 
         """
         for suite in self._suites:
@@ -96,12 +98,12 @@ class SuiteRegistry(object):
                 pass
         if self._fallback and self._fallback.handles_video_url(url):
             return self._fallback
-        raise CantIdentifyUrl
+        raise UnhandledURL
 
     def suite_for_feed_url(self, url):
         """
         Returns the first registered suite which can handle the ``url`` as a
-        feed or raises :exc:`.CantIdentifyUrl` if no such suite is found.
+        feed or raises :exc:`.UnhandledURL` if no such suite is found.
 
         """
         for suite in self._suites:
@@ -112,7 +114,7 @@ class SuiteRegistry(object):
                 pass
         if self._fallback and self._fallback.handles_feed_url(url):
             return self._fallback
-        raise CantIdentifyUrl
+        raise UnhandledURL
 
 
 #: An instance of :class:`.SuiteRegistry` which is used by :mod:`vidscraper` to
@@ -142,7 +144,7 @@ class SuiteMethod(object):
     def process(self, response):
         """
         Parse the :mod:`requests` response into a dictionary mapping
-        :class:`Video` field names to values. Must be implemented by
+        :class:`.Video` field names to values. Must be implemented by
         subclasses.
 
         """
@@ -150,10 +152,15 @@ class SuiteMethod(object):
 
 
 class OEmbedMethod(SuiteMethod):
+    """
+    Basic OEmbed support for any suite.
+
+    :param endpoint: The endpoint url for this suite's oembed API.
+
+    """
     fields = set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
 
     def __init__(self, endpoint):
-        """Takes an ``endpoint`` - a URL for an oembed API."""
         self.endpoint = endpoint
 
     def get_url(self, video):

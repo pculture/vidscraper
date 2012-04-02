@@ -41,10 +41,6 @@ class GenericFeedSuiteTestCase(BaseTestCase):
     def tearDown(self):
         feedparser.SANITIZE_HTML = self.old_SANITIZE
 
-    # def test_CantIdentifyUrl_for_video(self):
-    #     self.assertRaises(CantIdentifyUrl, self.suite.get_video,
-    #                       'http://www.google.com/')
-
     def test_basic_feed_data(self):
         feed = self.suite.get_feed(
             'file://%s' % self._data_file_path('feed/feed.rss'))

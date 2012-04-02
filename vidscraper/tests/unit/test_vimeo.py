@@ -27,7 +27,7 @@ import datetime
 import json
 import urlparse
 
-from vidscraper.errors import VideoDeleted
+from vidscraper.exceptions import VideoDeleted
 from vidscraper.suites.vimeo import (VimeoSuite, LAST_URL_CACHE,
                                      VimeoApiMethod, VimeoScrapeMethod)
 from vidscraper.tests.base import BaseTestCase

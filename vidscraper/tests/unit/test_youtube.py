@@ -24,6 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import json
 import urllib
 import urllib2
 import urlparse
@@ -95,7 +96,7 @@ CARAMELL_DANSEN_API_DATA = {
         u"funny",
         u"caramelldansen",
         u"U-U-U-Aua",
-        u"Music",
+        u"Music", # technically a category, but historically included
     ]),
     'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
     'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
@@ -162,16 +163,16 @@ class YouTubeApiTestCase(YouTubeTestCase):
         api_url = self.method.get_url(self.video)
         self.assertEqual(
             api_url,
-            "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2")
+            "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2&alt=json")
         video = self.suite.get_video(
             url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
         api_url = self.method.get_url(video)
         self.assertEqual(
             api_url,
-            "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2")
+            "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2&alt=json")
 
     def test_process(self):
-        api_file = self.get_data_file('youtube/api.atom')
+        api_file = self.get_data_file('youtube/api.json')
         response = self.get_response(api_file.read())
         data = self.method.process(response)
         self.assertEqual(set(data), self.method.fields)
@@ -190,6 +191,21 @@ class YouTubeApiTestCase(YouTubeTestCase):
         data = self.method.process(response)
         self.assertDictEqual(data, expected_data)
 
+    def test_parse_api_response_restricted(self):
+        api_file = self.get_data_file('youtube/restricted_api.json')
+        response = self.get_response(api_file.read())
+        data = self.method.process(response)
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data['description'],
+                         "Like dolphins, whales communicate using sound. \
+Humpbacks especially have extremely complex communication systems.")
+
+    def test_parse_api_response_missing_keywords(self):
+        api_file = self.get_data_file('youtube/missing_keywords.json')
+        response = self.get_response(api_file.read())
+        data = self.method.process(response)
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data['tags'], ['Nonprofit'])
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def setUp(self):

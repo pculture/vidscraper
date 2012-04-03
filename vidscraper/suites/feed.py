@@ -51,7 +51,10 @@ class GenericFeed(FeedparserVideoFeed):
                 embed_code = convert_entities(player['content'])
             elif 'url' in player:
                 embed_code = make_embed_code(player['url'], '')
-
+        if 'media_license' in item:
+            license = item['media_license']['href']
+        else:
+            license = item.get('license')
         return {
             'link': link,
             'title': convert_entities(item['title']),
@@ -67,8 +70,7 @@ class GenericFeed(FeedparserVideoFeed):
             'embed_code': embed_code,
             'tags': [tag['term'] for tag in item['tags']
                      if tag['scheme'] is None] if 'tags' in item else None,
-            'license': item.get('license',
-                                item.get('media_license', {}).get('href'))
+            'license': license
         }
 
 

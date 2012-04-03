@@ -24,6 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
+import json
 import re
 import time
 import urllib
@@ -232,18 +233,24 @@ class YouTubeSuite(BaseSuite):
             if thumbnail['yt$name'] == 'hqdefault':
                 thumbnail_url = thumbnail['url']
                 break
+        if '$t' in media_group['media$keywords']:
+            tags = media_group['media$keywords']['$t'].split(', ')
+        else:
+            tags = []
+        tags.extend(
+            [cat['$t'] for cat in media_group['media$category']])
         data = {
             'link': video['link'][0]['href'].split('&', 1)[0],
             'title': video['title']['$t'],
-            'description': description,
+            'description': description.replace('\r', ''),
             'thumbnail_url': thumbnail_url,
             'publish_datetime': datetime.strptime(video[date_key]['$t'],
                                                   "%Y-%m-%dT%H:%M:%S.000Z"),
-            'tags': media_group['media$keywords']['$t'].split(', '),
+            'tags': tags,
             'user': username,
             'user_url': u'http://www.youtube.com/user/{0}'.format(username),
             'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
-                        video['id'].split(':')[-1]),
+                        video['id']['$t'].split(':')[-1]),
             'license': media_group['media$license']['href'],
             'flash_enclosure_url': media_group['media$player']['url']
         }

@@ -93,7 +93,6 @@ CARAMELL_DANSEN_API_DATA = {
         u"funny",
         u"caramelldansen",
         u"U-U-U-Aua",
-        u"Music",
     ]),
     'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
     'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
@@ -210,16 +209,16 @@ class YouTubeApiTestCase(YouTubeTestCase):
         api_url = self.suite.get_api_url(self.video)
         self.assertEqual(
             api_url,
-            "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2")
+            "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2&alt=json")
         video = self.suite.get_video(
             url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
         api_url = self.suite.get_api_url(video)
         self.assertEqual(
             api_url,
-            "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2")
+            "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2&alt=json")
 
     def test_parse_api_response(self):
-        api_file = open(os.path.join(self.data_file_dir, 'api.atom'))
+        api_file = open(os.path.join(self.data_file_dir, 'api.json'))
         data = self.suite.parse_api_response(api_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.api_fields)
@@ -233,7 +232,7 @@ class YouTubeApiTestCase(YouTubeTestCase):
 
     def test_parse_api_response_restricted(self):
         api_file = open(os.path.join(self.data_file_dir,
-                                        'restricted_api.atom'))
+                                        'restricted_api.json'))
         data = self.suite.parse_api_response(api_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(data['description'],

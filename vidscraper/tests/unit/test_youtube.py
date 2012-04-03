@@ -33,6 +33,7 @@ import urlparse
 import feedparser
 
 from vidscraper.suites.youtube import YouTubeSuite
+from vidscraper.compat import json
 
 
 CARAMELL_DANSEN_ATOM_DATA = {
@@ -93,7 +94,7 @@ CARAMELL_DANSEN_API_DATA = {
         u"funny",
         u"caramelldansen",
         u"U-U-U-Aua",
-        u"Music",
+        u"Music", # technically a category, but historically included
     ]),
     'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
     'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
@@ -210,16 +211,16 @@ class YouTubeApiTestCase(YouTubeTestCase):
         api_url = self.suite.get_api_url(self.video)
         self.assertEqual(
             api_url,
-            "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2")
+            "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2&alt=json")
         video = self.suite.get_video(
             url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
         api_url = self.suite.get_api_url(video)
         self.assertEqual(
             api_url,
-            "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2")
+            "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2&alt=json")
 
     def test_parse_api_response(self):
-        api_file = open(os.path.join(self.data_file_dir, 'api.atom'))
+        api_file = open(os.path.join(self.data_file_dir, 'api.json'))
         data = self.suite.parse_api_response(api_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.suite.api_fields)
@@ -231,6 +232,21 @@ class YouTubeApiTestCase(YouTubeTestCase):
                              'field %s not equal:\n%r != %r' % (
                     field, data[field], expected_data[field]))
 
+    def test_parse_api_response_restricted(self):
+        api_file = open(os.path.join(self.data_file_dir,
+                                     'restricted_api.json'))
+        data = self.suite.parse_api_response(api_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data['description'],
+                         "Like dolphins, whales communicate using sound. \
+Humpbacks especially have extremely complex communication systems.")
+
+    def test_parse_api_response_missing_keywords(self):
+        api_file = open(os.path.join(self.data_file_dir,
+                                     'missing_keywords.json'))
+        data = self.suite.parse_api_response(api_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data['tags'], ['Nonprofit'])
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def test_get_scrape_url(self):

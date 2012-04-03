@@ -199,3 +199,11 @@ Caramelldansen""",
         feed = self.suite.get_feed(feed_url)
         feed.load()
         self.assertEqual(feed.title, 'Uploads by DukeJewishStudies')
+
+    def test_video_18936(self):
+        video_url = 'http://www.youtube.com/watch?v=YquEJpyZ_3U'
+        video = self.suite.get_video(video_url, fields=['description'])
+        video.load()
+        self.assertEqual(video.description,
+                         "Like dolphins, whales communicate using sound. \
+Humpbacks especially have extremely complex communication systems.")

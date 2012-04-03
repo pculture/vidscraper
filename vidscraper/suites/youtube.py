@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from datetime import datetime
 import re
 import time
 import urllib
@@ -37,6 +38,7 @@ feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 
 from vidscraper.suites import BaseSuite, registry
+from vidscraper.compat import json
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
 
@@ -144,37 +146,56 @@ class YouTubeSuite(BaseSuite):
 
     def get_api_url(self, video):
         video_id = self.video_regex.match(video.url).group('video_id')
-        return "http://gdata.youtube.com/feeds/api/videos/%s?v=2" % video_id
+        return "http://gdata.youtube.com/feeds/api/videos/%s?v=2&alt=json" % (
+            video_id,)
 
     def parse_api_response(self, response_text):
-        parsed = feedparser.parse(response_text)
-        entry = parsed.entries[0]
-        user = entry['author']
-        best_date = struct_time_to_datetime(entry['published_parsed'])
+        parsed = json.loads(response_text)
+        video = parsed['entry']
+        username = video['author'][0]['name']['$t']
+        if 'published' in video:
+            date_key = 'published'
+        else:
+            date_key = 'updated'
+
+        media_group = video['media$group']
+        description = media_group['media$description']
+        if description['type'] != 'plain':
+            # HTML-ified description. SB: Is this correct? Added in
+            # 5ca9e928 originally.
+            soup = BeautifulSoup(description['$t']).findAll('span')[0]
+            description = unicode(soup.string)
+        else:
+            description = description['$t']
+
+        thumbnail_url = None
+        for thumbnail in media_group['media$thumbnail']:
+            if thumbnail_url is None and thumbnail['yt$name'] == 'default':
+                thumbnail_url = thumbnail['url']
+            if thumbnail['yt$name'] == 'hqdefault':
+                thumbnail_url = thumbnail['url']
+                break
+        if '$t' in media_group['media$keywords']:
+            tags = media_group['media$keywords']['$t'].split(', ')
+        else:
+            tags = []
+        tags.extend(
+            [cat['$t'] for cat in media_group['media$category']])
         data = {
-            'link': entry['links'][0]['href'].split('&', 1)[0],
-            'title': entry['title'],
-            'description': entry['media_group'],
-            'thumbnail_url': get_entry_thumbnail_url(entry),
-            'publish_datetime': best_date,
-            'tags': [t['term'] for t in entry['tags']
-                    if not t['term'].startswith('http')],
-            'user': user,
-            'user_url': u'http://www.youtube.com/user/%s' % user,
-            'guid' : 'http://gdata.youtube.com/feeds/api/videos/%s' % (
-                entry.id.split(':')[-1],),
-            'license': entry['media_license']['href'],
-            'flash_enclosure_url': entry['media_player']['url']
+            'link': video['link'][0]['href'].split('&', 1)[0],
+            'title': video['title']['$t'],
+            'description': description.replace('\r', ''),
+            'thumbnail_url': thumbnail_url,
+            'publish_datetime': datetime.strptime(video[date_key]['$t'],
+                                                  "%Y-%m-%dT%H:%M:%S.000Z"),
+            'tags': tags,
+            'user': username,
+            'user_url': u'http://www.youtube.com/user/{0}'.format(username),
+            'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
+                        video['id']['$t'].split(':')[-1]),
+            'license': media_group['media$license']['href'],
+            'flash_enclosure_url': media_group['media$player']['url']
         }
-        if data['thumbnail_url'].endswith('/default.jpg'):
-            # got a crummy version; increase the resolution
-            data['thumbnail_url'] = data['thumbnail_url'].replace(
-                '/default.jpg', '/hqdefault.jpg')
-        if (data['description'][:len(data['user'])].lower().startswith(
-                data['user'].lower()) and
-            data['description'].endswith('youtube')):
-            # description looks like "USERNAME[real description]youtube"
-            data['description'] = data['description'][len(data['user']):-7]
         return data
 
     def get_scrape_url(self, video):

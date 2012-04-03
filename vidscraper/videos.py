@@ -335,8 +335,8 @@ class FeedparserVideoIteratorMixin(object):
     must still be implemented by subclasses.
 
     """
-    def get_page(self, start_index, max_results):
-        url = self.get_page_url(start_index, max_results)
+    def get_page(self, page_start, page_max):
+        url = self.get_page_url(page_start, page_max)
         response = feedparser.parse(url, etag=self.etag, modified=self.modified)
         # Don't let feedparser silence connection problems.
         if isinstance(response.get('bozo_exception', None), urllib2.URLError):

@@ -37,7 +37,7 @@ try:
 except RuntimeError:
     async = None
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)
 from vidscraper.videos import Video, VideoFeed, VideoSearch
@@ -273,10 +273,14 @@ class BaseSuite(object):
 
     def get_feed(self, *args, **kwargs):
         """Returns an instance of :attr:`feed_class`."""
+        if self.feed_class is None:
+            raise UnhandledURL
         return self.feed_class(*args, **kwargs)
 
     def get_search(self, *args, **kwargs):
         """Returns an instance of :attr:`search_class`."""
+        if self.search_class is None:
+            raise UnhandledSearch
         return self.search_class(*args, **kwargs)
 
     def find_best_methods(self, missing_fields):

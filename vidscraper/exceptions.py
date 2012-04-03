@@ -28,6 +28,7 @@ class VidscraperError(Exception):
     """Base error for :mod:`vidscraper`."""
     pass
 
+
 class UnhandledURL(VidscraperError):
     """
     Raised if a url can't be handled by any known :doc:`suite </api/suites>`, or
@@ -35,6 +36,15 @@ class UnhandledURL(VidscraperError):
 
     """
     pass
+
+
+class UnhandledSearch(VidscraperError):
+	"""
+	Raised if a search can't be handled by a :class:`.VideoSearch` subclass.
+
+	"""
+	pass
+
 
 class VideoDeleted(VidscraperError):
     """Raised if the remote server has deleted the video being scraped."""

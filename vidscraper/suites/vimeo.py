@@ -39,11 +39,11 @@ except ImportError:
     oauth2 = None
 import requests
 
-from vidscraper.exceptions import VideoDeleted
+from vidscraper.exceptions import VideoDeleted, UnhandledURL, UnhandledSearch
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.utils.http import open_url_while_lying_about_agent
-from vidscraper.videos import VideoFeed
+from vidscraper.videos import VideoFeed, VideoSearch
 
 
 class VimeoApiMethod(SuiteMethod):
@@ -112,7 +112,112 @@ class VimeoScrapeMethod(SuiteMethod):
         return data
 
 
-class VimeoFeed(VideoFeed):
+class AdvancedVimeoApiMixin(object):
+    """
+    Mixin class to be used with VideoIterators to provide standard access to
+    Vimeo's advanced API.
+
+    """
+    page_url_format = ("http://vimeo.com/api/rest/v2?format=json&full_response=1&per_page=50&"
+                       "method=vimeo.{method}&sort={sort}&page={page}&{method_params}")
+
+    per_page = 50
+
+    def has_api_keys(self):
+        return ('vimeo_key' in self.api_keys and
+                'vimeo_secret' in self.api_keys)
+
+    def get_page(self, page_start, page_max):
+        url = self.get_page_url(start_index, max_results)
+        if oauth2 is None:
+            raise ImportError("OAuth2 library must be installed.")
+        consumer = oauth2.Consumer(self.api_keys['vimeo_key'],
+                                   self.api_keys['vimeo_secret'])
+        client = oauth2.Client(consumer)
+        response, text = client.request(url)
+        return {
+            'response': response,
+            'text': text,
+            'parsed': json.loads(text)
+        }
+
+    def _data_from_advanced_response(self, response):
+        # Advanced api doesn't have etags, but it does have explicit
+        # video counts.
+        parsed = response['parsed']
+        if 'videos' not in parsed:
+            video_count = 0
+        else:
+            video_count = parsed['videos']['total']
+        return {'video_count': video_count}
+
+    def get_response_items(self, response):
+        parsed = response['parsed']
+        if 'videos' not in parsed:
+            return []
+
+        # A blank page will not include the 'video' key.
+        if parsed['videos']['on_this_page'] == 0:
+            return []
+
+        return parsed['videos']['video']
+
+    def get_item_data(self, item):
+        # TODO: items have an embed_privacy key. What is this? Should
+        # vidscraper return that information? Doesn't youtube have something
+        # similar?
+        if not item['upload_date']:
+            # deleted video
+            link = [u['_content'] for u in item['urls']['url']
+                    if u['type'] == 'video'][0]
+            raise VideoDeleted(link)
+        data = {
+            'title': item['title'],
+            'link': [u['_content'] for u in item['urls']['url']
+                    if u['type'] == 'video'][0],
+            'description': item['description'],
+            'thumbnail_url': item['thumbnails']['thumbnail'][1]['_content'],
+            'user': item['owner']['realname'],
+            'user_url': item['owner']['profileurl'],
+            'publish_datetime': datetime.strptime(item['upload_date'],
+                                             '%Y-%m-%d %H:%M:%S'),
+            'tags': [t['_content']
+                            for t in item.get('tags', {}).get('tag', [])],
+            'flash_enclosure_url': VimeoSuite.video_flash_enclosure(item['id']),
+            'embed_code': VimeoSuite.video_embed_code(item['id'])
+        }
+        return data
+
+
+class VimeoSearch(AdvancedVimeoApiMixin, VideoSearch):
+    def __init__(self, query, order_by='relevant', **kwargs):
+        super(VimeoSearch, self).__init__(query, order_by, **kwargs)
+        if not self.has_api_keys():
+            raise UnhandledSearch
+        # Vimeo's search api supports relevant, newest, oldest, most_played,
+        # most_commented, and most_liked. We only support relevant and newest,
+        # for now.
+        if self.order_by == 'relevant':
+            pass
+        elif self.order_by == 'latest':
+            self.order_by = 'newest'
+        else:
+            raise UnhandledSearch
+
+    def data_from_response(self, response):
+        return self._data_from_advanced_response(response)
+
+    def get_page_url_data(self, page_start, page_max):
+        data = super(VimeoSearch, self).get_page_url_data(page_start,
+                                                          page_max)
+        data.update({
+            'method': 'videos.search',
+            'method_params': 'query={0}'.format(urllib.urlencode(self.query))
+        })
+        return data
+
+
+class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
     """
     Vimeo supports the following feeds for videos through its "Simple API":
 
@@ -168,25 +273,21 @@ class VimeoFeed(VideoFeed):
 
     @property
     def page_url_format(self):
-        if self.is_simple():
+        if not self.has_api_keys():
             return self.simple_url_format
-        return self.advanced_url_format
+        return AdvancedVimeoApiMixin.page_url_format
 
     @property
     def per_page(self):
-        if self.is_simple():
+        if not self.has_api_keys():
             return 20
-        return 50
+        return AdvancedVimeoApiMixin.per_page
 
     def __init__(self, *args, **kwargs):
         super(VimeoFeed, self).__init__(*args, **kwargs)
-        if self.is_simple():
+        if not self.has_api_keys():
             warnings.warn("Without an API key and secret, only the first 60 "
                           "results can be retrieved for this feed.")
-
-    def is_simple(self):
-        return ('vimeo_key' in self.api_keys and
-                'vimeo_secret' in self.api_keys)
 
     def get_url_data(self, url):
         parsed_url = urlparse.urlsplit(url)
@@ -207,25 +308,20 @@ class VimeoFeed(VideoFeed):
 
     def get_simple_api_path(self, data):
         if data['user_id']:
-            request_type = (data['request_type'] if data['request_type']
-                            in ('videos', 'likes', 'appears_in',
-                                'all_videos', 'subscriptions')
-                            else 'videos')
-            api_path = data['user_id']
+            return data['user_id']
         else:
-            request_type = 'videos'
             if data['album_id']:
-                api_path = "album/{0}".format(data['album_id'])
+                return "album/{0}".format(data['album_id'])
             elif data['channel_id']:
-                api_path = "channel/{0}".format(data['channel_id'])
+                return "channel/{0}".format(data['channel_id'])
             elif data['group_id']:
-                api_path = "group/{0}".format(data['group_id'])
-            else:
-                raise ValueError
+                return "group/{0}".format(data['group_id'])
+
+        raise ValueError
 
     def get_page_url_data(self, *args, **kwargs):
         data = super(VimeoFeed, self).get_page_url_data(*args, **kwargs)
-        if self.is_simple():
+        if not self.has_api_keys():
             if data['user_id']:
                 request_type = (data['request_type'] if data['request_type']
                                 in ('videos', 'likes', 'appears_in',
@@ -270,18 +366,14 @@ class VimeoFeed(VideoFeed):
             })
         return data
 
-    def get_page(self, start_index, max_results):
-        url = self.get_page_url(start_index, max_results)
-        if self.is_simple():
-            # Do we still need to fake the agent?
-            response = requests.get(url, timeout=5).text
-        else:
-            if oauth2 is None:
-                raise ImportError("OAuth2 library must be installed.")
-            consumer = oauth2.Consumer(self.api_keys['vimeo_key'],
-                                       self.api_keys['vimeo_secret'])
-            client = oauth2.Client(consumer)
-            response = client.request(url)
+    def get_page(self, page_start, page_max):
+        if self.has_api_keys():
+            return AdvancedVimeoApiMixin.get_page(self, start_index, max_results)
+
+        # Do we still need to fake the agent?
+        url = self.get_page_url(page_start, page_max)
+        response = requests.get(url, timeout=5)
+        response._parsed = json.loads(response.text)
         return response
 
     def load(self):
@@ -302,21 +394,15 @@ class VimeoFeed(VideoFeed):
             url = self.simple_url_format.format(**url_data)
             response = requests.get(url)
             data = self.data_from_response(response)
+
             if self._response is None:
                 self._next_page()
-            if self.is_simple():
-                data['etag'] = self._response.headers['etag']
+
+            if self.has_api_keys():
+                data.update(self._data_from_advanced_response(self._response))
             else:
-                # Advanced api doesn't have etags, but it does have explicit
-                # video counts.
-                response = json.loads(self._response[1])
-                if 'videos' not in response:
-                    video_count = 0
-                else:
-                    video_count = int(response['videos']['total'])
-                data.update({
-                    'video_count': video_count,
-                })
+                data['etag'] = self._response.headers['etag']
+
             self._apply(data)
             self._loaded = True
 
@@ -389,17 +475,18 @@ class VimeoFeed(VideoFeed):
         return data
 
     def get_response_items(self, response):
-        if self.is_simple():
-            if response.status_code == 403:
-                return []
-            return json.loads(response.text)
-        response = json.loads(response[1])
-        if 'videos' not in response:
+        if self.has_api_keys():
+            return AdvancedVimeoApiMixin.get_response_items(self, response)
+
+        if response.status_code == 403:
             return []
-        return response['videos']['video']
+        return json.loads(response.text)
 
     def get_item_data(self, item):
-        return VimeoSuite.api_video_to_data(entry)
+        if self.has_api_keys():
+            return AdvancedVimeoApiMixin.get_item_data(self, item)
+
+        return VimeoSuite.simple_api_video_to_data(item)
 
 
 class VimeoSuite(BaseSuite):
@@ -419,19 +506,20 @@ class VimeoSuite(BaseSuite):
     methods = (OEmbedMethod(u"http://vimeo.com/api/oembed.json"),
                VimeoApiMethod(), VimeoScrapeMethod())
     feed_class = VimeoFeed
+    search_class = VimeoSearch
 
-    @classmethod
-    def api_video_embed_code(cls, api_video):
-        return u"""<iframe src="http://player.vimeo.com/video/%s" \
+    @staticmethod
+    def video_embed_code(video_id):
+        return u"""<iframe src="http://player.vimeo.com/video/{0}" \
 width="320" height="240" frameborder="0" webkitAllowFullScreen \
-allowFullScreen></iframe>""" % api_video['id']
+allowFullScreen></iframe>""".format(video_id)
+
+    @staticmethod
+    def video_flash_enclosure(video_id):
+        return u'http://vimeo.com/moogaloop.swf?clip_id={0}'.format(video_id)
 
     @classmethod
-    def api_video_flash_enclosure(cls, api_video):
-        return u'http://vimeo.com/moogaloop.swf?clip_id=%s' % api_video['id']
-
-    @classmethod
-    def api_video_to_data(cls, api_video):
+    def simple_api_video_to_data(cls, api_video):
         """
         Takes a video dictionary from a vimeo API response and returns a
         dictionary mapping field names to values.
@@ -447,97 +535,10 @@ allowFullScreen></iframe>""" % api_video['id']
             'publish_datetime': datetime.strptime(api_video['upload_date'],
                                              '%Y-%m-%d %H:%M:%S'),
             'tags': [tag for tag in api_video['tags'].split(', ') if tag],
-            'flash_enclosure_url': cls.api_video_flash_enclosure(api_video),
-            'embed_code': cls.api_video_embed_code(api_video),
+            'flash_enclosure_url': cls.video_flash_enclosure(api_video['id']),
+            'embed_code': cls.video_embed_code(api_video['id']),
             'guid': 'tag:vimeo,%s:clip%i' % (api_video['upload_date'][:10],
                                              api_video['id'])
-        }
-        return data
-
-
-    def _get_user_api_url(self, user, type):
-        return 'http://vimeo.com/api/v2/%s/%s.json' % (user, type)
-
-    def get_search_url(self, search, extra_params=None):
-        if search.api_keys is None or not search.api_keys.get('vimeo_key'):
-            raise NotImplementedError("API Key is missing.")
-        params = {
-            'format': 'json',
-            'full_response': '1',
-            'method': 'vimeo.videos.search',
-            'query': search.query,
-        }
-        params['api_key'] = search.api_keys['vimeo_key']
-        if search.order_by == 'relevant':
-            params['sort'] = 'relevant'
-        elif search.order_by == 'latest':
-            params['sort'] = 'newest'
-        if extra_params is not None:
-            params.update(extra_params)
-        return "http://vimeo.com/api/rest/v2/?%s" % urllib.urlencode(params)
-
-    def get_next_search_page_url(self, search, search_response):
-        total = self.get_search_total_results(search, search_response)
-        page = int(search_response['videos']['page'])
-        per_page = int(search_response['videos']['perpage'])
-        if page * per_page > total:
-            return None
-        extra_params = {'page': page + 1}
-        return self.get_search_url(search,
-                                   extra_params=extra_params)
-
-    def get_search_response(self, search, search_url):
-        if oauth2 is None:
-            raise ImportError("OAuth2 library must be installed.")
-        api_key = (search.api_keys.get('vimeo_key')
-                   if search.api_keys else None)
-        api_secret = (search.api_keys.get('vimeo_secret')
-                      if search.api_keys else None)
-        if api_key is None or api_secret is None:
-            raise NotImplementedError("API Key and Secret missing.")
-        consumer = oauth2.Consumer(api_key, api_secret)
-        client = oauth2.Client(consumer)
-        request = client.request(search_url)
-        return json.loads(request[1])
-
-    def get_search_total_results(self, search, search_response):
-        if 'videos' not in search_response:
-            return 0
-        return int(search_response['videos']['total'])
-
-    def get_search_results(self, search, search_response):
-        if 'videos' not in search_response:
-            return []
-        # Vimeo only includes the 'video' key if there are actually videos on
-        # the page.
-        if int(search_response['videos']['on_this_page']) > 0:
-            return search_response['videos']['video']
-        return []
-
-    def parse_search_result(self, search, result):
-        # TODO: results have an embed_privacy key. What is this? Should
-        # vidscraper return that information? Doesn't youtube have something
-        # similar?
-        video_id = result['id']
-        if not result['upload_date']:
-            # deleted video
-            link = [u['_content'] for u in result['urls']['url']
-                    if u['type'] == 'video'][0]
-            raise VideoDeleted(link)
-        data = {
-            'title': result['title'],
-            'link': [u['_content'] for u in result['urls']['url']
-                    if u['type'] == 'video'][0],
-            'description': result['description'],
-            'thumbnail_url': result['thumbnails']['thumbnail'][1]['_content'],
-            'user': result['owner']['realname'],
-            'user_url': result['owner']['profileurl'],
-            'publish_datetime': datetime.strptime(result['upload_date'],
-                                             '%Y-%m-%d %H:%M:%S'),
-            'tags': [t['_content']
-                            for t in result.get('tags', {}).get('tag', [])],
-            'flash_enclosure_url': VimeoSuite.api_video_flash_enclosure(result),
-            'embed_code': VimeoSuite.api_video_embed_code(result)
         }
         return data
 registry.register(VimeoSuite)

@@ -219,6 +219,22 @@ class Video(object):
         """The suite to be used for scraping this video."""
         return self._suite
 
+    def items(self):
+        """Iterator over (field, value) for requested fields."""
+        for mem in self.fields:
+            yield (mem, getattr(self, mem))
+
+    def to_json(self, **kw):
+        """Returns the video JSON-ified.
+
+        Takes keyword arguments and passes them to json.dumps().
+
+        Example:
+
+        >>> v.to_json(indent=2, sort_keys=True)
+        """
+        return json.dumps(dict(self.items()), **kw)
+
     def load(self):
         """Uses the video's :attr:`suite` to fetch the fields for the video."""
         if not self._loaded:

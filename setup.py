@@ -8,6 +8,7 @@ setup(
     author='Participatory Culture Foundation',
     license='BSD',
     packages=find_packages(),
+    scripts=['bin/vidscraper-cmd'],
     install_requires=[
         'lxml',
         'oauth2',

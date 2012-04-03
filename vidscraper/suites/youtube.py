@@ -23,6 +23,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from datetime import datetime
+import json
 import re
 import time
 import urllib
@@ -49,41 +51,57 @@ class YouTubeApiMethod(SuiteMethod):
 
     def get_url(self, video):
         video_id = video.suite.video_regex.match(video.url).group('video_id')
-        return "http://gdata.youtube.com/feeds/api/videos/%s?v=2" % video_id
+        return "http://gdata.youtube.com/feeds/api/videos/{0}?v=2&alt=json".format(video_id)
 
     def process(self, response):
         if response.status_code in (401, 403):
             return {'is_embeddable': False}
-        parsed = feedparser.parse(response.text.encode('utf-8'))
-        if parsed.bozo == 1:
-            raise parsed.bozo_exception
-        entry = parsed.entries[0]
-        user = entry['author']
-        best_date = struct_time_to_datetime(entry['published_parsed'])
+        parsed = json.loads(response.text)
+        video = parsed['entry']
+        username = video['author'][0]['name']['$t']
+        if 'published' in video:
+            date_key = 'published'
+        else:
+            date_key = 'updated'
+
+        media_group = video['media$group']
+        description = media_group['media$description']
+        if description['type'] != 'plain':
+            # HTML-ified description. SB: Is this correct? Added in
+            # 5ca9e928 originally.
+            soup = BeautifulSoup(description['$t']).findAll('span')[0]
+            description = unicode(soup.string)
+        else:
+            description = description['$t']
+
+        thumbnail_url = None
+        for thumbnail in media_group['media$thumbnail']:
+            if thumbnail_url is None and thumbnail['yt$name'] == 'default':
+                thumbnail_url = thumbnail['url']
+            if thumbnail['yt$name'] == 'hqdefault':
+                thumbnail_url = thumbnail['url']
+                break
+        if '$t' in media_group['media$keywords']:
+            tags = media_group['media$keywords']['$t'].split(', ')
+        else:
+            tags = []
+        tags.extend(
+            [cat['$t'] for cat in media_group['media$category']])
         data = {
-            'link': entry['links'][0]['href'].split('&', 1)[0],
-            'title': entry['title'],
-            'description': entry['media_group'],
-            'thumbnail_url': get_entry_thumbnail_url(entry),
-            'publish_datetime': best_date,
-            'tags': [t['term'] for t in entry['tags']
-                    if not t['term'].startswith('http')],
-            'user': user,
-            'user_url': u'http://www.youtube.com/user/%s' % user,
-            'guid' : 'http://gdata.youtube.com/feeds/api/videos/%s' % (
-                entry.id.split(':')[-1],),
-            'license': entry['media_license']['href'],
-            'flash_enclosure_url': entry['media_player']['url']
+            'link': video['link'][0]['href'].split('&', 1)[0],
+            'title': video['title']['$t'],
+            'description': description.replace('\r', ''),
+            'thumbnail_url': thumbnail_url,
+            'publish_datetime': datetime.strptime(video[date_key]['$t'],
+                                                  "%Y-%m-%dT%H:%M:%S.000Z"),
+            'tags': tags,
+            'user': username,
+            'user_url': u'http://www.youtube.com/user/{0}'.format(username),
+            'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
+                        video['id']['$t'].split(':')[-1]),
+            'license': media_group['media$license']['href'],
+            'flash_enclosure_url': media_group['media$player']['url']
         }
-        if data['thumbnail_url'].endswith('/default.jpg'):
-            # got a crummy version; increase the resolution
-            data['thumbnail_url'] = data['thumbnail_url'].replace(
-                '/default.jpg', '/hqdefault.jpg')
-        if (data['description'][:len(data['user'])].lower().startswith(
-                data['user'].lower()) and
-            data['description'].endswith('youtube')):
-            # description looks like "USERNAME[real description]youtube"
-            data['description'] = data['description'][len(data['user']):-7]
         return data
 
 

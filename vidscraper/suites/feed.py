@@ -52,7 +52,10 @@ class GenericFeedSuite(BaseSuite):
                 embed_code = convert_entities(player['content'])
             elif 'url' in player:
                 embed_code = make_embed_code(player['url'], '')
-
+        if 'media_license' in entry:
+            license = entry['media_license']['href']
+        else:
+            license = entry.get('license')
         return {
             'link': link,
             'title': convert_entities(entry['title']),
@@ -68,8 +71,7 @@ class GenericFeedSuite(BaseSuite):
             'embed_code': embed_code,
             'tags': [tag['term'] for tag in entry['tags']
                      if tag['scheme'] is None] if 'tags' in entry else None,
-            'license': entry.get('license',
-                                 entry.get('media_license', {}).get('href'))
+            'license': license
             }
 
 registry.register_fallback(GenericFeedSuite)

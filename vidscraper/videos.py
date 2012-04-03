@@ -177,7 +177,9 @@ class BaseVideoIterator(object):
     per_page = None
 
     #: A format string which will be used to build page urls for this
-    #: iterator.
+    #: iterator. This should use the {} format described under str.format()
+    #: in the python docs:
+    #: http://docs.python.org/library/stdtypes.html#str.format
     page_url_format = None
 
     def __init__(self, start_index=1, max_results=None, video_fields=None,
@@ -189,7 +191,6 @@ class BaseVideoIterator(object):
         self._loaded = False
 
         self.item_count = 0
-        self._page_videos_iter = None
         self._response = None
 
     # Act as a generator
@@ -210,9 +211,15 @@ class BaseVideoIterator(object):
         try:
             video = self._page_videos_iter.next()
         except StopIteration:
-            # We're done with this page; try the next one.
+            # We're done with this page.
+            if (self._page_videos_count == 0 or
+                self._page_videos_count < self.per_page):
+                # If the page was either completely empty or not full, reraise
+                # the StopIteration.
+                raise
+
+            # Try the next page.
             self._response = None
-            self._page_videos_iter = None
             return self.next()
         else:
             self.item_count += 1
@@ -233,17 +240,18 @@ class BaseVideoIterator(object):
 
     def _page_videos(self, response, max_results=None):
         items = self.get_response_items(response)
-        item_count = 0
+        self._page_videos_count = 0
         for item in items:
             data = self.get_item_data(item)
             video = Video(data['link'], fields=self.video_fields,
                           api_keys=self.api_keys)
 
             video._apply(data)
-            item_count += 1
+            self._page_videos_count += 1
             yield video
-            if max_results is not None and item_count >= max_results:
-                raise StopIteration
+            if (max_results is not None and
+                self._page_videos_count >= max_results):
+                break
 
     def load(self):
         """
@@ -285,7 +293,7 @@ class BaseVideoIterator(object):
         if self.page_url_format is None:
             raise NotImplementedError
         format_data = self.get_page_url_data(page_start, page_max)
-        return self.page_url_format % format_data
+        return self.page_url_format.format(**format_data)
 
     def get_page_url_data(self, page_start, page_max):
         """
@@ -293,10 +301,13 @@ class BaseVideoIterator(object):
         :attr:`page_url_format` to build a page url.
 
         """
-        return {
+        data = {
             'page_start': page_start,
             'page_max': page_max
         }
+        if self.per_page is not None:
+            data['page'] = page_start / self.per_page
+        return data
 
     def get_page(self, page_start, page_max):
         """
@@ -379,7 +390,7 @@ class VideoFeed(BaseVideoIterator):
                  known.
 
                  .. seealso:: http://en.wikipedia.org/wiki/HTTP_ETag
-    :raises: :exc:`CantIdentifyUrl` if the url can't be handled by the class
+    :raises: :exc:`UnhandledURL` if the url can't be handled by the class
              being instantiated.
 
     :class:`VideoFeed` also supports the following "fields", which are
@@ -442,13 +453,15 @@ class VideoFeed(BaseVideoIterator):
         """
         Parses the url into data which can be used to construct page urls.
 
-        :raises: :exc:`CantIdentifyUrl` if the url isn't handled by this feed.
+        :raises: :exc:`UnhandledURL` if the url isn't handled by this feed.
 
         """
-        return {'url': url}
+        raise UnhandledURL
 
-    def get_page_url_data(self):
-        return self.url_data.copy()
+    def get_page_url_data(self, page_start, page_max):
+        data = super(VideoFeed, self).get_page_url_data(page_start, page_max)
+        data.update(self.url_data)
+        return data
 
 
 class FeedparserVideoFeed(FeedparserVideoIteratorMixin, VideoFeed):

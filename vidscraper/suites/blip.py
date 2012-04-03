@@ -35,36 +35,7 @@ from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
                                         get_first_accepted_enclosure
 from vidscraper.utils.http import clean_description_html
-
-
-def parse_blip_feed_entry(entry):
-    """
-    Parses a feedparser entry from a blip rss feed into a dictionary mapping
-    :class:`.Video` fields to values. This is used for blip feeds and blip API
-    requests (since those can also be done with feeds.)
-
-    """
-    enclosure = get_first_accepted_enclosure(entry)
-
-    data = {
-        'guid': entry['id'],
-        'link': entry['link'],
-        'title': entry['title'],
-        'description': clean_description_html(
-            entry['blip_puredescription']),
-        'file_url': enclosure['url'],
-        'embed_code': entry['media_player']['content'],
-        'publish_datetime': datetime.strptime(entry['blip_datestamp'],
-                                              "%Y-%m-%dT%H:%M:%SZ"),
-        'thumbnail_url': get_entry_thumbnail_url(entry),
-        'tags': [tag['term'] for tag in entry['tags']
-                 if tag['scheme'] is None][1:],
-        'user': entry['blip_safeusername'],
-        'user_url': entry['blip_showpage']
-    }
-    if 'license' in entry:
-        data['license'] = entry['license']
-    return data
+from vidscraper.videos import FeedparserVideoFeed
 
 
 class BlipApiMethod(SuiteMethod):
@@ -89,7 +60,56 @@ class BlipApiMethod(SuiteMethod):
 
     def process(self, response):
         parsed = feedparser.parse(response.text.encode('utf-8'))
-        return parse_blip_feed_entry(parsed.entries[0])
+        return BlipSuite.parse_feed_entry(parsed.entries[0])
+
+
+class BlipFeed(FeedparserVideoFeed):
+    """
+    Supports the following known blip feeds:
+
+    * blip.tv/rss: All most recent posts.
+    * blip.tv/<show>/rss: Most recent posts by a show.
+
+    Any of the following are valid inputs:
+
+    * http://blip.tv/
+    * http://blip.tv/rss
+    * http://blip.tv?skin=rss
+    * http://blip.tv/<show>
+    * http://blip.tv/<show>/rss
+    * http://blip.tv/<show>?skin=rss
+
+    .. seealso:: http://wiki.blip.tv/index.php/Video_Browsing_API
+                 http://wiki.blip.tv/index.php/RSS_Output_Format
+
+    """
+    path_re = re.compile(r'^/(?:(P<show>[\w-]+)/)?rss')
+    page_url_format = "http://blip.tv/{show_path}rss?page={page}"
+    per_page = 100
+
+    def get_url_data(self, url):
+        parsed_url = urlparse.urlsplit(url)
+        if parsed_url.scheme not in ('http', 'https'):
+            raise UnhandledURL
+
+        if (not parsed_url.netloc == 'blip.tv' and
+            not parsed_url.netloc.endswith('.blip.tv')):
+            raise UnhandledURL
+
+        match = self.path_re.match(parsed_url.path)
+        if not match:
+            raise UnhandledURL
+
+        return match.groupdict()
+
+    def get_page_url_data(self, *args, **kwargs):
+        data = super(BlipFeed, self).get_page_url_data(*args, **kwargs)
+        show = self.url_data['show']
+        data['show_path'] = '{0}/'.format(show) if show is not None else ''
+        return data
+
+    def get_item_data(self, item):
+        return BlipSuite.parse_feed_entry(item)
 
 
 class BlipSuite(BaseSuite):
@@ -100,6 +120,8 @@ class BlipSuite(BaseSuite):
     old_video_path_re = re.compile(r'^/file/\d+/?$', re.I)
 
     methods = (OEmbedMethod(u"http://blip.tv/oembed/"), BlipApiMethod())
+
+    feed_class = BlipFeed
 
     def handles_video_url(self, url):
         parsed_url = urlparse.urlsplit(url)
@@ -116,27 +138,35 @@ class BlipSuite(BaseSuite):
 
         return False
 
-    def get_feed_url(self, url):
-        if not url.endswith('/rss'):
-            if url.endswith('/'):
-                return url + 'rss'
-            else:
-                return url + '/rss'
-        return url
+    @staticmethod
+    def parse_feed_entry(entry):
+        """
+        Parses a feedparser entry from a blip rss feed into a dictionary
+        mapping :class:`.Video` fields to values. This is used for blip feeds
+        and blip API requests (since those can also be done with feeds.)
 
-    def parse_feed_entry(self, entry):
-        return parse_blip_feed_entry(entry)
+        """
+        enclosure = get_first_accepted_enclosure(entry)
 
-    def get_next_feed_page_url(self, feed, feed_response):
-        parsed = urlparse.urlparse(feed_response.href)
-        params = urlparse.parse_qs(parsed.query)
-        try:
-            page = int(params.get('page', ['1'])[0])
-        except ValueError:
-            page = 1
-        params['page'] = unicode(page + 1)
-        return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None)),
-                          urllib.urlencode(params, True))
+        data = {
+            'guid': entry['id'],
+            'link': entry['link'],
+            'title': entry['title'],
+            'description': clean_description_html(
+                entry['blip_puredescription']),
+            'file_url': enclosure['url'],
+            'embed_code': entry['media_player']['content'],
+            'publish_datetime': datetime.strptime(entry['blip_datestamp'],
+                                                  "%Y-%m-%dT%H:%M:%SZ"),
+            'thumbnail_url': get_entry_thumbnail_url(entry),
+            'tags': [tag['term'] for tag in entry['tags']
+                     if tag['scheme'] is None][1:],
+            'user': entry['blip_safeusername'],
+            'user_url': entry['blip_showpage']
+        }
+        if 'license' in entry:
+            data['license'] = entry['license']
+        return data
 
 
 registry.register(BlipSuite)

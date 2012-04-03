@@ -249,32 +249,23 @@ class BaseSuite(object):
         that is not possible.
 
         """
-        try:
-            return bool(self.video_regex.match(url))
-        except AttributeError:
-            raise NotImplementedError
+        if self.video_regex is None:
+            return False
+        return bool(self.video_regex.match(url))
 
     def handles_feed_url(self, url):
         """
         Returns ``True`` if this suite can handle the ``url`` as a feed and
-        ``False`` otherwise. By default, this method will check whether the url
-        matches :attr:`.feed_regex` or raise a :exc:`NotImplementedError` if
-        that is not possible.
+        ``False`` otherwise.
 
         """
         if self.feed_class is None:
             return False
-        return self.feed_class.handles_url(url)
-
-    def get_feed_url(self, url):
-        """
-        Some suites can handle URLs that are not technically feeds, but can
-        convert them into a feed that is usable.  This method can be overidden
-        to do that conversion.  By default, this method just returns the
-        original URL.
-
-        """
-        return url
+        try:
+            self.feed_class(url)
+        except UnhandledURL:
+            return False
+        return True
 
     def get_video(self, url, **kwargs):
         """Returns a video using this suite."""

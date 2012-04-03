@@ -33,6 +33,7 @@ import urlparse
 import feedparser
 
 from vidscraper.suites.youtube import YouTubeSuite
+from vidscraper.compat import json
 
 
 CARAMELL_DANSEN_ATOM_DATA = {
@@ -93,6 +94,7 @@ CARAMELL_DANSEN_API_DATA = {
         u"funny",
         u"caramelldansen",
         u"U-U-U-Aua",
+        u"Music", # technically a category, but historically included
     ]),
     'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
     'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
@@ -232,13 +234,19 @@ class YouTubeApiTestCase(YouTubeTestCase):
 
     def test_parse_api_response_restricted(self):
         api_file = open(os.path.join(self.data_file_dir,
-                                        'restricted_api.json'))
+                                     'restricted_api.json'))
         data = self.suite.parse_api_response(api_file.read())
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(data['description'],
                          "Like dolphins, whales communicate using sound. \
 Humpbacks especially have extremely complex communication systems.")
 
+    def test_parse_api_response_missing_keywords(self):
+        api_file = open(os.path.join(self.data_file_dir,
+                                     'missing_keywords.json'))
+        data = self.suite.parse_api_response(api_file.read())
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data['tags'], ['Nonprofit'])
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def test_get_scrape_url(self):

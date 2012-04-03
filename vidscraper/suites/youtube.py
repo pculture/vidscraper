@@ -175,6 +175,12 @@ class YouTubeSuite(BaseSuite):
             if thumbnail['yt$name'] == 'hqdefault':
                 thumbnail_url = thumbnail['url']
                 break
+        if '$t' in media_group['media$keywords']:
+            tags = media_group['media$keywords']['$t'].split(', ')
+        else:
+            tags = []
+        tags.extend(
+            [cat['$t'] for cat in media_group['media$category']])
         data = {
             'link': video['link'][0]['href'].split('&', 1)[0],
             'title': video['title']['$t'],
@@ -182,7 +188,7 @@ class YouTubeSuite(BaseSuite):
             'thumbnail_url': thumbnail_url,
             'publish_datetime': datetime.strptime(video[date_key]['$t'],
                                                   "%Y-%m-%dT%H:%M:%S.000Z"),
-            'tags': media_group['media$keywords']['$t'].split(', '),
+            'tags': tags,
             'user': username,
             'user_url': u'http://www.youtube.com/user/{0}'.format(username),
             'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(

@@ -99,7 +99,7 @@ class VimeoScrapeTestCase(VimeoTestCase):
             'user': u'Jake Lodwick',
             'user_url': u'http://vimeo.com/jakob',
             'embed_code': '<object width="400" height="300"><param name="allowfullscreen" value="true" /><param name="allowscriptaccess" value="always" /><param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" /><embed src="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="300"></embed></object><p><a href="http://vimeo.com/2">Good morning, universe</a> from <a href="http://vimeo.com/jakob">Jake Lodwick</a> on <a href="http://vimeo.com">Vimeo</a>.</p>',
-            'file_url_expires': datetime.datetime(2011, 11, 29, 19, 11, 40),
+            'file_url_expires': datetime.datetime(2011, 11, 30, 1, 11, 40),
             'file_url_mimetype': u'video/x-flv',
             'file_url': 'http://www.vimeo.com/moogaloop/play/clip:2/e82cb5d075e82a8cd790a1710e8b1d2f/1322593900/?q=sd'
         }

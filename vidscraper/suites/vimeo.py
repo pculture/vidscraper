@@ -24,7 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-from datetime import datetime
+import datetime
 import json
 import re
 import urllib
@@ -89,7 +89,6 @@ class VimeoScrapeMethod(SuiteMethod):
                 xml_data[key] = str_data # actually Unicode
             else:
                 xml_data[key] = str_data.decode('utf8')
-
         data = {
             'link': xml_data['url'],
             'user': xml_data['uploader_display_name'],
@@ -97,8 +96,9 @@ class VimeoScrapeMethod(SuiteMethod):
             'title': xml_data['caption'],
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
-            'file_url_expires': struct_time_to_datetime(time.gmtime(
-                    int(xml_data['request_signature_expires']))),
+            'file_url_expires': (struct_time_to_datetime(time.gmtime(
+                    int(xml_data['request_signature_expires']))) +
+                                 datetime.timedelta(hours=6)),
             'file_url_mimetype': u'video/x-flv',
             }
         base_file_url = (
@@ -158,8 +158,8 @@ allowFullScreen></iframe>""" % api_video['id']
             'thumbnail_url': api_video['thumbnail_medium'],
             'user': api_video['user_name'],
             'user_url': api_video['user_url'],
-            'publish_datetime': datetime.strptime(api_video['upload_date'],
-                                             '%Y-%m-%d %H:%M:%S'),
+            'publish_datetime': datetime.datetime.strptime(
+                api_video['upload_date'], '%Y-%m-%d %H:%M:%S'),
             'tags': [tag for tag in api_video['tags'].split(', ') if tag],
             'flash_enclosure_url': cls.api_video_flash_enclosure(api_video),
             'embed_code': cls.api_video_embed_code(api_video),
@@ -352,7 +352,6 @@ allowFullScreen></iframe>""" % api_video['id']
         # TODO: results have an embed_privacy key. What is this? Should
         # vidscraper return that information? Doesn't youtube have something
         # similar?
-        video_id = result['id']
         if not result['upload_date']:
             # deleted video
             link = [u['_content'] for u in result['urls']['url']
@@ -366,11 +365,12 @@ allowFullScreen></iframe>""" % api_video['id']
             'thumbnail_url': result['thumbnails']['thumbnail'][1]['_content'],
             'user': result['owner']['realname'],
             'user_url': result['owner']['profileurl'],
-            'publish_datetime': datetime.strptime(result['upload_date'],
-                                             '%Y-%m-%d %H:%M:%S'),
+            'publish_datetime': datetime.datetime.strptime(
+                result['upload_date'], '%Y-%m-%d %H:%M:%S'),
             'tags': [t['_content']
                             for t in result.get('tags', {}).get('tag', [])],
-            'flash_enclosure_url': VimeoSuite.api_video_flash_enclosure(result),
+            'flash_enclosure_url': VimeoSuite.api_video_flash_enclosure(
+                result),
             'embed_code': VimeoSuite.api_video_embed_code(result)
         }
         return data

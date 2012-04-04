@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import math
 import urllib
 
 from vidscraper.exceptions import UnhandledURL, VideoDeleted
@@ -306,7 +307,7 @@ class BaseVideoIterator(object):
             'page_max': page_max
         }
         if self.per_page is not None:
-            data['page'] = page_start / self.per_page
+            data['page'] = int(math.ceil(float(page_start) / self.per_page))
         return data
 
     def get_page(self, page_start, page_max):
@@ -502,11 +503,14 @@ class VideoSearch(BaseVideoIterator):
         self.raw_query = query
         self.order_by = order_by
 
-    def get_page_url_data(self):
-        return {
+    def get_page_url_data(self, page_start, page_max):
+        data = super(VideoSearch, self).get_page_url_data(page_start,
+                                                          page_max)
+        data.update({
             'query': urllib.quote_plus(self.query),
             'order_by': self.order_by
-        }
+        })
+        return data
 
 
 class FeedparserVideoSearch(FeedparserVideoIteratorMixin, VideoSearch):

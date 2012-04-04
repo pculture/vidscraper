@@ -28,8 +28,9 @@ import json
 import urlparse
 
 from vidscraper.exceptions import VideoDeleted
-from vidscraper.suites.vimeo import (VimeoSuite, LAST_URL_CACHE,
-                                     VimeoApiMethod, VimeoScrapeMethod)
+from vidscraper.suites.vimeo import (VimeoSuite, VimeoApiMethod,
+                                     VimeoScrapeMethod, VimeoFeed,
+                                     VimeoSearch)
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -115,98 +116,199 @@ class VimeoScrapeTestCase(VimeoTestCase):
         data = self.method.process(response)
         self.assertEqual(data, {'is_embeddable': False})
 
-class VimeoFeedTestCase(VimeoTestCase):
+class VimeoSimpleFeedTestCase(VimeoTestCase):
+    """
+    Tests the feed if no API keys are supplied.
+    """
     def setUp(self):
         VimeoTestCase.setUp(self)
-        feed_file = self.get_data_file('vimeo/feed.json')
-        response = json.loads(feed_file.read())
         self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
-        self.feed._first_response = response
-        self.entries = self.suite.get_feed_entries(self.feed, response)
-        info_file = self.get_data_file('vimeo/info.json')
-        self.info_response = json.load(info_file)
 
-    def test_get_feed_url(self):
-        self.assertEqual(
-            self.suite.get_feed_url('http://vimeo.com/jakob/videos/rss'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url(
-                'http://vimeo.com/channels/whitehouse/videos/rss'),
-            'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url('http://vimeo.com/jakob/videos'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url('http://vimeo.com/jakob'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url(
-                'http://vimeo.com/api/v2/jakob/videos.json'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
+    def test_feed_urls(self):
+        valid_feed_inputs = (
+            (('/plasticcut',),
+             {'user_id': 'plasticcut'}),
 
-    def test_get_feed_title(self):
-        self.assertEqual(
-            self.suite.get_feed_title(self.feed, self.info_response),
-            "Jake Lodwick's videos on Vimeo")
+            (('/plasticcut/videos',
+              '/plasticcut/videos/rss',
+              '/plasticcut/videos/sort:oldest',
+              '/plasticcut/videos/sort:oldest/format:thumbnail'),
+             {'user_id': 'plasticcut',
+              'request_type': 'videos'}),
 
-    def test_get_feed_title_likes(self):
-        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
-        self.assertEqual(
-            self.suite.get_feed_title(self.feed, self.info_response),
-            "Videos Jake Lodwick likes on Vimeo")        
+            (('/plasticcut/likes',
+              '/plasticcut/likes/rss',
+              '/plasticcut/likes/sort:oldest',
+              '/plasticcut/likes/sort:oldest/format:thumbnail'),
+              {'user_id': 'plasticcut',
+               'request_type': 'likes'}),
 
-    def test_get_feed_entry_count(self):
-        self.assertEqual(
-            self.suite.get_feed_entry_count(self.feed, self.info_response),
-            359)
+            (('/channels/deutschekurze',
+              '/channels/deutschekurze/videos/rss'),
+             {'channel_id': 'deutschekurze'}),
 
-    def test_get_feed_entry_count_likes(self):
-        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
-        self.assertEqual(
-            self.suite.get_feed_entry_count(self.feed, self.info_response),
-            1333)        
+            (('/groups/markenfaktor',
+              '/groups/markenfaktor/videos',
+              '/groups/markenfaktor/videos/sort:oldest',
+              '/groups/markenfaktor/videos/sort:oldest/format:thumbnail'),
+             {'group_id': 'markenfaktor'}),
 
-    def test_get_feed_description(self):
-        self.assertEqual(
-            self.suite.get_feed_description(self.feed, self.info_response),
-            "")
+            (('/album/82090',
+              '/album/82090/format:thumbnail'),
+             {'album_id': '82090'}),
 
-    def test_get_feed_webpage(self):
-        self.assertEqual(
-            self.suite.get_feed_webpage(self.feed, self.info_response),
-            "http://vimeo.com/jakob/videos")
+            (('/api/v2/album/82090/videos.json',),
+             {'album_id': '82090',
+              'request_type': 'videos'}),
+            (('/api/v2/channel/deutschekurze/videos.json',),
+             {'channel_id': 'deutschekurze',
+              'request_type': 'videos'}),
+            (('/api/v2/group/markenfaktor/videos.json',),
+             {'group_id': 'markenfaktor',
+              'request_type': 'videos'}),
+            (('/api/v2/plasticcut/videos.json',),
+             {'user_id': 'plasticcut',
+              'request_type': 'videos'}),
+        )
 
-    def test_feed_webpage_likes(self):
-        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
-        self.assertEqual(
-            self.suite.get_feed_webpage(self.feed, self.info_response),
-            "http://vimeo.com/jakob/likes")
+        for scheme in ("http", "https"):
+            for netloc in ("vimeo.com", "www.vimeo.com"):
+                for paths, expected in valid_feed_inputs:
+                    for path in paths:
+                        data = self.feed.get_url_data("{0}://{1}{2}".format(
+                                    scheme, netloc, path))
+                        data = dict((k, v) for k, v in data.items()
+                                    if v is not None)
+                        self.assertEqual(data, expected)
 
-    def test_get_feed_thumbnail_url(self):
-        self.assertEqual(
-            self.suite.get_feed_thumbnail_url(self.feed, self.info_response),
-            "http://b.vimeocdn.com/ps/137/734/1377340_300.jpg")
+    def test_data_from_response__user(self):
+        info_file = self.get_data_file('vimeo/info_user.json')
+        response = self.get_response(info_file.read())
+        expected = {
+            'title': "Jake Lodwick's videos",
+            'video_count': 60,
+            'description': '',
+            'webpage': u'http://vimeo.com/jakob/videos',
+            'thumbnail_url': "http://b.vimeocdn.com/ps/137/734/1377340_300.jpg",
+        }
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
 
-    def test_get_feed_guid(self):
-        self.assertEqual(
-            self.suite.get_feed_guid(self.feed, self.info_response),
-            None)
+        self.feed.url_data['request_type'] = 'likes'
+        expected.update({
+            'title': "Videos Jake Lodwick likes",
+            'webpage': u'http://vimeo.com/jakob/likes',
+        })
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
 
-    def test_get_feed_last_modified(self):
-        self.assertEqual(
-            self.suite.get_feed_last_modified(self.feed, self.info_response),
-            None)
+        self.feed.url_data['request_type'] = 'appears_in'
+        expected.update({
+            'title': "Videos Jake Lodwick appears in",
+            'webpage': u'http://vimeo.com/jakob',
+        })
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
 
-    def test_get_feed_etag(self):
-        self.assertEqual(
-            self.suite.get_feed_etag(self.feed, self.info_response),
-            None)
+        self.feed.url_data['request_type'] = 'all_videos'
+        expected.update({
+            'title': "Jake Lodwick's videos and videos Jake Lodwick appears in",
+            'video_count': None,
+        })
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
 
-    def test_parse_feed_entry_0(self):
-        data = self.suite.parse_feed_entry(self.entries[0])
-        self.assertTrue(isinstance(data, dict))
-        expected_data = {
+        self.feed.url_data['request_type'] = 'subscriptions'
+        expected.update({
+            'title': "Videos Jake Lodwick is subscribed to",
+        })
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
+
+    def test_data_from_response__album(self):
+        info_file = self.get_data_file('vimeo/info_album.json')
+        response = self.get_response(info_file.read())
+        expected = {
+            'webpage': u'http://vimeo.com/album/82090',
+            'video_count': 7,
+            'thumbnail_url': None,
+            'description': u'',
+            'title': u'Plastic.Cut'
+        }
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
+
+    def test_data_from_response__channel(self):
+        info_file = self.get_data_file('vimeo/info_channel.json')
+        response = self.get_response(info_file.read())
+        expected = {
+            'webpage': u'http://vimeo.com/channels/deutschekurze',
+            'video_count': 22,
+            'thumbnail_url': u'http://channelheader.vimeo.com.s3.amazonaws.com/654/65472_980.jpg',
+            'description': u"Nur allerfeinste und handerlesene deutsche "
+                           u"Kurzfilmware gibt es hier zu rezipieren. Und "
+                           u"damit hier eben nur edelster Stoff angeboten "
+                           u"werden kann, muss man sich schon bewerben: "
+                           u"Entweder man wird Mitglied in der gleichnamigen "
+                           u"Gruppe und postet dort sein Werk oder man "
+                           u"verlinkt es weiter unten in der Shoutbox. Der "
+                           u"Chef himself (Sascha Dornh\xf6fer) pr\xfcft die "
+                           u"Ware kritisch und wenn's nach seinem "
+                           u"supersubjektiven Gusto ist, wird man mit einer "
+                           u"Ver\xf6ffentlichung geadelt. Nur fertige Werke "
+                           u"kommen in die T\xfcte, gerne auch Musikvideos, "
+                           u"die als eigenst\xe4ndiger Film funktionieren "
+                           u"und wenn gesprochen wird, dann deutsch. Trailer "
+                           u"oder Teaser haben hier nichts verloren.<br />\r"
+                           u"\n<br />\r\n---<br />\r\n<br />\r\nMachen Sie "
+                           u"sich zum angesehenen Mitglied der entsprechenden"
+                           u" Gruppe:<br />\r\nvimeo.com/groups/deutschekurze"
+                           u"<br />\r\n<br />\r\nShortcut zu diesem feinen "
+                           u"Channel:<br />\r\n"
+                           u"vimeo.com/channels/deutschekurze<br />\r\n<br />"
+                           u"\r\nDeutsche Webserien gibts \xfcbrigens hier:"
+                           u"<br />\r\nvimeo.com/groups/webserien<br />\r\n"
+                           u"<br />\r\nOffizielle Website:<br />\r\n"
+                           u"www.neuemassenproduktion.de",
+            'title': u'Deutsche Kurzfilme'
+        }
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
+
+    def test_data_from_response__group(self):
+        info_file = self.get_data_file('vimeo/info_group.json')
+        response = self.get_response(info_file.read())
+        expected = {
+            'webpage': u'http://vimeo.com/groups/markenfaktor',
+            'video_count': 60,
+            'thumbnail_url': u'http://groupheader.vimeo.com.s3.amazonaws.com/389/38990_980.',
+            'description': u'Der Fachblog f\xfcr Marke, Kommunikation und Des'
+                           u'ign. <br />\r\n<br />\r\nmarkenfaktor ist auch h'
+                           u'ier:<br />\r\n<br />\r\nwww.markenfaktor.de<br /'
+                           u'>\r\nwww.facebook.com/\u200bmarkenfaktor<br />\r'
+                           u'\nwww.plus.google.com/109380568776060074590/post'
+                           u's<br />\r\nwww.twitter.com/\u200bmarkenfaktor<br'
+                           u' />\r\nwww.pinterest.com/markenfaktor/<br />\r\n'
+                           u'www.youtube.com/\u200buser/\u200bmarkenfaktor<br'
+                           u' />\r\nwww.xing.com/\u200bnet/\u200bmarkenfaktor'
+                           u'<br />\r\nwww.flickr.com/\u200bpeople/\u200bmark'
+                           u'enfaktor<br />\r\nwww.soundcloud.com/\u200bmarke'
+                           u'nfaktor/\u200bdropbox<br />\r\n<br />\r\nmarkenf'
+                           u'aktor Magazin:<br />\r\nwww.paper.li/\u200bmarke'
+                           u'nfaktor',
+            'title': u'markenfaktor'
+        }
+        data = self.feed.data_from_response(response)
+        self.assertEqual(data, expected)
+
+    def test_get_item_data(self):
+        feed_file = self.get_data_file('vimeo/feed.json')
+        response = self.get_response(feed_file.read())
+        response._parsed = json.loads(response.text)
+        items = self.feed.get_response_items(response)
+
+        data = self.feed.get_item_data(items[0])
+        expected = {
             'title': u'Grandfather recollects end of WWII',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/'
                           u'24714980" width="320" height="240" frameborder="0" '
@@ -221,12 +323,10 @@ class VimeoFeedTestCase(VimeoTestCase):
             'guid': u'tag:vimeo,2011-06-06:clip24714980',
             'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
         }
-        self.assertEqual(data, expected_data)
+        self.assertEqual(data, expected)
 
-    def test_parse_feed_entry_1(self):
-        data = self.suite.parse_feed_entry(self.entries[1])
-        self.assertTrue(isinstance(data, dict))
-        expected_data = {
+        data = self.feed.get_item_data(items[1])
+        expected = {
             'link': u"http://vimeo.com/23833511",
             'title': u"Santa vs. The Easter Bunny",
             'description': u'A pre-Jackass prank and one of my first '
@@ -246,38 +346,31 @@ class VimeoFeedTestCase(VimeoTestCase):
             'guid': u'tag:vimeo,2011-05-16:clip23833511',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
         }
-        self.maxDiff = None
-        self.assertEqual(data, expected_data)
+        self.assertEqual(data, expected)
 
-    def test_next_feed_url(self):
-        self.feed.url = "http://vimeo.com/nothing/here/?page=1"
-        next_url = self.suite.get_next_feed_page_url(self.feed, None)
-        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
-
-        delattr(self.feed, LAST_URL_CACHE)
-        self.feed.url = "http://vimeo.com/nothing/here/"
-        next_url = self.suite.get_next_feed_page_url(self.feed, None)
-        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
-
-        delattr(self.feed, LAST_URL_CACHE)
-        self.feed.url = "http://vimeo.com/nothing/here/?page=notanumber"
-        next_url = self.suite.get_next_feed_page_url(self.feed, None)
-        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+    def test_get_page_url(self):
+        expected = "http://vimeo.com/api/v2/jakob/videos.json?page=2"
+        url = self.feed.get_page_url(page_start=21, page_max=20)
+        self.assertEqual(url, expected)
 
 
 class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
-        search_file = self.get_data_file('vimeo/search.json')
-        response = json.loads(search_file.read())
         self.search = self.suite.get_search(
-            'search query',
+            'search query!',
             api_keys={'vimeo_key': 'BLANK',
                       'vimeo_secret': 'BLANK'})
-        self.results = self.suite.get_search_results(self.search, response)
 
-    def test_parse_search_result_1(self):
-        data = self.suite.parse_search_result(self.search, self.results[0])
+    def test_get_item_data(self):
+        search_file = self.get_data_file('vimeo/search.json')
+        response_text = search_file.read()
+        response = {
+            'test': response_text,
+            'parsed': json.loads(response_text),
+        }
+        results = self.search.get_response_items(response)
+        data = self.search.get_item_data(results[0])
         expected_data = {
             'title': u'Dancing Pigeons - Ritalin',
             'link': 'http://vimeo.com/13639493',
@@ -297,46 +390,22 @@ allowFullScreen></iframe>"""
 
     def test_get_search_with_deleted_video(self):
         search_file = self.get_data_file('vimeo/search_with_deleted.json')
-        response = json.loads(search_file.read())
-        search = self.suite.get_search(
-            'search query',
-            api_keys={'vimeo_key': 'BLANK',
-                      'vimeo_secret': 'BLANK'})
-        results = self.suite.get_search_results(search, response)
+        response_text = search_file.read()
+        response = {
+            'test': response_text,
+            'parsed': json.loads(response_text),
+        }
+        results = self.search.get_response_items(response)
+        data = self.search.get_item_data(results[0])
+
         self.assertEqual(len(results), 50)
         self.assertRaises(VideoDeleted,
-                          self.suite.parse_search_result,
-                          search, results[49])
+                          self.search.get_item_data,
+                          results[49])
 
-    def test_get_search_url(self):
-        extra_params = {'bar': 'baz'}
-        self.assertEqual(
-            self.suite.get_search_url(self.search,
-                                      extra_params=extra_params),
-            'http://vimeo.com/api/rest/v2/?bar=baz&full_response=1&format=json'
-            '&query=query+search&api_key=BLANK&method=vimeo.videos.search')
-        self.search.order_by = 'relevant'
-        self.assertEqual(
-            self.suite.get_search_url(self.search),
-            'http://vimeo.com/api/rest/v2/?sort=relevant&full_response=1&'
-            'format=json&query=query+search&api_key=BLANK&'
-            'method=vimeo.videos.search')
-        self.search.order_by = 'latest'
-        self.assertEqual(
-            self.suite.get_search_url(self.search),
-            'http://vimeo.com/api/rest/v2/?sort=newest&full_response=1&'
-            'format=json&query=query+search&api_key=BLANK&'
-            'method=vimeo.videos.search')
-
-    def test_next_page_url(self):
-        response = {'videos': {'total': '10', 'page': '1', 'perpage': '50'}}
-        new_url = self.suite.get_next_search_page_url(self.search,
-                                                      response)
-        self.assertTrue(new_url is None)
-        response['videos']['total'] = '100'
-        new_url = self.suite.get_next_search_page_url(self.search,
-                                                      response)
-        self.assertFalse(new_url is None)
-        parsed = urlparse.urlparse(new_url)
-        params = urlparse.parse_qs(parsed.query)
-        self.assertEqual(int(params['page'][0]), 2)
+    def test_get_page_url(self):
+        expected = ("http://vimeo.com/api/rest/v2?format=json&full_response=1"
+                    "&per_page=50&method=vimeo.videos.search&sort=relevant"
+                    "&page=2&query=search+query%21")
+        url = self.search.get_page_url(page_start=57, page_max=50)
+        self.assertEqual(url, expected)

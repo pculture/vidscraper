@@ -91,7 +91,7 @@ def auto_feed(url, last_modified=None, etag=None, start_index=1,
     raise UnhandledURL
 
 
-def auto_search(query, order_by=None, start_index=1, max_results=None,
+def auto_search(query, order_by='relevant', start_index=1, max_results=None,
                 video_fields=None, api_keys=None):
     """
     Returns a dictionary mapping each registered suite to a

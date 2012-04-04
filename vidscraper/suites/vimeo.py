@@ -57,7 +57,7 @@ class VimeoApiMethod(SuiteMethod):
 
     def process(self, response):
         parsed = json.loads(response.text)[0]
-        return VimeoSuite.api_video_to_data(parsed)
+        return VimeoSuite.simple_api_video_to_data(parsed)
 
 
 class VimeoScrapeMethod(SuiteMethod):
@@ -208,11 +208,12 @@ class VimeoSearch(AdvancedVimeoApiMixin, VideoSearch):
         return self._data_from_advanced_response(response)
 
     def get_page_url_data(self, page_start, page_max):
-        data = super(VimeoSearch, self).get_page_url_data(page_start,
+        data = super(VideoSearch, self).get_page_url_data(page_start,
                                                           page_max)
         data.update({
             'method': 'videos.search',
-            'method_params': 'query={0}'.format(urllib.urlencode(self.query))
+            'method_params': 'query={0}'.format(urllib.quote_plus(self.query)),
+            'sort': self.order_by,
         })
         return data
 
@@ -265,7 +266,7 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
                          r'(?:^/groups/(?P<group_id>\w+)(?:/videos(?:/sort:\w+(?:/format:\w+)?)?)?/?)$|'
                          r'(?:^/(?P<user_id>\w+)(?:/(?P<request_type>videos|likes)(?:/sort:\w+(?:/format:\w+)?|/rss)?)?/?)$')
 
-    api_re = re.compile(r'(?:^/api/v2/(?:album/(?P<album_id>\d+)|channel/(?P<channel_id>\w+)|group/(?P<group_id>\w+)|(?P<user_id>\w+))/(?P<request_type>\w+).(?P<output_type>json|php|xml)))')
+    api_re = re.compile(r'(?:^/api/v2/(?:album/(?P<album_id>\d+)|channel/(?P<channel_id>\w+)|group/(?P<group_id>\w+)|(?P<user_id>\w+))/(?P<request_type>\w+)\.(?:json|php|xml))')
 
     simple_url_format = "http://vimeo.com/api/v2/{api_path}/{request_type}.json?page={page}"
     advanced_url_format = ("http://vimeo.com/api/rest/v2?format=json&full_response=1&sort=newest&"
@@ -413,29 +414,29 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
         info.
 
         """
-        response = json.loads(response.text)
+        parsed = json.loads(response.text)
         data = {}
         # User is very different
-        if self.url_data['user_id']:
-            display_name = response['display_name']
+        if "display_name" in parsed:
+            display_name = parsed['display_name']
             request_type = (self.url_data['request_type'] if
                             self.url_data['request_type'] in
                             ('videos', 'likes', 'appears_in',
                              'all_videos', 'subscriptions')
                             else 'videos')
             count = None
-            webpage = response['profile_url']
+            webpage = parsed['profile_url']
             if request_type == 'videos':
                 title = "{0}'s videos".format(display_name)
-                count = response['total_videos_uploaded']
-                webpage = response['videos_url']
+                count = parsed['total_videos_uploaded']
+                webpage = parsed['videos_url']
             elif request_type == 'likes':
                 title = 'Videos {0} likes'.format(display_name)
-                count = response['total_videos_liked']
+                count = parsed['total_videos_liked']
                 webpage = "{0}/likes".format(webpage)
             elif request_type == 'appears_in':
                 title = "Videos {0} appears in".format(display_name)
-                count = response['total_videos_appears_in']
+                count = parsed['total_videos_appears_in']
             elif request_type == 'all_videos':
                 title = "{0}'s videos and videos {0} appears in".format(
                             display_name)
@@ -443,32 +444,36 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
                 title = "Videos {0} is subscribed to".format(display_name)
             data.update({
                 'title': title,
-                'video_count': count,
-                'description': response['bio'],
+                # if this is the simple API, we can only get up to 60 videos;
+                # if it's the advanced API, this will be overridden anyway.
+                'video_count': min(count, 60),
+                'description': parsed['bio'],
                 'webpage': webpage,
-                'thumbnail_url': response['portrait_huge']
+                'thumbnail_url': parsed['portrait_huge']
             })
         else:
             # It's a channel, album, or group feed.
 
-            # Title
-            if self.url_data['album_id']:
-                title = response['title']
+            # Title - albums use 'title'; channels/groups use 'name'
+            if "title" in parsed:
+                title = parsed['title']
             else:
-                title = response['name']
+                title = parsed['name']
 
             # Albums and groups have a small thumbnail (~100x75). Groups and
             # channels have a large logo, as well, but it seems like a paid
             # feature - some groups/channels have a blank value there.
-            thumbnail_url = response.get('logo')
-            if not thumbnail_url and 'thumbnail' in response:
-                thumbnail_url = response['thumbnail']
+            thumbnail_url = parsed.get('logo')
+            if not thumbnail_url and 'thumbnail' in parsed:
+                thumbnail_url = parsed['thumbnail']
 
             data.update({
                 'title': title,
-                'video_count': response['total_videos'],
-                'description': response['description'],
-                'webpage': response['url'],
+                # if this is the simple API, we can only get up to 60 videos;
+                # if it's the advanced API, this will be overridden anyway.
+                'video_count': min(parsed['total_videos'], 60),
+                'description': parsed['description'],
+                'webpage': parsed['url'],
                 'thumbnail_url': thumbnail_url
             })
 

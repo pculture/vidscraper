@@ -39,11 +39,11 @@ feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 import requests
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
-from vidscraper.videos import VideoFeed
+from vidscraper.videos import VideoFeed, VideoSearch
 
 
 class YouTubeApiMethod(SuiteMethod):
@@ -147,36 +147,40 @@ class YouTubeFeed(VideoFeed):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
                        'uploads?alt=rss&v=2&start-index={page_start}&max-results={page_max}')
-    path_re = re.compile(r'^/(?:user/)?(?P<username>\w+)/?$')
+    path_re = re.compile(r'^/(?:user/)?(?P<username>\w+)(?:/videos)?/?$')
     # old_path_re means that the username is in the GET params as 'user'
-    old_path_re = re.compile(r'^/profile(?:_videos)/?$')
+    old_path_re = re.compile(r'^/profile(?:_videos)?/?$')
     gdata_re = re.compile(r'^/feeds/(?:base|api)/users/(?P<username>\w+)/?')
+
+    #: Usernames can be at youtube.com/<username> - these are words which
+    #: therefore can't be used as usernames, since they already have meanings
+    #: at the root. This isn't a comprehensive list, just the ones people will
+    #: probably interact the most with.
+    invalid_usernames = set(('user', 'profile', 'profile_videos', 'watch',
+                             'playlist', 'embed'))
 
     def get_url_data(self, url):
         parsed_url = urlparse.urlsplit(url)
-        if parsed_url.scheme not in ('http', 'https'):
-            raise UnhandledURL
+        if parsed_url.scheme in ('http', 'https'):
+            if parsed_url.netloc in ('youtube.com', 'www.youtube.com'):
+                match = self.path_re.match(parsed_url.path)
+                if (match and
+                    match.group('username') not in self.invalid_usernames):
+                    return match.groupdict()
 
-        if parsed_url.netloc in ('youtube.com', 'www.youtube.com'):
-            match = self.path_re.match(parsed_url.path)
-            if match:
-                return match.groupdict()
-            
-            match = self.old_path_re.match(parsed_url.path)
-            if match:
-                parsed_qs = urlparse.parse_qs(parsed_url.query)
-                if 'user' not in parsed_qs:
-                    raise UnhandledURL
-                return {'username': parsed_qs['user'][0]}
-        elif parsed_url.netloc == 'gdata.youtube.com':
-            match = self.gdata_re.match(parsed_url.path)
-            if match:
-                return match.groupdict()
+                match = self.old_path_re.match(parsed_url.path)
+                if match:
+                    parsed_qs = urlparse.parse_qs(parsed_url.query)
+                    if 'user' in parsed_qs:
+                        username = parsed_qs['user'][0]
+                        if username not in self.invalid_usernames:
+                            return {'username': username}
+            elif parsed_url.netloc == 'gdata.youtube.com':
+                match = self.gdata_re.match(parsed_url.path)
+                if match:
+                    return match.groupdict()
 
-        raise UnhandledURL
-
-    def get_item_data(self, item):
-        return YouTubeSuite.parse_api_video(item)
+        raise UnhandledURL(url)
 
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)
@@ -184,18 +188,63 @@ class YouTubeFeed(VideoFeed):
         response._parsed = json.loads(response.text)
         return response
 
+    def get_response_items(self, response):
+        return response._parsed['feed']['entry']
+
+    def get_item_data(self, item):
+        return YouTubeSuite.parse_api_video(item)
+
+    def data_from_response(self, response):
+        feed = response._parsed['feed']
+        for l in feed['link']:
+            if l['rel'] == 'alternate':
+                link = l['href']
+                break
+        else:
+            link = None
+        return {
+            'video_count': feed['openSearch$totalResults']['$t'],
+            'title': feed['title']['$t'],
+            'webpage': link,
+            'guid': feed['id']['$t'],
+            'etag': response.headers['etag'] or feed['gd$etag']
+        }
+
+
+class YouTubeSearch(VideoSearch):
+    per_page = 50
+    page_url_format = ('http://gdata.youtube.com/feeds/api/videos?v=2&alt=json&'
+                       'q={query}&orderby={order_by}&start-index={page_start}&'
+                       'max-results={page_max}')
+
+    def __init__(self, query, order_by='relevant', **kwargs):
+        super(YouTubeSearch, self).__init__(query, order_by, **kwargs)
+        # YouTube's search supports relevance, published, viewCount, and
+        # rating. We currently only support relevance and published.
+        if self.order_by == 'latest':
+            self.order_by = 'published'
+        elif self.order_by == 'relevant':
+            self.order_by = 'relevance'
+        else:
+            raise UnhandledSearch
+
+    def get_page(self, page_start, page_max):
+        url = self.get_page_url(page_start, page_max)
+        response = requests.get(url)
+        response._parsed = json.loads(response.text)
+        return response
+
+    def get_response_items(self, response):
+        return response._parsed['feed']['entry']
+
+    def get_item_data(self, item):
+        return YouTubeSuite.parse_api_video(item)
+
     def data_from_response(self, response):
         feed = response._parsed['feed']
         return {
             'video_count': feed['openSearch$totalResults']['$t'],
-            'title': feed['title']['$t'],
-            'webpage': feed['link'],
-            'guid': feed['id']['$t'],
-            'etag': response.headers['etag']
         }
-
-    def get_response_items(self, response):
-        return response._parsed['feed']['entry']
 
 
 class YouTubeSuite(BaseSuite):
@@ -207,6 +256,7 @@ class YouTubeSuite(BaseSuite):
                YouTubeApiMethod(), YouTubeScrapeMethod())
 
     feed_class = YouTubeFeed
+    search_class = YouTubeSearch
 
     @staticmethod
     def parse_api_video(video):
@@ -256,40 +306,5 @@ class YouTubeSuite(BaseSuite):
         }
         return data
 
-    def get_search_url(self, search, extra_params=None):
-        params = {
-            'vq': search.query,
-        }
-        if extra_params is not None:
-            params.update(extra_params)
-        if search.order_by == 'relevant':
-            params['orderby'] = 'relevance'
-        elif search.order_by == 'latest':
-            params['orderby'] = 'published'
-        return 'http://gdata.youtube.com/feeds/api/videos?%s' % (
-            urllib.urlencode(params))
-
-    def get_next_page_url_params(self, response):
-        start_index = response['feed'].get('opensearch_startindex', None)
-        per_page = response['feed'].get('opensearch_itemsperpage', None)
-        total_results = response['feed'].get('opensearch_totalresults', None)
-        if start_index is None or per_page is None or total_results is None:
-            return None
-        new_start = int(start_index) + int(per_page)
-        if new_start > int(total_results):
-            return None
-        extra_params = {
-            'start-index': new_start,
-            'max-results': per_page
-        }
-        return extra_params
-
-    def get_next_search_page_url(self, search, search_response):
-        extra_params = self.get_next_page_url_params(search_response)
-        if not extra_params:
-            return None
-        return self.get_search_url(
-            search,
-            extra_params=extra_params)
 
 registry.register(YouTubeSuite)

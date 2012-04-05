@@ -29,7 +29,7 @@ import urllib2
 
 import feedparser
 
-from vidscraper.compat import json
+from vidscraper.compat import json, json_dump_helper
 from vidscraper.errors import CantIdentifyUrl, VideoDeleted
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)
@@ -221,8 +221,8 @@ class Video(object):
 
     def items(self):
         """Iterator over (field, value) for requested fields."""
-        for mem in self.fields:
-            yield (mem, getattr(self, mem))
+        for field in self.fields:
+            yield (field, getattr(self, field))
 
     def to_json(self, **kw):
         """Returns the video JSON-ified.
@@ -233,6 +233,7 @@ class Video(object):
 
         >>> v.to_json(indent=2, sort_keys=True)
         """
+        kw['default'] = json_dump_helper
         return json.dumps(dict(self.items()), **kw)
 
     def load(self):

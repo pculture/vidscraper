@@ -120,19 +120,31 @@ def auto_search(query, fields=None, order_by=None, crawl=False,
 # fetchvideo -> auto_scrape(url, fields, api_keys)
 
 
-class CommandHandler(object):
+class VidscraperCommandHandler(object):
+    """Command line handler for vidscraper.
+
+    This exposes functions in this module to the command line giving
+    vidscraper command line utility.
+
+    Subcommands are implemented in ``handle_SUBCOMMAND`` methods.  See
+    ``handle_video`` and ``handle_help`` for examples.
+    """
+
     usage = "%prog [command] [options]"
 
     def get_commands(self):
+        """Returns a list of subcommands implemented."""
         return [mem.replace("handle_", "")
                 for mem in dir(self)
                 if mem.startswith("handle_")]
 
     def build_parser(self, usage):
+        """Builds the parser with universal bits."""
         parser = OptionParser(usage=usage, version=__version__)
         return parser
 
     def handle_video(self):
+        """Handler for auto_scrape."""
         parser = self.build_parser("%prog video [options] URL")
         parser.add_option("--fields", dest="fields",
                           help="comma-separated list of fields to retrieve. "
@@ -151,7 +163,7 @@ class CommandHandler(object):
             fields = None
 
         if options.api_keys:
-            api_keys = dict(mem.split(":")
+            api_keys = dict(mem.split(":", 1)
                             for mem in options.api_keys.split(","))
         else:
             api_keys = None
@@ -161,7 +173,10 @@ class CommandHandler(object):
             video = auto_scrape(arg, fields=fields, api_keys=api_keys)
             print video.to_json(indent=2, sort_keys=True)
 
+        return 0
+
     def handle_help(self, error=None):
+        """Handles help."""
         parser = self.build_parser("%prog [command]")
         parser.print_help()
         if error:
@@ -187,4 +202,4 @@ class CommandHandler(object):
         return handler()
 
 if __name__ == "__main__":
-    sys.exit(CommandHandler().main())
+    sys.exit(VidscraperCommandHandler().main())

@@ -1,4 +1,4 @@
-# Copyright 2009 - Participatory Culture Foundation
+# Copyright 2012 - Participatory Culture Foundation
 #
 # This file is part of vidscraper.
 #
@@ -23,18 +23,37 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import datetime
+import unittest
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        raise ImportError("simplejson or native json must be installed.")
+from nose.tools import eq_
+
+from vidscraper import auto_scrape
+from vidscraper.compat import json
+from vidscraper.suites.base import Video
 
 
-def json_dump_helper(obj):
-    if isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    raise TypeError("%s is not serializable" % repr(obj))
+class VideoTestCase(unittest.TestCase):
+    def test_items(self):
+        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+
+        # Make sure items can be iterated over and that there's one
+        # for every field.
+        for i, item in enumerate(video.items()):
+            eq_(item[0], Video._all_fields[i])
+
+    def test_items_with_fields(self):
+        fields = ['title', 'user']
+        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4",
+                            fields)
+
+        # Make sure items can be iterated over and that there's one
+        # for every field.
+        for i, item in enumerate(video.items()):
+            eq_(item[0], fields[i])
+
+    def test_to_json(self):
+        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+
+        data_json = video.to_json()
+        # Verify that we can load the json back into Python.
+        json.loads(data_json)

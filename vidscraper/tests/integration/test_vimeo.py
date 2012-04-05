@@ -29,7 +29,7 @@ import unittest
 from vidscraper.suites.vimeo import VimeoSuite
 
 
-class VimeoFunctionalTestCase(unittest.TestCase):
+class VimeoIntegrationTestCase(unittest.TestCase):
 
     def setUp(self):
         self.suite = VimeoSuite()

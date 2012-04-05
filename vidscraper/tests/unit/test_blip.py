@@ -162,6 +162,7 @@ class BlipSearchTestCase(BlipTestCase):
         data = self.suite.parse_search_result(self.search, results[1])
         self.assertEqual(data, DISQUS_DATA)
 
+
 class BlipSuiteTestCase(BlipTestCase):
     def test_mp4_not_included(self):
         self.assertFalse(self.suite.handles_video_url(

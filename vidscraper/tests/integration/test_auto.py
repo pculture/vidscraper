@@ -45,9 +45,9 @@ class AutoIntegrationTestCase(unittest.TestCase):
         results = []
         for suite, search in searches.iteritems():
             videos = list(search)
-            self.assertTrue(len(videos) < 20,
+            self.assertTrue(len(videos) <= 20,
                             "{0} suite has too many results ({1})".format(
-                                suite.__class__.__name__), len(videos))
+                                suite.__class__.__name__, len(videos)))
             results.extend(videos)
         self.assertTrue(len(videos) > 0)
 

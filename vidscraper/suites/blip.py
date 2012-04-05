@@ -30,12 +30,12 @@ import urlparse
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
                                         get_first_accepted_enclosure
 from vidscraper.utils.http import clean_description_html
-from vidscraper.videos import FeedparserVideoFeed
+from vidscraper.videos import FeedparserVideoFeed, FeedparserVideoSearch
 
 
 class BlipApiMethod(SuiteMethod):
@@ -83,8 +83,8 @@ class BlipFeed(FeedparserVideoFeed):
                  http://wiki.blip.tv/index.php/RSS_Output_Format
 
     """
-    path_re = re.compile(r'^/(?:(P<show>[\w-]+)/)?rss')
-    page_url_format = "http://blip.tv/{show_path}rss?page={page}"
+    path_re = re.compile(r'^(?:/(P<show>[\w-]+))?(?:/rss)?/?')
+    page_url_format = "http://blip.tv/{show_path}rss?page={page}&pagelen=100"
     per_page = 100
 
     def get_url_data(self, url):
@@ -109,6 +109,20 @@ class BlipFeed(FeedparserVideoFeed):
         return BlipSuite.parse_feed_entry(item)
 
 
+class BlipSearch(FeedparserVideoSearch):
+    page_url_format = "http://blip.tv/rss?page={page}&search={query}"
+    # pagelen doesn't work with searches. Huh.
+    per_page = 10
+
+    def __init__(self, query, order_by='relevant', **kwargs):
+        super(BlipSearch, self).__init__(query, order_by, **kwargs)
+        if order_by != 'relevant':
+            raise UnhandledSearch
+
+    def get_item_data(self, item):
+        return BlipSuite.parse_feed_entry(item)
+
+
 class BlipSuite(BaseSuite):
     video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?(?<!.mp4)$'
     feed_regex = video_regex
@@ -119,6 +133,7 @@ class BlipSuite(BaseSuite):
     methods = (OEmbedMethod(u"http://blip.tv/oembed/"), BlipApiMethod())
 
     feed_class = BlipFeed
+    search_class = BlipSearch
 
     def handles_video_url(self, url):
         parsed_url = urlparse.urlsplit(url)

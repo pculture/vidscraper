@@ -347,8 +347,8 @@ class FeedparserVideoIteratorMixin(object):
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)
         response = feedparser.parse(url,
-                                    etag=self.etag,
-                                    modified=self.last_modified)
+                                etag=getattr(self, 'etag', None),
+                                modified=getattr(self, 'last_modified', None))
         # Don't let feedparser silence connection problems.
         if isinstance(response.get('bozo_exception', None), urllib2.URLError):
             raise response.bozo_exception

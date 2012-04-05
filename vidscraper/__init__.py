@@ -60,7 +60,8 @@ def auto_scrape(url, fields=None, api_keys=None):
     :raises UnhandledURL: if no registered suites know how to handle this url.
 
     """
-    video = Video(url, fields=fields, api_keys=api_keys)
+    suite = registry.suite_for_video_url(url)
+    video = Video(url, suite=suite, fields=fields, api_keys=api_keys)
     video.load()
     return video
 

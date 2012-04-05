@@ -44,8 +44,8 @@ class Video(object):
     :param url: The "pasted" url for the video.
     :param suite: The suite to use for the video. This does not need to be a
                   registered suite, but it does need to handle the video's
-                  ``url``. If no suite is provided, one will be auto-selected
-                  based on the ``url``.
+                  ``url``. If no suite is provided, then the video will not be
+                  able to load additional data.
     :param fields: A list of fields which should be fetched for the video. This
                   may be used to optimize the fetching process.
 
@@ -111,17 +111,12 @@ class Video(object):
     fields = None
 
     def __init__(self, url, suite=None, fields=None, api_keys=None):
-        from vidscraper.suites import registry
-        if suite is None:
-            suite = registry.suite_for_video_url(url)
-        elif not suite.handles_video_url(url):
-            raise UnhandledURL(url)
         if fields is None:
             self.fields = list(self._all_fields)
         else:
             self.fields = [f for f in fields if f in self._all_fields]
         self.url = url
-        self._suite = suite
+        self.suite = suite
         self.api_keys = api_keys if api_keys is not None else {}
 
         # This private attribute is set to ``True`` when data is loaded into
@@ -138,14 +133,13 @@ class Video(object):
         """
         return [f for f in self.fields if getattr(self, f) is None]
 
-    @property
-    def suite(self):
-        """The suite to be used for scraping this video."""
-        return self._suite
-
     def load(self):
-        """Uses the video's :attr:`suite` to fetch the fields for the video."""
-        if not self._loaded:
+        """
+        If the video has a :attr:`suite`, uses that suite to fetch the data
+        for the video's :attr:`fields`.
+
+        """
+        if self.suite is not None and not self._loaded:
             data = self.suite.run_methods(self)
             self._apply(data)
             self._loaded = True
@@ -245,11 +239,20 @@ class BaseVideoIterator(object):
         self._page_videos_iter = self._page_videos(r, page_max)
 
     def _page_videos(self, response, max_results=None):
+        # Avoid circular imports.
+        from vidscraper.suites import registry
         items = self.get_response_items(response)
         self._page_videos_count = 0
         for item in items:
             data = self.get_item_data(item)
-            video = Video(data['link'], fields=self.video_fields,
+            url = data['link']
+            try:
+                suite = registry.suite_for_video_url(url)
+            except UnhandledURL:
+                suite = None
+            video = Video(url,
+                          suite=suite,
+                          fields=self.video_fields,
                           api_keys=self.api_keys)
 
             video._apply(data)

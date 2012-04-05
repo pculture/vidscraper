@@ -237,11 +237,7 @@ class YouTubeSearch(VideoSearch):
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)
         response = requests.get(url)
-        try:
-            response._parsed = json.loads(response.text)
-        except ValueError:
-            import pdb
-            pdb.set_trace()
+        response._parsed = json.loads(response.text)
         return response
 
     def get_response_items(self, response):

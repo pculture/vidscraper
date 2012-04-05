@@ -24,35 +24,32 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
+import json
 
-from nose.tools import eq_
-
-from vidscraper import auto_scrape
-from vidscraper.compat import json
-from vidscraper.suites.base import Video
+from vidscraper.videos import Video
 
 
 class VideoTestCase(unittest.TestCase):
     def test_items(self):
-        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
 
         # Make sure items can be iterated over and that there's one
         # for every field.
         for i, item in enumerate(video.items()):
-            eq_(item[0], Video._all_fields[i])
+            self.assertEqual(item[0], Video._all_fields[i])
 
     def test_items_with_fields(self):
         fields = ['title', 'user']
-        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4",
-                            fields)
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4",
+                            fields=fields)
 
         # Make sure items can be iterated over and that there's one
         # for every field.
         for i, item in enumerate(video.items()):
-            eq_(item[0], fields[i])
+            self.assertEqual(item[0], fields[i])
 
     def test_to_json(self):
-        video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
 
         data_json = video.to_json()
         # Verify that we can load the json back into Python.

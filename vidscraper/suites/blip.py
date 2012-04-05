@@ -54,7 +54,7 @@ class BlipApiMethod(SuiteMethod):
             new_parsed_url = parsed_url[:3] + ("skin=rss", None)
         else:
             # We shouldn't ever get here, so raise an exception.
-            raise UnhandledURL("Unhandled video url: %s" % video.url)
+            raise UnhandledURL(video.url)
 
         return urlparse.urlunsplit(new_parsed_url)
 
@@ -89,18 +89,15 @@ class BlipFeed(FeedparserVideoFeed):
 
     def get_url_data(self, url):
         parsed_url = urlparse.urlsplit(url)
-        if parsed_url.scheme not in ('http', 'https'):
-            raise UnhandledURL
+        if parsed_url.scheme in ('http', 'https'):
+            if (parsed_url.netloc == 'blip.tv' or
+                parsed_url.netloc.endswith('.blip.tv')):
 
-        if (not parsed_url.netloc == 'blip.tv' and
-            not parsed_url.netloc.endswith('.blip.tv')):
-            raise UnhandledURL
+                match = self.path_re.match(parsed_url.path)
+                if match:
+                    return match.groupdict()
 
-        match = self.path_re.match(parsed_url.path)
-        if not match:
-            raise UnhandledURL
-
-        return match.groupdict()
+        raise UnhandledURL(url)
 
     def get_page_url_data(self, *args, **kwargs):
         data = super(BlipFeed, self).get_page_url_data(*args, **kwargs)

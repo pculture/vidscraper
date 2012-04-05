@@ -296,20 +296,17 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
 
     def get_url_data(self, url):
         parsed_url = urlparse.urlsplit(url)
-        if parsed_url.scheme not in ('http', 'https'):
-            raise UnhandledURL
+        if parsed_url.scheme in ('http', 'https'):
+            if parsed_url.netloc in ('vimeo.com', 'www.vimeo.com'):
+                match = self.path_re.match(parsed_url.path)
+                if not match:
+                    # Only use the api regex as a fallback - less likely to
+                    # see it.
+                    match = self.api_re.match(parsed_url.path)
 
-        if parsed_url.netloc not in ('vimeo.com', 'www.vimeo.com'):
-            raise UnhandledURL
-
-        match = self.path_re.match(parsed_url.path)
-        if not match:
-            # Only use the api regex as a fallback - less likely to see it.
-            match = self.api_re.match(parsed_url.path)
-            if not match:
-                raise UnhandledURL
-
-        return match.groupdict()
+                if match:
+                    return match.groupdict()
+        raise UnhandledURL(url)
 
     def get_simple_api_path(self, data):
         if data['user_id']:

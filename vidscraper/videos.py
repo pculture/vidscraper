@@ -115,7 +115,7 @@ class Video(object):
         if suite is None:
             suite = registry.suite_for_video_url(url)
         elif not suite.handles_video_url(url):
-            raise UnhandledURL
+            raise UnhandledURL(url)
         if fields is None:
             self.fields = list(self._all_fields)
         else:
@@ -464,7 +464,7 @@ class VideoFeed(BaseVideoIterator):
         :raises: :exc:`UnhandledURL` if the url isn't handled by this feed.
 
         """
-        raise UnhandledURL
+        raise UnhandledURL(url)
 
     def get_page_url_data(self, page_start, page_max):
         data = super(VideoFeed, self).get_page_url_data(page_start, page_max)

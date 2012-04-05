@@ -88,7 +88,7 @@ def auto_feed(url, last_modified=None, etag=None, start_index=1,
                                   api_keys=None)
         except UnhandledURL:
             pass
-    raise UnhandledURL
+    raise UnhandledURL(url)
 
 
 def auto_search(query, order_by='relevant', start_index=1, max_results=None,

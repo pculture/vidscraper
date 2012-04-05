@@ -199,8 +199,7 @@ class BaseVideoIterator(object):
 
     # Act as a generator
     def next(self):
-        if (self.max_results is not None and
-            self.item_count >= self.max_results):
+        if self.is_finished():
             raise StopIteration
 
         if self._response is None:
@@ -211,13 +210,6 @@ class BaseVideoIterator(object):
         try:
             video = self._page_videos_iter.next()
         except StopIteration:
-            # We're done with this page.
-            if (self._page_videos_count == 0 or
-                self._page_videos_count < self.per_page):
-                # If the page was either completely empty or not full, reraise
-                # the StopIteration.
-                raise
-
             # Try the next page.
             self._response = None
             return self.next()
@@ -238,7 +230,7 @@ class BaseVideoIterator(object):
         self._response = r
         self._page_videos_iter = self._page_videos(r, page_max)
 
-    def _page_videos(self, response, max_results=None):
+    def _page_videos(self, response, page_max=None):
         # Avoid circular imports.
         from vidscraper.suites import registry
         items = self.get_response_items(response)
@@ -258,9 +250,24 @@ class BaseVideoIterator(object):
             video._apply(data)
             self._page_videos_count += 1
             yield video
-            if (max_results is not None and
-                self._page_videos_count >= max_results):
+            if (page_max is not None and
+                self._page_videos_count >= page_max):
                 break
+
+    def is_finished(self):
+        if (self.max_results is not None and
+            self.item_count >= self.max_results):
+            return True
+        if self._response is None:
+            # Then we're between pages.
+            try:
+                if (self._page_videos_count == 0 or
+                    self._page_videos_count < self.per_page):
+                    # The last page was either empty or not full.
+                    return True
+            except AttributeError:
+                pass
+        return False
 
     def load(self):
         """

@@ -194,7 +194,7 @@ class YouTubeFeed(VideoFeed):
         return response
 
     def get_response_items(self, response):
-        return response._parsed['feed']['entry']
+        return response._parsed['feed'].get('entry', [])
 
     def get_item_data(self, item):
         return YouTubeSuite.parse_api_video(item)
@@ -241,7 +241,7 @@ class YouTubeSearch(VideoSearch):
         return response
 
     def get_response_items(self, response):
-        return response._parsed['feed']['entry']
+        return response._parsed['feed'].get('entry', [])
 
     def get_item_data(self, item):
         return YouTubeSuite.parse_api_video(item)

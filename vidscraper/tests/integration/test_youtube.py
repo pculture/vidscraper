@@ -207,3 +207,13 @@ Caramelldansen""",
         self.assertEqual(video.description,
                          "Like dolphins, whales communicate using sound. \
 Humpbacks especially have extremely complex communication systems.")
+
+    def test_beyond_page_range(self):
+        """YouTube feeds only allow access to 999 videos."""
+        feed_url = 'http://www.youtube.com/user/AssociatedPress'
+        feed = self.suite.get_feed(feed_url)
+        feed.load()
+        feed.start_index = feed.video_count + 1
+        feed._response = None
+        self.assertRaises(StopIteration, feed.next)
+        self.assertTrue(feed.is_finished())

@@ -46,6 +46,10 @@ from vidscraper.utils.http import open_url_while_lying_about_agent
 from vidscraper.videos import VideoFeed, VideoSearch
 
 
+# Documentation for the Vimeo APIs:
+# * http://vimeo.com/api
+
+
 class VimeoApiMethod(SuiteMethod):
     fields = set(['link', 'title', 'description', 'tags', 'guid',
                   'publish_datetime', 'thumbnail_url', 'user', 'user_url',

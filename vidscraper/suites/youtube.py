@@ -46,6 +46,11 @@ from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import VideoFeed, VideoSearch
 
 
+# Information on the YouTube API can be found at the following links:
+# * https://developers.google.com/youtube/2.0/developers_guide_protocol
+# * https://developers.google.com/youtube/2.0/reference
+
+
 class YouTubeApiMethod(SuiteMethod):
     fields = set(('link', 'title', 'description', 'guid', 'thumbnail_url',
                   'publish_datetime', 'tags', 'flash_enclosure_url', 'user',

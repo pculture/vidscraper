@@ -23,6 +23,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
+import json
 import math
 import urllib
 import urllib2
@@ -155,6 +157,28 @@ class Video(object):
 
     def is_loaded(self):
         return self._loaded
+
+    def items(self):
+        """Iterator over (field, value) for requested fields."""
+        for mem in self.fields:
+            yield (mem, getattr(self, mem))
+
+    def to_json(self, **kw):
+        """Returns the video JSON-ified.
+
+        Takes keyword arguments and passes them to json.dumps().
+
+        Example:
+
+        >>> v.to_json(indent=2, sort_keys=True)
+        """
+        def json_dump_helper(obj):
+            if isinstance(obj, datetime.datetime):
+                return obj.isoformat()
+            raise TypeError("%r is not serializable" % (obj,))
+
+        kw['default'] = json_dump_helper
+        return json.dumps(dict(self.items()), **kw)
 
 
 class BaseVideoIterator(object):

@@ -24,7 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import time
-from datetime import datetime
+import datetime
 import json
 import re
 import urllib
@@ -92,7 +92,6 @@ class VimeoScrapeMethod(SuiteMethod):
                 xml_data[key] = str_data # actually Unicode
             else:
                 xml_data[key] = str_data.decode('utf8')
-
         data = {
             'link': xml_data['url'],
             'user': xml_data['uploader_display_name'],
@@ -100,8 +99,9 @@ class VimeoScrapeMethod(SuiteMethod):
             'title': xml_data['caption'],
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
-            'file_url_expires': struct_time_to_datetime(time.gmtime(
-                    int(xml_data['request_signature_expires']))),
+            'file_url_expires': (struct_time_to_datetime(time.gmtime(
+                    int(xml_data['request_signature_expires']))) +
+                                 datetime.timedelta(hours=6)),
             'file_url_mimetype': u'video/x-flv',
             }
         base_file_url = (
@@ -183,8 +183,8 @@ class AdvancedVimeoApiMixin(object):
             'thumbnail_url': item['thumbnails']['thumbnail'][1]['_content'],
             'user': item['owner']['realname'],
             'user_url': item['owner']['profileurl'],
-            'publish_datetime': datetime.strptime(item['upload_date'],
-                                             '%Y-%m-%d %H:%M:%S'),
+            'publish_datetime': datetime.datetime.strptime(
+                    item['upload_date'], '%Y-%m-%d %H:%M:%S'),
             'tags': [t['_content']
                             for t in item.get('tags', {}).get('tag', [])],
             'flash_enclosure_url': VimeoSuite.video_flash_enclosure(item['id']),
@@ -538,8 +538,8 @@ allowFullScreen></iframe>""".format(video_id)
             'thumbnail_url': api_video['thumbnail_medium'],
             'user': api_video['user_name'],
             'user_url': api_video['user_url'],
-            'publish_datetime': datetime.strptime(api_video['upload_date'],
-                                             '%Y-%m-%d %H:%M:%S'),
+            'publish_datetime': datetime.datetime.strptime(
+                api_video['upload_date'], '%Y-%m-%d %H:%M:%S'),
             'tags': [tag for tag in api_video['tags'].split(', ') if tag],
             'flash_enclosure_url': cls.video_flash_enclosure(api_video['id']),
             'embed_code': cls.video_embed_code(api_video['id']),
@@ -547,4 +547,6 @@ allowFullScreen></iframe>""".format(video_id)
                                              api_video['id'])
         }
         return data
+
+
 registry.register(VimeoSuite)

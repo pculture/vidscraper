@@ -98,7 +98,7 @@ class SuiteRegistry(object):
                 pass
         if self._fallback and self._fallback.handles_video_url(url):
             return self._fallback
-        raise UnhandledURL
+        raise UnhandledURL(url)
 
     def suite_for_feed_url(self, url):
         """
@@ -114,7 +114,7 @@ class SuiteRegistry(object):
                 pass
         if self._fallback and self._fallback.handles_feed_url(url):
             return self._fallback
-        raise UnhandledURL
+        raise UnhandledURL(url)
 
 
 #: An instance of :class:`.SuiteRegistry` which is used by :mod:`vidscraper` to
@@ -271,11 +271,11 @@ class BaseSuite(object):
         """Returns a video using this suite."""
         return Video(url, self, **kwargs)
 
-    def get_feed(self, *args, **kwargs):
+    def get_feed(self, url, *args, **kwargs):
         """Returns an instance of :attr:`feed_class`."""
         if self.feed_class is None:
-            raise UnhandledURL
-        return self.feed_class(*args, **kwargs)
+            raise UnhandledURL(url)
+        return self.feed_class(url, *args, **kwargs)
 
     def get_search(self, *args, **kwargs):
         """Returns an instance of :attr:`search_class`."""

@@ -24,7 +24,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from vidscraper.exceptions import UnhandledSearch
+from vidscraper.exceptions import UnhandledSearch, UnhandledURL
 from vidscraper.suites import registry
 from vidscraper.videos import Video, VideoSearch, VideoFeed
 

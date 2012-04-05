@@ -26,6 +26,7 @@
 
 import datetime
 import os
+
 import feedparser
 
 from vidscraper.suites.feed import GenericFeedSuite
@@ -35,6 +36,8 @@ from vidscraper.tests.base import BaseTestCase
 class GenericFeedSuiteTestCase(BaseTestCase):
     def setUp(self):
         self.suite = GenericFeedSuite()
+        self.feed = self.suite.get_feed(
+            'file://{0}'.format(self._data_file_path('feed/feed.rss')))
         self.old_SANITIZE = feedparser.SANITIZE_HTML
         feedparser.SANITIZE_HTML = False
 
@@ -42,23 +45,21 @@ class GenericFeedSuiteTestCase(BaseTestCase):
         feedparser.SANITIZE_HTML = self.old_SANITIZE
 
     def test_basic_feed_data(self):
-        feed = self.suite.get_feed(
-            'file://%s' % self._data_file_path('feed/feed.rss'))
-        feed.load()
-        self.assertEqual(feed.title, 'Internet Archive - Mediatype: movies')
-        self.assertEqual(feed.webpage, 'http://www.archive.org/details/movies')
+        # this test can be removed if base unit tests for the feedparser mixin
+        # get added.
+        self.feed.load()
+        self.assertEqual(self.feed.title, 'Internet Archive - Mediatype: movies')
+        self.assertEqual(self.feed.webpage, 'http://www.archive.org/details/movies')
         self.assertEqual(
-            feed.description,
+            self.feed.description,
             ('The most recent additions to the Internet Archive collections.  '
              'This RSS feed is generated dynamically'))
-        self.assertEqual(feed.last_modified,
+        self.assertEqual(self.feed.last_modified,
                          datetime.datetime(2011, 10, 20, 14, 36, 1))
-        self.assertEqual(feed.entry_count, 2)
+        self.assertEqual(self.feed.video_count, 2)
         
-    def test_feed_entry_data(self):
-        feed = self.suite.get_feed(
-            'file://%s' % self._data_file_path('feed/feed.rss'))
-        video = iter(feed).next()
+    def test_get_item_data(self):
+        video = self.feed.next()
         self.assertEqual(video.title,
                          'SFGTV : October 20, 2011 6:00am-6:30am PDT')
         self.assertEqual(
@@ -89,11 +90,9 @@ Text, MP3, MPEG2, Metadata, SubRip, Thumbnail, Video Index, h.264</p>""")
                          'http://creativecommons.org/licenses/by/2.5/')
 
     def test_feed_entry_unicode(self):
-        feed = self.suite.get_feed(
-            'file://%s' % self._data_file_path('feed/feed.rss'))
-        i = iter(feed)
-        i.next() # skip the first one
-        video = i.next()
+        # skip the first video.
+        self.feed.next()
+        video = self.feed.next()
         self.assertEqual(
             video.title,
             u'مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 "')
@@ -126,13 +125,13 @@ h.264</p>""")
 
     def test_parse_feed_entry_rel_via(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_link_via.atom'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        data = self.feed.get_item_data(fp.entries[0])
         self.assertEqual(data['link'],
                          "http://www.example.org/entries/1")
 
     def test_parse_feed_entry_atom(self):
         fp = feedparser.parse(self._data_file_path('feed/feed.atom'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        data = self.feed.get_item_data(fp.entries[0])
         self.assertEqual(
             data,
             {'title': u'Atom 1.0',
@@ -155,7 +154,7 @@ h.264</p>""")
 
     def test_parse_feed_media_player(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player.atom'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        data = self.feed.get_item_data(fp.entries[0])
         self.assertEqual(data['embed_code'],
                          u'<object width="425" height="271">'
                          '<embed id="ONPlayerEmbed" width="425" height="271" '
@@ -174,7 +173,7 @@ h.264</p>""")
 
     def test_parse_feed_media_player_url(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player_url.rss'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        data = self.feed.get_item_data(fp.entries[0])
         self.assertEqual(data['embed_code'],
                         u'''<object width="400" height="264">
     <param name="flashvars" value="">

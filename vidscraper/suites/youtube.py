@@ -151,7 +151,7 @@ class YouTubeOEmbedMethod(OEmbedMethod):
 class YouTubeFeed(VideoFeed):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
-                       'uploads?alt=rss&v=2&start-index={page_start}&max-results={page_max}')
+                       'uploads?alt=json&v=2&start-index={page_start}&max-results={page_max}')
     path_re = re.compile(r'^/(?:user/)?(?P<username>\w+)(?:/videos)?/?$')
     # old_path_re means that the username is in the GET params as 'user'
     old_path_re = re.compile(r'^/profile(?:_videos)?/?$')
@@ -212,7 +212,8 @@ class YouTubeFeed(VideoFeed):
             'title': feed['title']['$t'],
             'webpage': link,
             'guid': feed['id']['$t'],
-            'etag': response.headers['etag'] or feed['gd$etag']
+            'etag': response.headers['etag'] or feed['gd$etag'],
+            'thumbnail_url': feed['logo']['$t'],
         }
 
 
@@ -236,7 +237,11 @@ class YouTubeSearch(VideoSearch):
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)
         response = requests.get(url)
-        response._parsed = json.loads(response.text)
+        try:
+            response._parsed = json.loads(response.text)
+        except ValueError:
+            import pdb
+            pdb.set_trace()
         return response
 
     def get_response_items(self, response):

@@ -181,9 +181,9 @@ Caramelldansen""",
         feed = self.suite.get_feed(feed_url)
         feed.load()
         expected = {
-            'url': u'http://gdata.youtube.com/feeds/base/users/AssociatedPress/uploads?alt=rss&v=2',
+            'url': 'http://www.youtube.com/user/AssociatedPress',
             'title': u'Uploads by AssociatedPress',
-            'description': u'',
+            'description': None,
             'webpage': u'http://www.youtube.com/user/AssociatedPress/videos',
             'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
             'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
@@ -192,7 +192,7 @@ Caramelldansen""",
             self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
                     key, value, getattr(feed, key)))
 
-        self.assertTrue(feed.entry_count > 55000, feed.entry_count)
+        self.assertTrue(feed.video_count > 55000, feed.video_count)
 
     def test_feed_18790(self):
         feed_url = 'http://www.youtube.com/user/DukeJewishStudies/videos'

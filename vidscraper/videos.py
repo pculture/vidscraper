@@ -25,8 +25,13 @@
 
 import math
 import urllib
+import urllib2
+
+import feedparser
 
 from vidscraper.exceptions import UnhandledURL, VideoDeleted
+from vidscraper.utils.feedparser import (get_item_thumbnail_url,
+                                         struct_time_to_datetime)
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
@@ -338,7 +343,9 @@ class FeedparserVideoIteratorMixin(object):
     """
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)
-        response = feedparser.parse(url, etag=self.etag, modified=self.modified)
+        response = feedparser.parse(url,
+                                    etag=self.etag,
+                                    modified=self.last_modified)
         # Don't let feedparser silence connection problems.
         if isinstance(response.get('bozo_exception', None), urllib2.URLError):
             raise response.bozo_exception

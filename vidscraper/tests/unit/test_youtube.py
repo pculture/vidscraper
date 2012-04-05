@@ -267,6 +267,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
             'webpage': u'http://www.youtube.com/user/AssociatedPress/videos',
             'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
             'etag': u'W/"C0AEQX0_eip7I2A9WhVQFUs."',
+            'thumbnail_url': 'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
         }
         data = self.feed.data_from_response(self.response)
         self.assertEqual(data, expected)
@@ -274,7 +275,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
     def test_get_page_url(self):
         url = self.feed.get_page_url(page_start=3, page_max=25)
         self.assertEqual(url, 'http://gdata.youtube.com/feeds/api/users/'
-                              'AssociatedPress/uploads?alt=rss&v=2&'
+                              'AssociatedPress/uploads?alt=json&v=2&'
                               'start-index=3&max-results=25')
 
     def test_get_item_data(self):

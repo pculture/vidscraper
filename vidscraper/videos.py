@@ -24,6 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import datetime
 
 from vidscraper.exceptions import UnhandledURL, VideoDeleted
 from vidscraper.utils.search import (search_string_from_terms,
@@ -170,6 +171,12 @@ class Video(object):
 
         >>> v.to_json(indent=2, sort_keys=True)
         """
+        def json_dump_helper(obj):
+            if isinstance(obj, datetime.datetime):
+                return obj.isoformat()
+            raise TypeError("%r is not serializable" % (obj,))
+
+        kw['default'] = json_dump_helper
         return json.dumps(dict(self.items()), **kw)
 
 

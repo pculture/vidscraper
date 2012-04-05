@@ -92,8 +92,7 @@ difference:\t%r\nexpires:\t%r\nnow:\t\t%r' % (
         feed = self.suite.get_feed(feed_url)
         feed.load()
         expected = {
-            'url': u'http://vimeo.com/api/v2/user1751935/videos.json',
-            'title': u"Latoya Peterson's videos on Vimeo",
+            'title': u"Latoya Peterson's videos",
             'description': u'',
             'webpage': u'http://vimeo.com/user1751935/videos',
             'thumbnail_url':
@@ -104,4 +103,4 @@ portrait_300_blue.png',
             self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
                     key, value, getattr(feed, key)))
 
-        self.assertTrue(feed.entry_count > 30, feed.entry_count)
+        self.assertTrue(feed.video_count > 30, feed.video_count)

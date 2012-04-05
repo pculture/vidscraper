@@ -27,10 +27,13 @@ import datetime
 import urllib
 import urlparse
 
-from vidscraper.videos import Video
+import feedparser
+
+from vidscraper.exceptions import UnhandledSearch
 from vidscraper.suites import OEmbedMethod
 from vidscraper.suites.blip import BlipSuite, BlipApiMethod
 from vidscraper.tests.base import BaseTestCase
+from vidscraper.videos import Video
 
 
 DISQUS_DATA = {
@@ -100,67 +103,60 @@ class BlipFeedTestCase(BlipTestCase):
         BlipTestCase.setUp(self)
         self.feed_url = 'http://blip.tv/djangocon'
         self.feed = self.suite.get_feed(self.feed_url)
-        self.feed_data = self.get_data_file('blip/feed.rss').read()
-        self.feed.handle_first_response(self.suite.get_feed_response(
-                self.feed, self.feed_data))
+        self.response = feedparser.parse(self.get_data_file('blip/feed.rss'))
 
-    def test_get_feed_url(self):
-        self.assertEqual(self.suite.get_feed_url(self.feed_url),
-                         'http://blip.tv/djangocon/rss')
-        self.assertEqual(self.suite.get_feed_url(
-                'http://blip.tv/djangocon/rss'),
-                         'http://blip.tv/djangocon/rss')
-        self.assertEqual(self.suite.get_feed_url(
-                'http://blip.tv/djangocon'),
-                         'http://blip.tv/djangocon/rss')
+    def test_feed_urls(self):
+        valid_show_urls = (
+            'http://blip.tv/djangocon',
+            'http://blip.tv/djangocon/rss',
+            'http://blip.tv/djangocon?skin=rss',
+        )
+        valid_no_show_urls = (
+            'http://blip.tv',
+            'http://blip.tv/rss',
+            'http://blip.tv?skin=rss',
+        )
+        for url in valid_show_urls:
+            data = self.feed.get_url_data(url)
+            self.assertEqual(data, {'show': 'djangocon'})
 
-    def test_get_feed_entries(self):
-        response = self.suite.get_feed_response(self.feed, self.feed_data)
-        entries = self.suite.get_feed_entries(self.feed, response)
-        self.assertEqual(len(entries), 77)
+        for url in valid_no_show_urls:
+            data = self.feed.get_url_data(url)
+            self.assertEqual(data, {'show': None})
 
-    def test_parse_entry(self):
-        response = self.suite.get_feed_response(self.feed, self.feed_data)
-        entries = self.suite.get_feed_entries(self.feed, response)
-        data = self.suite.parse_feed_entry(entries[1])
+    def test_get_page_url(self):
+        expected = "http://blip.tv/djangocon/rss?page=1&pagelen=100"
+        url = self.feed.get_page_url(page_start=1, page_max=100)
+        self.assertEqual(url, expected)
+
+    def test_get_item_data(self):
+        items = self.feed.get_response_items(self.response)
+        data = self.feed.get_item_data(items[1])
         self.assertEqual(data, DISQUS_DATA)
 
-    def test_parse_feed(self):
-        self.assertEqual(len(list(self.feed)), 77)
-        for video in self.feed:
-            self.assertTrue(isinstance(video, Video))
-
-    def test_next_feed_page_url(self):
-        # get_next_feed_page_url expects ``feed``, ``feed_response`` arguments.
-        # feed_response is a feedparser response.
-        response = self.suite.get_feed_response(self.feed, self.feed_data)
-        response.href = 'http://blip.tv/nothing/here/?page=5'
-        new_url = self.suite.get_next_feed_page_url(None, response)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=6')
-        response.href = 'http://blip.tv/nothing/here/'
-        new_url = self.suite.get_next_feed_page_url(None, response)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=2')
-        response.href = 'http://blip.tv/nothing/here/?page=notanumber'
-        new_url = self.suite.get_next_feed_page_url(None, response)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=2')
+    def test_get_response_items(self):
+        videos = self.feed.get_response_items(self.response)
+        self.assertEqual(len(videos), 77)
 
 
 class BlipSearchTestCase(BlipTestCase):
     def setUp(self):
         BlipTestCase.setUp(self)
-        self.feed_data = self.get_data_file('blip/search.rss')
+        search_file = self.get_data_file('blip/search.rss')
+        self.response = feedparser.parse(search_file.read())
         self.search = self.suite.get_search('search query')
 
-    def test_parse_search_feed(self):
-        response = self.suite.get_search_response(self.search, self.feed_data)
-        results = self.suite.get_search_results(self.search, response)
+    def test_get_item_data(self):
+        results = self.search.get_response_items(self.response)
         self.assertTrue(len(results) > 0)
-
-    def test_parse_result(self):
-        response = self.suite.get_search_response(self.search, self.feed_data)
-        results = self.suite.get_search_results(self.search, response)
-        data = self.suite.parse_search_result(self.search, results[1])
+        data = self.search.get_item_data(results[1])
         self.assertEqual(data, DISQUS_DATA)
+
+    def test_unhandled_searches(self):
+        self.assertRaises(UnhandledSearch,
+                          self.suite.get_search,
+                          'search query',
+                          order_by='latest')
 
 
 class BlipSuiteTestCase(BlipTestCase):

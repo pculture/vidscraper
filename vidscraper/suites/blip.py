@@ -83,16 +83,14 @@ class BlipFeed(FeedparserVideoFeed):
                  http://wiki.blip.tv/index.php/RSS_Output_Format
 
     """
-    path_re = re.compile(r'^(?:/(P<show>[\w-]+))?(?:/rss)?/?')
+    path_re = re.compile(r'^(?:|/rss|(?:/(?P<show>[\w-]+))(?:/rss)?)/?$')
     page_url_format = "http://blip.tv/{show_path}rss?page={page}&pagelen=100"
     per_page = 100
 
     def get_url_data(self, url):
         parsed_url = urlparse.urlsplit(url)
         if parsed_url.scheme in ('http', 'https'):
-            if (parsed_url.netloc == 'blip.tv' or
-                parsed_url.netloc.endswith('.blip.tv')):
-
+            if parsed_url.netloc == 'blip.tv':
                 match = self.path_re.match(parsed_url.path)
                 if match:
                     return match.groupdict()

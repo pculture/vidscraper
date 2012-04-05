@@ -354,6 +354,80 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
         self.assertEqual(url, expected)
 
 
+class VimeoAdvancedFeedTestCase(VimeoTestCase):
+    """
+    Tests the feed if API keys are supplied.
+    """
+    def setUp(self):
+        VimeoTestCase.setUp(self)
+        self.feed = self.suite.get_feed('http://vimeo.com/plasticcut/videos',
+                                        api_keys={'vimeo_key': 'BLANK',
+                                                  'vimeo_secret': 'BLANK'})
+
+    def test_get_response_items(self):
+        feed_file = self.get_data_file('vimeo/feed_advanced.json')
+        response = {
+          'parsed': json.load(feed_file),
+        }
+        items = self.feed.get_response_items(response)
+        self.assertEqual(len(items), 46)
+
+        response['parsed']['videos']['on_this_page'] = 0
+        items = self.feed.get_response_items(response)
+        self.assertEqual(len(items), 0)
+
+        del response['parsed']['videos']
+        items = self.feed.get_response_items(response)
+        self.assertEqual(len(items), 0)
+
+    def test_get_item_data(self):
+        feed_file = self.get_data_file('vimeo/feed_advanced.json')
+        text = feed_file.read()
+        response = {
+          'text': text,
+          'parsed': json.loads(text),
+        }
+        items = self.feed.get_response_items(response)
+
+        data = self.feed.get_item_data(items[0])
+        expected = {
+            'description': '',
+            'user_url': u'http://vimeo.com/plasticcut',
+            'link': u'http://vimeo.com/39590925',
+            'user': u'Plastic.Cut',
+            'guid': u'tag:vimeo,2012-04-01:clip39590925',
+            'embed_code': u'<iframe src="http://player.vimeo.com/video/395909'
+                          u'25" width="320" height="240" frameborder="0" webk'
+                          u'itAllowFullScreen allowFullScreen></iframe>',
+            'flash_enclosure_url': u'http://vimeo.com/moogaloop.swf?clip_id=39590925',
+            'title': u'Tula "Dragon" - March 30th, 2012 @ Franz Mehlhose, Erfurt (GER)',
+            'tags': [u'Tula', u'Dragon', u'Franz Mehlhose', u'Erfurt',
+                     u'Patrick Richter', u'Roman Hagenbrock'],
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/273/118/273118277_200.jpg',
+            'publish_datetime': datetime.datetime(2012, 4, 1, 15, 49, 22)
+        }
+        self.assertEqual(data, expected)
+
+    def test_data_from_advanced(self):
+        feed_file = self.get_data_file('vimeo/feed_advanced.json')
+        response = {
+          'parsed': json.load(feed_file),
+        }
+        data = self.feed._data_from_advanced_response(response)
+        self.assertEqual(data, {'video_count': 46})
+
+        del response['parsed']['videos']
+        data = self.feed._data_from_advanced_response(response)
+        self.assertEqual(data, {'video_count': 0})
+
+    def test_get_page_url(self):
+        expected = ("http://vimeo.com/api/rest/v2?format=json&full_response=1"
+                    "&per_page=50&method=vimeo.videos.getUploaded&"
+                    "sort=newest&page=1&user_id=plasticcut")
+        url = self.feed.get_page_url(page_start=21, page_max=20)
+        self.assertEqual(url, expected)
+
+
 class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
@@ -384,7 +458,8 @@ class VimeoSearchTestCase(VimeoTestCase):
             'flash_enclosure_url': 'http://vimeo.com/moogaloop.swf?clip_id=13639493',
             'embed_code': """<iframe src="http://player.vimeo.com/video/\
 13639493" width="320" height="240" frameborder="0" webkitAllowFullScreen \
-allowFullScreen></iframe>"""
+allowFullScreen></iframe>""",
+            'guid': u'tag:vimeo,2010-07-26:clip13639493',
         }
         self.assertDictEqual(data, expected_data)
 

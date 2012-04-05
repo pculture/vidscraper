@@ -132,7 +132,7 @@ class AdvancedVimeoApiMixin(object):
                 'vimeo_secret' in self.api_keys)
 
     def get_page(self, page_start, page_max):
-        url = self.get_page_url(start_index, max_results)
+        url = self.get_page_url(page_start, page_max)
         if oauth2 is None:
             raise ImportError("OAuth2 library must be installed.")
         consumer = oauth2.Consumer(self.api_keys['vimeo_key'],
@@ -152,7 +152,7 @@ class AdvancedVimeoApiMixin(object):
         if 'videos' not in parsed:
             video_count = 0
         else:
-            video_count = parsed['videos']['total']
+            video_count = int(parsed['videos']['total'])
         return {'video_count': video_count}
 
     def get_response_items(self, response):
@@ -188,7 +188,8 @@ class AdvancedVimeoApiMixin(object):
             'tags': [t['_content']
                             for t in item.get('tags', {}).get('tag', [])],
             'flash_enclosure_url': VimeoSuite.video_flash_enclosure(item['id']),
-            'embed_code': VimeoSuite.video_embed_code(item['id'])
+            'embed_code': VimeoSuite.video_embed_code(item['id']),
+            'guid': VimeoSuite.video_guid(item['upload_date'], item['id']),
         }
         return data
 
@@ -273,8 +274,6 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
     api_re = re.compile(r'(?:^/api/v2/(?:album/(?P<album_id>\d+)|channel/(?P<channel_id>\w+)|group/(?P<group_id>\w+)|(?P<user_id>\w+))/(?P<request_type>\w+)\.(?:json|php|xml))')
 
     simple_url_format = "http://vimeo.com/api/v2/{api_path}/{request_type}.json?page={page}"
-    advanced_url_format = ("http://vimeo.com/api/rest/v2?format=json&full_response=1&sort=newest&"
-                           "method=vimeo.{method}&per_page=50&page={page}&{method_params}")
 
     @property
     def page_url_format(self):
@@ -364,13 +363,14 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
                 raise ValueError
             data.update({
                 'method_params': method_params,
-                'method': method
+                'method': method,
+                'sort': 'newest',
             })
         return data
 
     def get_page(self, page_start, page_max):
         if self.has_api_keys():
-            return AdvancedVimeoApiMixin.get_page(self, start_index, max_results)
+            return AdvancedVimeoApiMixin.get_page(self, page_start, page_max)
 
         # Do we still need to fake the agent?
         url = self.get_page_url(page_start, page_max)
@@ -524,6 +524,11 @@ allowFullScreen></iframe>""".format(video_id)
     def video_flash_enclosure(video_id):
         return u'http://vimeo.com/moogaloop.swf?clip_id={0}'.format(video_id)
 
+    @staticmethod
+    def video_guid(video_upload_date, video_id):
+        return u'tag:vimeo,{0}:clip{1}'.format(video_upload_date[:10],
+                                               video_id)
+
     @classmethod
     def simple_api_video_to_data(cls, api_video):
         """
@@ -543,8 +548,7 @@ allowFullScreen></iframe>""".format(video_id)
             'tags': [tag for tag in api_video['tags'].split(', ') if tag],
             'flash_enclosure_url': cls.video_flash_enclosure(api_video['id']),
             'embed_code': cls.video_embed_code(api_video['id']),
-            'guid': 'tag:vimeo,%s:clip%i' % (api_video['upload_date'][:10],
-                                             api_video['id'])
+            'guid': cls.video_guid(api_video['upload_date'], api_video['id'])
         }
         return data
 

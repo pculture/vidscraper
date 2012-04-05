@@ -89,7 +89,7 @@ def auto_feed(url, last_modified=None, etag=None, start_index=1,
                                   start_index=start_index,
                                   max_results=max_results,
                                   video_fields=video_fields,
-                                  api_keys=None)
+                                  api_keys=api_keys)
         except UnhandledURL:
             pass
     raise UnhandledURL(url)

@@ -57,7 +57,7 @@ class YouTubeApiMethod(SuiteMethod):
                   'user_url', 'license'))
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('video_id')
+        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
         return "http://gdata.youtube.com/feeds/api/videos/{0}?v=2&alt=json".format(video_id)
 
     def process(self, response):
@@ -85,7 +85,7 @@ class YouTubeScrapeMethod(SuiteMethod):
         ]
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('video_id')
+        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
         return (u"http://www.youtube.com/get_video_info?video_id=%s&"
                 "el=embedded&ps=default&eurl=" % video_id)
 
@@ -258,9 +258,9 @@ class YouTubeSearch(VideoSearch):
 
 
 class YouTubeSuite(BaseSuite):
-    video_regex = r'^https?://(' +\
-    r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v=' +\
-                  r'|youtu.be/)(?P<video_id>[\w-]+)'
+    video_regex = re.compile(r'^https?://('
+                             r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v='
+                             r'|youtu.be/)(?P<video_id>[\w-]+)')
 
     methods = (YouTubeOEmbedMethod("http://www.youtube.com/oembed"),
                YouTubeApiMethod(), YouTubeScrapeMethod())

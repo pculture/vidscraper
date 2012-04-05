@@ -56,7 +56,7 @@ class VimeoApiMethod(SuiteMethod):
                   'flash_enclosure_url', 'embed_code'])
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('video_id')
+        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
         return u"http://vimeo.com/api/v2/video/%s.json" % video_id
 
     def process(self, response):
@@ -70,7 +70,7 @@ class VimeoScrapeMethod(SuiteMethod):
                   'file_url_expires'])
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('video_id')
+        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
         return u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id
 
     def process(self, response):
@@ -501,7 +501,7 @@ class VimeoSuite(BaseSuite):
     API key is required for this level of access.
 
     """
-    video_regex = r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)'
+    video_regex = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
     api_regex = re.compile((r'http://(?:www\.)?vimeo.com/api/v./'
                             r'(?:(?P<collection>channel|group)s/)?'
                             r'(?P<name>\w+)'

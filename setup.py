@@ -10,6 +10,7 @@ setup(
     url='https://github.com/pculture/vidscraper',
     license='BSD',
     packages=find_packages(),
+    scripts=['bin/vidscraper-cmd'],
     install_requires=[
         'lxml>=2.3.4',
         'oauth2>=1.5.211',

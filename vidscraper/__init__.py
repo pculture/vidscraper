@@ -24,6 +24,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import sys
+from optparse import OptionParser
+
 from vidscraper.suites import registry
 from vidscraper.videos import Video, VideoSearch, VideoFeed
 
@@ -110,3 +113,91 @@ def auto_search(query, fields=None, order_by=None, crawl=False,
             suites[suite] = search
         
     return suites
+
+
+# fetchvideo -> auto_scrape(url, fields, api_keys)
+
+
+class VidscraperCommandHandler(object):
+    """Command line handler for vidscraper.
+
+    This exposes functions in this module to the command line giving
+    vidscraper command line utility.
+
+    Subcommands are implemented in ``handle_SUBCOMMAND`` methods.  See
+    ``handle_video`` and ``handle_help`` for examples.
+    """
+
+    usage = "%prog [command] [options]"
+
+    def get_commands(self):
+        """Returns a list of subcommands implemented."""
+        return [mem.replace("handle_", "")
+                for mem in dir(self)
+                if mem.startswith("handle_")]
+
+    def build_parser(self, usage):
+        """Builds the parser with universal bits."""
+        parser = OptionParser(usage=usage, version=__version__)
+        return parser
+
+    def handle_video(self):
+        """Handler for auto_scrape."""
+        parser = self.build_parser("%prog video [options] URL")
+        parser.add_option("--fields", dest="fields",
+                          help="comma-separated list of fields to retrieve. "
+                          "e.g. --fields=a,b,c")
+        parser.add_option("--apikeys", dest="api_keys",
+                          help="api keys comma separated. "
+                          "e.g. --apikeys=key:val,key2:val")
+        (options, args) = parser.parse_args()
+
+        if len(args) == 0:
+            parser.error("URL needed.")
+
+        if options.fields:
+            fields = options.fields.split(",")
+        else:
+            fields = None
+
+        if options.api_keys:
+            api_keys = dict(mem.split(":", 1)
+                            for mem in options.api_keys.split(","))
+        else:
+            api_keys = None
+
+        for arg in args:
+            print "Scraping %s" % arg
+            video = auto_scrape(arg, fields=fields, api_keys=api_keys)
+            print video.to_json(indent=2, sort_keys=True)
+
+        return 0
+
+    def handle_help(self, error=None):
+        """Handles help."""
+        parser = self.build_parser("%prog [command]")
+        parser.print_help()
+        if error:
+            print ""
+            print "Error: " + error
+        print ""
+        print "Commands:"
+        for cmd in self.get_commands():
+            print "    %s" % cmd
+        return 0
+
+    def main(self):
+        if len(sys.argv) <= 1 or sys.argv[1] in ("-h", "--help"):
+            return self.handle_help()
+
+        try:
+            cmd = sys.argv.pop(1)
+            cmd = "".join(c for c in cmd if c.isalpha())
+            handler = getattr(self, "handle_%s" % cmd)
+        except AttributeError:
+            return self.handle_help(error='%s is not a valid command.' % cmd)
+
+        return handler()
+
+if __name__ == "__main__":
+    sys.exit(VidscraperCommandHandler().main())

@@ -103,7 +103,7 @@ class BlipFeed(FeedparserVideoFeed):
         data['show_path'] = '{0}/'.format(show) if show is not None else ''
         return data
 
-    def get_item_data(self, item):
+    def get_video_data(self, item):
         return BlipSuite.parse_feed_entry(item)
 
 
@@ -112,7 +112,7 @@ class BlipSearch(FeedparserVideoSearch):
     # pagelen doesn't work with searches. Huh.
     per_page = 10
 
-    def get_item_data(self, item):
+    def get_video_data(self, item):
         return BlipSuite.parse_feed_entry(item)
 
 

@@ -301,13 +301,13 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
         data = self.feed.data_from_response(response)
         self.assertEqual(data, expected)
 
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         feed_file = self.get_data_file('vimeo/feed.json')
         response = self.get_response(feed_file.read())
         response._parsed = json.loads(response.text)
         items = self.feed.get_response_items(response)
 
-        data = self.feed.get_item_data(items[0])
+        data = self.feed.get_video_data(items[0])
         expected = {
             'title': u'Grandfather recollects end of WWII',
             'embed_code': u'<iframe src="http://player.vimeo.com/video/'
@@ -325,7 +325,7 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
         }
         self.assertEqual(data, expected)
 
-        data = self.feed.get_item_data(items[1])
+        data = self.feed.get_video_data(items[1])
         expected = {
             'link': u"http://vimeo.com/23833511",
             'title': u"Santa vs. The Easter Bunny",
@@ -380,7 +380,7 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
         items = self.feed.get_response_items(response)
         self.assertEqual(len(items), 0)
 
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')
         text = feed_file.read()
         response = {
@@ -389,7 +389,7 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
         }
         items = self.feed.get_response_items(response)
 
-        data = self.feed.get_item_data(items[0])
+        data = self.feed.get_video_data(items[0])
         expected = {
             'description': '',
             'user_url': u'http://vimeo.com/plasticcut',
@@ -436,7 +436,7 @@ class VimeoSearchTestCase(VimeoTestCase):
             api_keys={'vimeo_key': 'BLANK',
                       'vimeo_secret': 'BLANK'})
 
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         search_file = self.get_data_file('vimeo/search.json')
         response_text = search_file.read()
         response = {
@@ -444,7 +444,7 @@ class VimeoSearchTestCase(VimeoTestCase):
             'parsed': json.loads(response_text),
         }
         results = self.search.get_response_items(response)
-        data = self.search.get_item_data(results[0])
+        data = self.search.get_video_data(results[0])
         expected_data = {
             'title': u'Dancing Pigeons - Ritalin',
             'link': 'http://vimeo.com/13639493',
@@ -471,11 +471,11 @@ allowFullScreen></iframe>""",
             'parsed': json.loads(response_text),
         }
         results = self.search.get_response_items(response)
-        data = self.search.get_item_data(results[0])
+        data = self.search.get_video_data(results[0])
 
         self.assertEqual(len(results), 50)
         self.assertRaises(VideoDeleted,
-                          self.search.get_item_data,
+                          self.search.get_video_data,
                           results[49])
 
     def test_get_page_url(self):

@@ -58,7 +58,7 @@ class GenericFeedSuiteTestCase(BaseTestCase):
                          datetime.datetime(2011, 10, 20, 14, 36, 1))
         self.assertEqual(self.feed.video_count, 2)
         
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         video = self.feed.next()
         self.assertEqual(video.title,
                          'SFGTV : October 20, 2011 6:00am-6:30am PDT')
@@ -125,13 +125,13 @@ h.264</p>""")
 
     def test_parse_feed_entry_rel_via(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_link_via.atom'))
-        data = self.feed.get_item_data(fp.entries[0])
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['link'],
                          "http://www.example.org/entries/1")
 
     def test_parse_feed_entry_atom(self):
         fp = feedparser.parse(self._data_file_path('feed/feed.atom'))
-        data = self.feed.get_item_data(fp.entries[0])
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(
             data,
             {'title': u'Atom 1.0',
@@ -154,7 +154,7 @@ h.264</p>""")
 
     def test_parse_feed_media_player(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player.atom'))
-        data = self.feed.get_item_data(fp.entries[0])
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['embed_code'],
                          u'<object width="425" height="271">'
                          '<embed id="ONPlayerEmbed" width="425" height="271" '
@@ -173,7 +173,7 @@ h.264</p>""")
 
     def test_parse_feed_media_player_url(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player_url.rss'))
-        data = self.feed.get_item_data(fp.entries[0])
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['embed_code'],
                         u'''<object width="400" height="264">
     <param name="flashvars" value="">

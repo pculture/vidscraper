@@ -166,7 +166,7 @@ class AdvancedVimeoApiMixin(object):
 
         return parsed['videos']['video']
 
-    def get_item_data(self, item):
+    def get_video_data(self, item):
         # TODO: items have an embed_privacy key. What is this? Should
         # vidscraper return that information? Doesn't youtube have something
         # similar?
@@ -488,9 +488,9 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
             return []
         return json.loads(response.text)
 
-    def get_item_data(self, item):
+    def get_video_data(self, item):
         if self.has_api_keys():
-            return AdvancedVimeoApiMixin.get_item_data(self, item)
+            return AdvancedVimeoApiMixin.get_video_data(self, item)
 
         return VimeoSuite.simple_api_video_to_data(item)
 

@@ -22,7 +22,7 @@ class GenericFeed(FeedparserVideoFeed):
             raise StopIteration
         super(GenericFeed, self)._next_page()
 
-    def get_item_data(self, item):
+    def get_video_data(self, item):
         enclosure = get_first_accepted_enclosure(item)
         if 'published_parsed' in item:
             best_date = struct_time_to_datetime(item['published_parsed'])

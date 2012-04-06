@@ -262,7 +262,7 @@ class BaseVideoIterator(object):
         items = self.get_response_items(response)
         self._page_videos_count = 0
         for item in items:
-            data = self.get_item_data(item)
+            data = self.get_video_data(item)
             url = data['link']
             video = registry.get_video(url,
                                        fields=self.video_fields,
@@ -312,7 +312,7 @@ class BaseVideoIterator(object):
         """Returns an iterable of unparsed items for the response."""
         raise NotImplementedError
 
-    def get_item_data(self, item):
+    def get_video_data(self, item):
         """
         Parses a single item for the feed and returns a data dictionary for
         populating a :class:`Video` instance. By default, returns an empty
@@ -368,8 +368,8 @@ class BaseVideoIterator(object):
 class FeedparserVideoIteratorMixin(object):
     """
     Overrides the :meth:`get_page`, :meth:`data_from_response` and
-    :meth:`get_response_items` to use :mod:`feedparser`. :meth:`get_item_data`
-    must still be implemented by subclasses.
+    :meth:`get_response_items` to use :mod:`feedparser`.
+    :meth:`get_video_data` must still be implemented by subclasses.
 
     """
     def get_page(self, page_start, page_max):

@@ -129,9 +129,9 @@ class BlipFeedTestCase(BlipTestCase):
         url = self.feed.get_page_url(page_start=1, page_max=100)
         self.assertEqual(url, expected)
 
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         items = self.feed.get_response_items(self.response)
-        data = self.feed.get_item_data(items[1])
+        data = self.feed.get_video_data(items[1])
         self.assertEqual(data, DISQUS_DATA)
 
     def test_get_response_items(self):
@@ -146,10 +146,10 @@ class BlipSearchTestCase(BlipTestCase):
         self.response = feedparser.parse(search_file.read())
         self.search = self.suite.get_search('search query')
 
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         results = self.search.get_response_items(self.response)
         self.assertTrue(len(results) > 0)
-        data = self.search.get_item_data(results[1])
+        data = self.search.get_video_data(results[1])
         self.assertEqual(data, DISQUS_DATA)
 
     def test_unhandled_searches(self):

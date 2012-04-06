@@ -278,7 +278,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
                               'AssociatedPress/uploads?alt=json&v=2&'
                               'start-index=3&max-results=25')
 
-    def test_get_item_data(self):
+    def test_get_video_data(self):
         expected = {
             'description': u'GOP presidential candidate Mitt Romney said '
                             'President Barack Obama is being coy about his '
@@ -299,7 +299,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
              'license': u'http://www.youtube.com/t/terms',
         }
         entries = self.feed.get_response_items(self.response)
-        data = self.feed.get_item_data(entries[0])
+        data = self.feed.get_video_data(entries[0])
         self.assertEqual(data, expected)
 
 class YouTubeSearchTestCase(YouTubeTestCase):
@@ -312,7 +312,7 @@ class YouTubeSearchTestCase(YouTubeTestCase):
         self.results = self.search.get_response_items(response)
 
     def test_parse_search_result(self):
-        data = self.search.get_item_data(self.results[0])
+        data = self.search.get_video_data(self.results[0])
         self.assertTrue(isinstance(data, dict))
         data['tags'] = set(data['tags'])
         expected_data = CARAMELL_DANSEN_API_DATA.copy()

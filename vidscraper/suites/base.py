@@ -40,7 +40,7 @@ except RuntimeError:
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)
-from vidscraper.videos import Video, VideoFeed, VideoSearch
+from vidscraper.videos import Video
 
 
 RegexpPattern = type(re.compile(''))
@@ -60,8 +60,15 @@ class SuiteRegistry(object):
 
     @property
     def suites(self):
-        """Returns a tuple of registered suites."""
-        return tuple(self._suites)
+        """
+        Returns a tuple of registered suites. If a fallback is registered, it
+        will always be at the end of this tuple.
+
+        """
+        suites = tuple(self._suites)
+        if self._fallback is not None:
+            suites += (self._fallback,)
+        return suites
 
     def register(self, suite):
         """Registers a suite if it is not already registered."""
@@ -84,37 +91,79 @@ class SuiteRegistry(object):
             self._suites.remove(self._suite_dict[suite])
             del self._suite_dict[suite]
 
-    def suite_for_video_url(self, url):
+    def get_video(self, url, fields=None, api_keys=None, require_suite=True):
         """
-        Returns the first registered suite which can handle the ``url`` as a
-        video or raises :exc:`.UnhandledURL` if no such suite is found.
+        Automatically determines which suite to use and scrapes ``url`` with
+        that suite. The parameters ``url``, ``fields``, and ``api_keys`` have
+        the same meaning as for :class:`.Video`.
+
+        :param require_suite: If ``True``, the video will only be returned if
+                              a suite is found. Otherwise,
+                              :exc:`.UnhandledURL` will be raised.
+        :type require_suite: boolean
+        :returns: :class:`.Video` instance.
+
+        :raises UnhandledURL: If ``require_suite`` is ``True`` and no
+                              registered suite knows how to handle the url.
 
         """
-        for suite in self._suites:
+        for suite in self.suites:
+            if suite.handles_video_url(url):
+                break
+        else:
+            if require_suite:
+                raise UnhandledURL
+            return Video(url, fields=fields, api_keys=api_keys)
+
+        return suite.get_video(url, fields, api_keys)
+
+    def get_feed(self, url, last_modified=None, etag=None, start_index=1,
+                 max_results=None, video_fields=None, api_keys=None):
+        """
+        Tries to get a :class:`.VideoFeed` instance from each suite in sequence.
+        The parameters are the same as those for :class:`.VideoFeed`.
+
+        :returns: A :class:`VideoFeed` instance which yields
+                  :class:`.Video` instances for the items in the feed.
+
+        :raises UnhandledURL: if no registered suites know how to handle this url.
+
+        """
+        for suite in self.suites:
             try:
-                if suite.handles_video_url(url):
-                    return suite
-            except NotImplementedError:
+                return suite.get_feed(url,
+                                      last_modified=last_modified,
+                                      etag=etag,
+                                      start_index=start_index,
+                                      max_results=max_results,
+                                      video_fields=video_fields,
+                                      api_keys=api_keys)
+            except UnhandledURL:
                 pass
-        if self._fallback and self._fallback.handles_video_url(url):
-            return self._fallback
         raise UnhandledURL(url)
 
-    def suite_for_feed_url(self, url):
+
+    def get_searches(self, query, order_by='relevant', start_index=1,
+                     max_results=None, video_fields=None, api_keys=None):
         """
-        Returns the first registered suite which can handle the ``url`` as a
-        feed or raises :exc:`.UnhandledURL` if no such suite is found.
+        Returns a dictionary mapping each registered suite to a
+        :class:`.VideoSearch` instance which has been instantiated for that suite
+        and the given arguments.
 
         """
-        for suite in self._suites:
+        searches = {}
+        for suite in registry.suites:
             try:
-                if suite.handles_feed_url(url):
-                    return suite
-            except NotImplementedError:
+                searches[suite] = suite.get_search(query,
+                                                   order_by=order_by,
+                                                   start_index=start_index,
+                                                   max_results=max_results,
+                                                   video_fields=video_fields,
+                                                   api_keys=api_keys)
+            except UnhandledSearch:
                 pass
-        if self._fallback and self._fallback.handles_feed_url(url):
-            return self._fallback
-        raise UnhandledURL(url)
+
+        return searches
 
 
 #: An instance of :class:`.SuiteRegistry` which is used by :mod:`vidscraper` to
@@ -259,17 +308,15 @@ class BaseSuite(object):
         ``False`` otherwise.
 
         """
-        if self.feed_class is None:
-            return False
         try:
-            self.feed_class(url)
+            self.get_feed(url)
         except UnhandledURL:
             return False
         return True
 
-    def get_video(self, url, **kwargs):
+    def get_video(self, url, *args, **kwargs):
         """Returns a video using this suite."""
-        return Video(url, self, **kwargs)
+        return Video(url, self, *args, **kwargs)
 
     def get_feed(self, url, *args, **kwargs):
         """Returns an instance of :attr:`feed_class`."""

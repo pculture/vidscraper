@@ -50,6 +50,8 @@ class Video(object):
                   able to load additional data.
     :param fields: A list of fields which should be fetched for the video. This
                   may be used to optimize the fetching process.
+    :param api_keys: A dictionary of API keys to use for this video. The keys
+                     needed depend on the suite being used for the video.
 
     """
     # FIELDS
@@ -262,15 +264,10 @@ class BaseVideoIterator(object):
         for item in items:
             data = self.get_item_data(item)
             url = data['link']
-            try:
-                suite = registry.suite_for_video_url(url)
-            except UnhandledURL:
-                suite = None
-            video = Video(url,
-                          suite=suite,
-                          fields=self.video_fields,
-                          api_keys=self.api_keys)
-
+            video = registry.get_video(url,
+                                       fields=self.video_fields,
+                                       api_keys=self.api_keys,
+                                       require_suite=False)
             video._apply(data)
             self._page_videos_count += 1
             yield video

@@ -112,11 +112,6 @@ class BlipSearch(FeedparserVideoSearch):
     # pagelen doesn't work with searches. Huh.
     per_page = 10
 
-    def __init__(self, query, order_by='relevant', **kwargs):
-        super(BlipSearch, self).__init__(query, order_by, **kwargs)
-        if order_by != 'relevant':
-            raise UnhandledSearch
-
     def get_item_data(self, item):
         return BlipSuite.parse_feed_entry(item)
 

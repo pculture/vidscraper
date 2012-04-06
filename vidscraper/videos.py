@@ -31,7 +31,7 @@ import urllib2
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledURL, VideoDeleted
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch, VideoDeleted
 from vidscraper.utils.feedparser import (get_item_thumbnail_url,
                                          struct_time_to_datetime)
 from vidscraper.utils.search import (search_string_from_terms,
@@ -516,9 +516,11 @@ class VideoSearch(BaseVideoIterator):
     :param order_by: The ordering to apply to the search results. If a suite
                      does not support the given ordering, it will return an
                      empty list. Possible values: ``relevant``, ``latest``,
-                     ``popular``, ``None`` (use the default ordering of the
-                     suite's service provider). Values may be prefixed with a
-                     "-" to indicate descending ordering. Default: ``None``.
+                     ``popular``. Values may be prefixed with a "-" to
+                     indicate descending ordering. Default: ``relevant``.
+
+    :raises: :exc:`.UnhandledSearch` if the class doesn't support the given
+             parameters.
 
     :class:`VideoSearch` also supports the following "fields", which are
     populated with :meth:`data_from_response`. Fields which have not been
@@ -531,7 +533,14 @@ class VideoSearch(BaseVideoIterator):
     _all_fields = ('video_count',)
     video_count = None
 
-    def __init__(self, query, order_by=None, **kwargs):
+    #: Dictionary mapping our order_by options (relevant, latest, and popular)
+    #: to the service's equivalent term. If an order_by option is not in this
+    #: dictionary, it is assumed not to be supported by the service.
+    order_by_map = {
+        'relevant': 'relevant'
+    }
+
+    def __init__(self, query, order_by='relevant', **kwargs):
         super(VideoSearch, self).__init__(**kwargs)
         # Normalize the search
         self.include_terms, self.exclude_terms = terms_from_search_string(
@@ -540,13 +549,15 @@ class VideoSearch(BaseVideoIterator):
                                               self.exclude_terms)
         self.raw_query = query
         self.order_by = order_by
+        if order_by not in self.order_by_map:
+            raise UnhandledSearch
 
     def get_page_url_data(self, page_start, page_max):
         data = super(VideoSearch, self).get_page_url_data(page_start,
                                                           page_max)
         data.update({
             'query': urllib.quote_plus(self.query),
-            'order_by': self.order_by
+            'order_by': self.order_by_map[self.order_by]
         })
         return data
 

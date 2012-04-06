@@ -223,16 +223,12 @@ class YouTubeSearch(VideoSearch):
                        'q={query}&orderby={order_by}&start-index={page_start}&'
                        'max-results={page_max}')
 
-    def __init__(self, query, order_by='relevant', **kwargs):
-        super(YouTubeSearch, self).__init__(query, order_by, **kwargs)
-        # YouTube's search supports relevance, published, viewCount, and
-        # rating. We currently only support relevance and published.
-        if self.order_by == 'latest':
-            self.order_by = 'published'
-        elif self.order_by == 'relevant':
-            self.order_by = 'relevance'
-        else:
-            raise UnhandledSearch
+    # YouTube's search supports relevance, published, viewCount, and rating.
+    order_by_map = {
+        'relevant': 'relevance',
+        'latest': 'published',
+        'popular': 'viewCount',
+    }
 
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)

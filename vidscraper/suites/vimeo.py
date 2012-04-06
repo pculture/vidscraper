@@ -195,30 +195,30 @@ class AdvancedVimeoApiMixin(object):
 
 
 class VimeoSearch(AdvancedVimeoApiMixin, VideoSearch):
+    # Vimeo's search api supports relevant, newest, oldest, most_played,
+    # most_commented, and most_liked.
+    order_by_map = {
+        'relevant': 'relevant',
+        'latest': 'newest',
+        '-latest': 'oldest',
+        'popular': 'most_played'
+    }
+
     def __init__(self, query, order_by='relevant', **kwargs):
         super(VimeoSearch, self).__init__(query, order_by, **kwargs)
         if not self.has_api_keys():
-            raise UnhandledSearch
-        # Vimeo's search api supports relevant, newest, oldest, most_played,
-        # most_commented, and most_liked. We only support relevant and newest,
-        # for now.
-        if self.order_by == 'relevant':
-            pass
-        elif self.order_by == 'latest':
-            self.order_by = 'newest'
-        else:
             raise UnhandledSearch
 
     def data_from_response(self, response):
         return self._data_from_advanced_response(response)
 
     def get_page_url_data(self, page_start, page_max):
-        data = super(VideoSearch, self).get_page_url_data(page_start,
+        data = super(VimeoSearch, self).get_page_url_data(page_start,
                                                           page_max)
         data.update({
             'method': 'videos.search',
-            'method_params': 'query={0}'.format(urllib.quote_plus(self.query)),
-            'sort': self.order_by,
+            'method_params': 'query={0}'.format(data['query']),
+            'sort': data['order_by'],
         })
         return data
 

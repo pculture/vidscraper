@@ -25,6 +25,7 @@
 
 import datetime
 import json
+import re
 
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 
@@ -35,7 +36,7 @@ class UstreamApiMethod(SuiteMethod):
                   'user', 'user_url'])
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('id')
+        video_id = UstreamSuite.video_regex.match(video.url).group('id')
         if video.api_keys is None or 'ustream_key' not in video.api_keys:
             raise ValueError("API key must be set for Ustream API requests.")
         return 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (
@@ -64,7 +65,7 @@ class UstreamApiMethod(SuiteMethod):
 class UstreamSuite(BaseSuite):
     """Suite for fetching data on ustream videos."""
     # TODO: Ustream has feeds and search functionality - add support for that!
-    video_regex = 'https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)'
+    video_regex = re.compile('https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)')
     methods = (OEmbedMethod("http://www.ustream.tv/oembed/"),
                UstreamApiMethod())
 

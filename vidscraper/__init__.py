@@ -54,65 +54,17 @@ def handles_feed_url(url):
 
 def auto_scrape(url, fields=None, api_keys=None):
     """
-    Automatically determines which suite to use and scrapes ``url`` with that
-    suite.
-
-    :returns: :class:`.Video` instance.
-
-    :raises UnhandledURL: if no registered suites know how to handle this url.
+    Calls the default registry's :meth:`~.SuiteRegistry.get_video` method with
+    the given parameters, then loads and returns the :class:`.Video`.
 
     """
-    video = Video(url, fields=fields, api_keys=api_keys)
+    video = registry.get_video(url, fields=fields, api_keys=api_keys)
     video.load()
     return video
 
 
-def auto_feed(url, fields=None, crawl=False, max_results=None, api_keys=None,
-              last_modified=None, etag=None):
-    """
-    Automatically determines which suite to use and scrapes ``feed_url`` with
-    that suite. This will return a :class:`VideoFeed` instance instantiated
-    using the determined suite. When iterated over, the :class:`VideoFeed`
-    will yield :class:`.Video` instances which have been initialized with
-    the given ``fields`` and ``api_keys``. If ``crawl`` is ``True`` (not the
-    default) then :mod:`vidscraper` will return results from multiple pages of
-    the feed, if the suite supports it.
-
-    .. note:: Crawling will only initiate a new HTTP request after it has
-              exhausted the results on the current page.
-
-    :returns: A :class:`VideoFeed` instance which yields
-              :class:`.Video` instances for the items in the feed.
-
-    :raises UnhandledURL: if no registered suites know how to handle this url.
-
-    """
-    return VideoFeed(url, fields=fields, crawl=crawl, max_results=max_results,
-                       api_keys=api_keys, last_modified=last_modified,
-                       etag=etag)
-
-
-def auto_search(query, fields=None, order_by=None, crawl=False,
-                max_results=None, api_keys=None):
-    """
-    Returns a dictionary mapping each registered suite to a
-    :class:`.VideoSearch` instance which has been instantiated for that suite
-    and the given arguments.
-
-    """
-    suites = {}
-    for suite in registry.suites:
-        search = VideoSearch(query, suite, fields, order_by, crawl,
-                               max_results, api_keys)
-        try:
-            search.get_first_url()
-        except NotImplementedError:
-            # suite doesn't implement search
-            pass
-        else:
-            suites[suite] = search
-        
-    return suites
+auto_feed = registry.get_feed
+auto_search = registry.get_searches
 
 
 # fetchvideo -> auto_scrape(url, fields, api_keys)

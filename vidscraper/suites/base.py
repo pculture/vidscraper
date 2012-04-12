@@ -37,10 +37,10 @@ try:
 except RuntimeError:
     async = None
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.utils.feedparser import (struct_time_to_datetime,
                                          get_item_thumbnail_url)
-from vidscraper.videos import Video, VideoFeed, VideoSearch
+from vidscraper.videos import Video
 
 
 RegexpPattern = type(re.compile(''))
@@ -60,8 +60,15 @@ class SuiteRegistry(object):
 
     @property
     def suites(self):
-        """Returns a tuple of registered suites."""
-        return tuple(self._suites)
+        """
+        Returns a tuple of registered suites. If a fallback is registered, it
+        will always be at the end of this tuple.
+
+        """
+        suites = tuple(self._suites)
+        if self._fallback is not None:
+            suites += (self._fallback,)
+        return suites
 
     def register(self, suite):
         """Registers a suite if it is not already registered."""
@@ -84,37 +91,79 @@ class SuiteRegistry(object):
             self._suites.remove(self._suite_dict[suite])
             del self._suite_dict[suite]
 
-    def suite_for_video_url(self, url):
+    def get_video(self, url, fields=None, api_keys=None, require_suite=True):
         """
-        Returns the first registered suite which can handle the ``url`` as a
-        video or raises :exc:`.UnhandledURL` if no such suite is found.
+        Automatically determines which suite to use and scrapes ``url`` with
+        that suite. The parameters ``url``, ``fields``, and ``api_keys`` have
+        the same meaning as for :class:`.Video`.
+
+        :param require_suite: If ``True``, the video will only be returned if
+                              a suite is found. Otherwise,
+                              :exc:`.UnhandledURL` will be raised.
+        :type require_suite: boolean
+        :returns: :class:`.Video` instance.
+
+        :raises UnhandledURL: If ``require_suite`` is ``True`` and no
+                              registered suite knows how to handle the url.
 
         """
-        for suite in self._suites:
+        for suite in self.suites:
+            if suite.handles_video_url(url):
+                break
+        else:
+            if require_suite:
+                raise UnhandledURL
+            return Video(url, fields=fields, api_keys=api_keys)
+
+        return suite.get_video(url, fields, api_keys)
+
+    def get_feed(self, url, last_modified=None, etag=None, start_index=1,
+                 max_results=None, video_fields=None, api_keys=None):
+        """
+        Tries to get a :class:`.VideoFeed` instance from each suite in sequence.
+        The parameters are the same as those for :class:`.VideoFeed`.
+
+        :returns: A :class:`VideoFeed` instance which yields
+                  :class:`.Video` instances for the items in the feed.
+
+        :raises UnhandledURL: if no registered suites know how to handle this url.
+
+        """
+        for suite in self.suites:
             try:
-                if suite.handles_video_url(url):
-                    return suite
-            except NotImplementedError:
+                return suite.get_feed(url,
+                                      last_modified=last_modified,
+                                      etag=etag,
+                                      start_index=start_index,
+                                      max_results=max_results,
+                                      video_fields=video_fields,
+                                      api_keys=api_keys)
+            except UnhandledURL:
                 pass
-        if self._fallback and self._fallback.handles_video_url(url):
-            return self._fallback
-        raise UnhandledURL
+        raise UnhandledURL(url)
 
-    def suite_for_feed_url(self, url):
+
+    def get_searches(self, query, order_by='relevant', start_index=1,
+                     max_results=None, video_fields=None, api_keys=None):
         """
-        Returns the first registered suite which can handle the ``url`` as a
-        feed or raises :exc:`.UnhandledURL` if no such suite is found.
+        Returns a dictionary mapping each registered suite to a
+        :class:`.VideoSearch` instance which has been instantiated for that suite
+        and the given arguments.
 
         """
-        for suite in self._suites:
+        searches = {}
+        for suite in registry.suites:
             try:
-                if suite.handles_feed_url(url):
-                    return suite
-            except NotImplementedError:
+                searches[suite] = suite.get_search(query,
+                                                   order_by=order_by,
+                                                   start_index=start_index,
+                                                   max_results=max_results,
+                                                   video_fields=video_fields,
+                                                   api_keys=api_keys)
+            except UnhandledSearch:
                 pass
-        if self._fallback and self._fallback.handles_feed_url(url):
-            return self._fallback
-        raise UnhandledURL
+
+        return searches
 
 
 #: An instance of :class:`.SuiteRegistry` which is used by :mod:`vidscraper` to
@@ -202,6 +251,14 @@ class BaseSuite(object):
     #: .. seealso:: :meth:`BaseSuite.run_methods`
     methods = ()
 
+    #: A :class:`VideoFeed` subclass that will be used to parse feeds for this
+    #: suite.
+    feed_class = None
+
+    #: A :class:`VideoFeed` subclass that will be used to run searches for
+    #: this suite.
+    search_class = None
+
     def __init__(self):
         if isinstance(self.video_regex, basestring):
             self.video_regex = re.compile(self.video_regex)
@@ -241,41 +298,37 @@ class BaseSuite(object):
         that is not possible.
 
         """
-        try:
-            return bool(self.video_regex.match(url))
-        except AttributeError:
-            raise NotImplementedError
+        if self.video_regex is None:
+            return False
+        return bool(self.video_regex.match(url))
 
     def handles_feed_url(self, url):
         """
         Returns ``True`` if this suite can handle the ``url`` as a feed and
-        ``False`` otherwise. By default, this method will check whether the url
-        matches :attr:`.feed_regex` or raise a :exc:`NotImplementedError` if
-        that is not possible.
+        ``False`` otherwise.
 
         """
         try:
-            return bool(self.feed_regex.match(url))
-        except AttributeError:
-            raise NotImplementedError
+            self.get_feed(url)
+        except UnhandledURL:
+            return False
+        return True
 
-    def get_feed_url(self, url):
-        """
-        Some suites can handle URLs that are not technically feeds, but can
-        convert them into a feed that is usable.  This method can be overidden
-        to do that conversion.  By default, this method just returns the
-        original URL.
-
-        """
-        return url
-
-    def get_feed(self, url, **kwargs):
-        """Returns a feed using this suite."""
-        return VideoFeed(url, self, **kwargs)
-
-    def get_video(self, url, **kwargs):
+    def get_video(self, url, *args, **kwargs):
         """Returns a video using this suite."""
-        return Video(url, self, **kwargs)
+        return Video(url, self, *args, **kwargs)
+
+    def get_feed(self, url, *args, **kwargs):
+        """Returns an instance of :attr:`feed_class`."""
+        if self.feed_class is None:
+            raise UnhandledURL(url)
+        return self.feed_class(url, *args, **kwargs)
+
+    def get_search(self, *args, **kwargs):
+        """Returns an instance of :attr:`search_class`."""
+        if self.search_class is None:
+            raise UnhandledSearch
+        return self.search_class(*args, **kwargs)
 
     def find_best_methods(self, missing_fields):
         """
@@ -340,210 +393,3 @@ class BaseSuite(object):
             data.update(method.process(response))
 
         return data
-
-    def get_feed_response(self, feed, feed_url):
-        """
-        Returns a parsed response for this ``feed``. By default, this uses
-        :mod:`feedparser` to get a response for the ``feed_url`` and returns
-        the resulting structure.
-
-        """
-        response = feedparser.parse(feed_url)
-        # Don't let feedparser silence connection problems.
-        if isinstance(response.get('bozo_exception', None), urllib2.URLError):
-            raise response.bozo_exception
-        return response
-
-    def get_feed_info_response(self, feed, response):
-        """
-        In case the response for the given ``feed`` needs to do other work on
-        ``reponse`` to get feed information (title, &c), suites can override
-        this method to do that work.  By default, this method just returns the
-        ``response`` it was given.
-        """
-        return response
-
-    def get_feed_title(self, feed, feed_response):
-        """
-        Returns a title for the feed based on the ``feed_response``, or
-        ``None`` if no title can be determined. By default, assumes that the
-        response is a :mod:`feedparser` structure and returns a value based on
-        that.
-
-        """
-        return feed_response.feed.get('title')
-
-    def get_feed_entry_count(self, feed, feed_response):
-        """
-        Returns an estimate of the total number of entries in this feed, or
-        ``None`` if that cannot be determined. By default, returns the number
-        of entries in the feed.
-
-        """
-        return len(feed_response.entries)
-
-    def get_feed_description(self, feed, feed_response):
-        """
-        Returns a description of the feed based on the ``feed_response``, or
-        ``None`` if no description can be determined. By default, assumes that
-        the response is a :mod:`feedparser` structure and returns a value based
-        on that.
-
-        """
-        return feed_response.feed.get('subtitle')
-
-    def get_feed_webpage(self, feed, feed_response):
-        """
-        Returns the url for an HTML version of the ``feed_response``, or
-        ``None`` if no such url can be determined. By default, assumes that
-        the response is a :mod:`feedparser` structure and returns a value based
-        on that.
-
-        """
-        return feed_response.feed.get('link')
-
-    def get_feed_guid(self, feed, feed_response):
-        """
-        Returns the guid of the ``feed_response``, or ``None`` if no guid can
-        be determined. By default, assumes that the response is a
-        :mod:`feedparser` structure and returns a value based on that.
-
-        """
-        return feed_response.feed.get('id')
-
-    def get_feed_thumbnail_url(self, feed, feed_response):
-        """
-        Returns the thumbnail URL of the ``feed_response``, or ``None`` if no
-        thumbnail can be found.  By default, assumes that the response is a
-        :mod:`feedparser` structur4e and returns a value based on that.
-        """
-        try:
-            return get_item_thumbnail_url(feed_response.feed)
-        except KeyError:
-            return None
-
-    def get_feed_last_modified(self, feed, feed_response):
-        """
-        Returns the last modification date for the ``feed_response`` as a
-        python datetime, or ``None`` if no date can be determined. By default,
-        assumes that the response is a :mod:`feedparser` structure and returns
-        a value based on that.
-
-        """
-        if 'updated_parsed' in feed_response.feed:
-            return struct_time_to_datetime(feed_response.feed.updated_parsed)
-        if 'published_parsed' in feed_response.feed:
-            return struct_time_to_datetime(feed_response.feed.published_parsed)
-        return None
-
-    def get_feed_etag(self, feed, feed_response):
-        """
-        Returns the etag for a ``feed_response``, or ``None`` if no such url
-        can be determined. By default, assumes that the response is a
-        :mod:`feedparser` structure and returns a value based on that.
-
-        """
-        return feed_response.feed.get('etag')
-
-    def get_feed_entries(self, feed, feed_response):
-        """
-        Returns an iterable of feed entries for a ``feed_response`` as returned
-        from :meth:`get_feed_response`. By default, this assumes that the
-        response is a :mod:`feedparser` structure and tries to return its
-        entries.
-
-        """
-        return feed_response.entries
-
-    def parse_feed_entry(self, entry):
-        """
-        Given a feed entry (as returned by :meth:`.get_feed_entries`), creates
-        and returns a dictionary containing data from the feed entry, suitable
-        for application via :meth:`apply_video_data`. Must be implemented by
-        subclasses.
-
-        """
-        raise NotImplementedError
-
-    def get_next_feed_page_url(self, feed, feed_response):
-        """
-        Based on a ``feed_response`` and a :class:`VideoFeed` instance,
-        generates and returns a url for the next page of the feed, or returns
-        ``None`` if that is not possible. By default, simply returns ``None``.
-        Subclasses must override this method to have a meaningful feed crawl.
-
-        """
-        return None
-
-    def get_search_url(self, search):
-        """
-        Returns a url which this suite can use to fetch search results for the
-        given string. Must be implemented by subclasses.
-
-        """
-        raise NotImplementedError
-
-    def get_search(self, query, **kwargs):
-        """
-        Returns a search using this suite.
-        """
-        return VideoSearch(query, self, **kwargs)
-
-    def get_search_response(self, search, search_url):
-        """
-        Returns a parsed response for the given ``search_url``. By default,
-        assumes that the url references a feed and passes the work off to
-        :meth:`.get_feed_response`.
-
-        """
-        return self.get_feed_response(search, search_url)
-
-    def get_search_total_results(self, search, search_response):
-        """
-        Returns an estimate for the total number of search results based on the
-        first response returned by :meth:`get_search_response` for the
-        :class:`VideoSearch`. By default, assumes that the url references a
-        feed and passes the work off to :meth:`.get_feed_entry_count`.
-        """
-        return self.get_feed_entry_count(search, search_response)
-
-    def get_search_time(self, search, search_response):
-        """
-        Returns the amount of time required by the service provider for the
-        suite to execute the search. By default, simply returns ``None``.
-
-        """
-        return None
-
-    def get_search_results(self, search, search_response):
-        """
-        Returns an iterable of search results for a :class:`VideoSearch` and
-        a ``search_response`` as returned by :meth:`.get_search_response`. By
-        default, assumes that the ``search_response`` is a :mod:`feedparser`
-        structure and passes the work off to :meth:`.get_feed_entries`.
-
-        """
-        return self.get_feed_entries(search, search_response)
-
-    def parse_search_result(self, search, result):
-        """
-        Given a :class:`VideoSearch` instance and a search result (as
-        returned by :meth:`.get_search_results`), returns a dictionary
-        containing data from the search result, suitable for application via
-        :meth:`apply_video_data`. By default, assumes that the ``result`` is a
-        :mod:`feedparser` entry and passes the work off to
-        :meth:`.parse_feed_entry`.
-
-        """
-        return self.parse_feed_entry(result)
-
-    def get_next_search_page_url(self, search, search_response):
-        """
-        Based on a :class:`VideoSearch` and a ``search_response``, generates
-        and returns a url for the next page of the search, or returns ``None``
-        if that is not possible. By default, simply returns
-        ``None``. Subclasses must override this method to have a meaningful
-        search crawl.
-
-        """
-        return None

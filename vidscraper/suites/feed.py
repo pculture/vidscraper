@@ -4,74 +4,78 @@ from vidscraper.utils.html import convert_entities, make_embed_code
 from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
                                          get_entry_thumbnail_url,
                                          struct_time_to_datetime)
+from vidscraper.videos import FeedparserVideoFeed
 
-class GenericFeedSuite(BaseSuite):
 
-    def handles_video_url(self, url):
-        return True
+class GenericFeed(FeedparserVideoFeed):
+    """
+    Generically handles some of the crazy things we've seen out there. Doesn't
+    currently handle multi-page feeds.
 
-    def handles_feed_url(self, url):
-        return True
+    """
+    page_url_format = "{url}"
+    def get_url_data(self, url):
+        return {'url': url}
 
-    def get_feed_response(self, feed, url):
-        response = super(GenericFeedSuite, self).get_feed_response(feed, url)
-        if response.entries or not response.bozo_exception: # good feed
-            return response
-        if response.bozo_exception:
-            raise UnhandledURL('exception during response',
-                                  response.bozo_exception)
-        else:
-            raise UnhandledURL
+    def _next_page(self):
+        if self.start_index != 1 or self.item_count > 0:
+            raise StopIteration
+        super(GenericFeed, self)._next_page()
 
-    def parse_feed_entry(self, entry):
-        enclosure = get_first_accepted_enclosure(entry)
-        if 'published_parsed' in entry:
-            best_date = struct_time_to_datetime(entry['published_parsed'])
-        elif 'updated_parsed' in entry:
-            best_date = struct_time_to_datetime(entry['updated_parsed'])
+    def get_video_data(self, item):
+        enclosure = get_first_accepted_enclosure(item)
+        if 'published_parsed' in item:
+            best_date = struct_time_to_datetime(item['published_parsed'])
+        elif 'updated_parsed' in item:
+            best_date = struct_time_to_datetime(item['updated_parsed'])
         else:
             best_date = None
 
-        link = entry.get('link')
-        if 'links' in entry:
-            for possible_link in entry.links:
+        link = item.get('link')
+        if 'links' in item:
+            for possible_link in item.links:
                 if possible_link.get('rel') == 'via':
                     # original URL
                     link = possible_link['href']
                     break
-        if ('content' in entry and entry['content'] and
-            entry['content'][0]['value']): # Atom
-            description = entry['content'][0]['value']
+        if ('content' in item and item['content'] and
+            item['content'][0]['value']): # Atom
+            description = item['content'][0]['value']
         else:
-            description = entry.get('summary', '')
+            description = item.get('summary', '')
 
         embed_code = None
-        if 'media_player' in entry:
-            player = entry['media_player']
+        if 'media_player' in item:
+            player = item['media_player']
             if player.get('content'):
                 embed_code = convert_entities(player['content'])
             elif 'url' in player:
                 embed_code = make_embed_code(player['url'], '')
-        if 'media_license' in entry:
-            license = entry['media_license']['href']
+        if 'media_license' in item:
+            license = item['media_license']['href']
         else:
-            license = entry.get('license')
+            license = item.get('license')
         return {
             'link': link,
-            'title': convert_entities(entry['title']),
+            'title': convert_entities(item['title']),
             'description': description,
-            'thumbnail_url': get_entry_thumbnail_url(entry),
+            'thumbnail_url': get_entry_thumbnail_url(item),
             'file_url': enclosure.get('url') if enclosure else None,
             'file_url_mimetype': enclosure.get('type') if enclosure else None,
             'file_url_length': ((enclosure.get('filesize') or
                                 enclosure.get('length'))
                                 if enclosure else None),
             'publish_datetime': best_date,
-            'guid': entry.get('id'),
+            'guid': item.get('id'),
             'embed_code': embed_code,
-            'tags': [tag['term'] for tag in entry['tags']
-                     if tag['scheme'] is None] if 'tags' in entry else None,
+            'tags': [tag['term'] for tag in item['tags']
+                     if tag['scheme'] is None] if 'tags' in item else None,
             'license': license
-            }
+        }
+
+
+class GenericFeedSuite(BaseSuite):
+    feed_class = GenericFeed
+
 
 registry.register_fallback(GenericFeedSuite)

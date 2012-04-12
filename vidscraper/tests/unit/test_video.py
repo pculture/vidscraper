@@ -26,7 +26,7 @@
 import unittest
 import json
 
-from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_ATOM_DATA
+from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_API_DATA
 from vidscraper.videos import Video
 
 
@@ -52,7 +52,7 @@ class VideoTestCase(unittest.TestCase):
     def test_to_json(self):
         video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
         # we load the video data this way to avoid depending on the network
-        video_data = CARAMELL_DANSEN_ATOM_DATA.copy()
+        video_data = CARAMELL_DANSEN_API_DATA.copy()
         video_data['tags'] = list(video_data['tags'])
         video._apply(video_data)
 

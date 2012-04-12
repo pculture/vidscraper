@@ -39,9 +39,16 @@ feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 import requests
 
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
+from vidscraper.videos import VideoFeed, VideoSearch
+
+
+# Information on the YouTube API can be found at the following links:
+# * https://developers.google.com/youtube/2.0/developers_guide_protocol
+# * https://developers.google.com/youtube/2.0/reference
 
 
 class YouTubeApiMethod(SuiteMethod):
@@ -50,59 +57,15 @@ class YouTubeApiMethod(SuiteMethod):
                   'user_url', 'license'))
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('video_id')
+        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
         return "http://gdata.youtube.com/feeds/api/videos/{0}?v=2&alt=json".format(video_id)
 
     def process(self, response):
         if response.status_code in (401, 403):
             return {'is_embeddable': False}
         parsed = json.loads(response.text)
-        video = parsed['entry']
-        username = video['author'][0]['name']['$t']
-        if 'published' in video:
-            date_key = 'published'
-        else:
-            date_key = 'updated'
-
-        media_group = video['media$group']
-        description = media_group['media$description']
-        if description['type'] != 'plain':
-            # HTML-ified description. SB: Is this correct? Added in
-            # 5ca9e928 originally.
-            soup = BeautifulSoup(description['$t']).findAll('span')[0]
-            description = unicode(soup.string)
-        else:
-            description = description['$t']
-
-        thumbnail_url = None
-        for thumbnail in media_group['media$thumbnail']:
-            if thumbnail_url is None and thumbnail['yt$name'] == 'default':
-                thumbnail_url = thumbnail['url']
-            if thumbnail['yt$name'] == 'hqdefault':
-                thumbnail_url = thumbnail['url']
-                break
-        if '$t' in media_group['media$keywords']:
-            tags = media_group['media$keywords']['$t'].split(', ')
-        else:
-            tags = []
-        tags.extend(
-            [cat['$t'] for cat in media_group['media$category']])
-        data = {
-            'link': video['link'][0]['href'].split('&', 1)[0],
-            'title': video['title']['$t'],
-            'description': description.replace('\r', ''),
-            'thumbnail_url': thumbnail_url,
-            'publish_datetime': datetime.strptime(video[date_key]['$t'],
-                                                  "%Y-%m-%dT%H:%M:%S.000Z"),
-            'tags': tags,
-            'user': username,
-            'user_url': u'http://www.youtube.com/user/{0}'.format(username),
-            'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
-                        video['id']['$t'].split(':')[-1]),
-            'license': media_group['media$license']['href'],
-            'flash_enclosure_url': media_group['media$player']['url']
-        }
-        return data
+        entry = parsed['entry']
+        return YouTubeSuite.parse_api_video(entry)
 
 
 class YouTubeScrapeMethod(SuiteMethod):
@@ -122,7 +85,7 @@ class YouTubeScrapeMethod(SuiteMethod):
         ]
 
     def get_url(self, video):
-        video_id = video.suite.video_regex.match(video.url).group('video_id')
+        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
         return (u"http://www.youtube.com/get_video_info?video_id=%s&"
                 "el=embedded&ps=default&eurl=" % video_id)
 
@@ -185,120 +148,165 @@ class YouTubeOEmbedMethod(OEmbedMethod):
         return OEmbedMethod.process(self, response)
 
 
+class YouTubeFeed(VideoFeed):
+    per_page = 50
+    page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
+                       'uploads?alt=json&v=2&start-index={page_start}&max-results={page_max}')
+    path_re = re.compile(r'^/(?:user/)?(?P<username>\w+)(?:/videos)?/?$')
+    # old_path_re means that the username is in the GET params as 'user'
+    old_path_re = re.compile(r'^/profile(?:_videos)?/?$')
+    gdata_re = re.compile(r'^/feeds/(?:base|api)/users/(?P<username>\w+)/?')
+
+    #: Usernames can be at youtube.com/<username> - these are words which
+    #: therefore can't be used as usernames, since they already have meanings
+    #: at the root. This isn't a comprehensive list, just the ones people will
+    #: probably interact the most with.
+    invalid_usernames = set(('user', 'profile', 'profile_videos', 'watch',
+                             'playlist', 'embed'))
+
+    def get_url_data(self, url):
+        parsed_url = urlparse.urlsplit(url)
+        if parsed_url.scheme in ('http', 'https'):
+            if parsed_url.netloc in ('youtube.com', 'www.youtube.com'):
+                match = self.path_re.match(parsed_url.path)
+                if (match and
+                    match.group('username') not in self.invalid_usernames):
+                    return match.groupdict()
+
+                match = self.old_path_re.match(parsed_url.path)
+                if match:
+                    parsed_qs = urlparse.parse_qs(parsed_url.query)
+                    if 'user' in parsed_qs:
+                        username = parsed_qs['user'][0]
+                        if username not in self.invalid_usernames:
+                            return {'username': username}
+            elif parsed_url.netloc == 'gdata.youtube.com':
+                match = self.gdata_re.match(parsed_url.path)
+                if match:
+                    return match.groupdict()
+
+        raise UnhandledURL(url)
+
+    def get_page(self, page_start, page_max):
+        url = self.get_page_url(page_start, page_max)
+        response = requests.get(url)
+        response._parsed = json.loads(response.text)
+        return response
+
+    def get_response_items(self, response):
+        return response._parsed['feed'].get('entry', [])
+
+    def get_video_data(self, item):
+        return YouTubeSuite.parse_api_video(item)
+
+    def data_from_response(self, response):
+        feed = response._parsed['feed']
+        for l in feed['link']:
+            if l['rel'] == 'alternate':
+                link = l['href']
+                break
+        else:
+            link = None
+        return {
+            'video_count': feed['openSearch$totalResults']['$t'],
+            'title': feed['title']['$t'],
+            'webpage': link,
+            'guid': feed['id']['$t'],
+            'etag': response.headers['etag'] or feed['gd$etag'],
+            'thumbnail_url': feed['logo']['$t'],
+        }
+
+
+class YouTubeSearch(VideoSearch):
+    per_page = 50
+    page_url_format = ('http://gdata.youtube.com/feeds/api/videos?v=2&alt=json&'
+                       'q={query}&orderby={order_by}&start-index={page_start}&'
+                       'max-results={page_max}')
+
+    # YouTube's search supports relevance, published, viewCount, and rating.
+    order_by_map = {
+        'relevant': 'relevance',
+        'latest': 'published',
+        'popular': 'viewCount',
+    }
+
+    def get_page(self, page_start, page_max):
+        url = self.get_page_url(page_start, page_max)
+        response = requests.get(url)
+        response._parsed = json.loads(response.text)
+        return response
+
+    def get_response_items(self, response):
+        return response._parsed['feed'].get('entry', [])
+
+    def get_video_data(self, item):
+        return YouTubeSuite.parse_api_video(item)
+
+    def data_from_response(self, response):
+        feed = response._parsed['feed']
+        return {
+            'video_count': feed['openSearch$totalResults']['$t'],
+        }
+
+
 class YouTubeSuite(BaseSuite):
-    video_regex = r'^https?://(' +\
-    r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v=' +\
-                  r'|youtu.be/)(?P<video_id>[\w-]+)'
-    feed_regex = r'^https?://([^/]+\.)?youtube.com/'
-    feed_regexes = [re.compile(r) for r in (
-            (r'^(http://)?(www\.)?youtube\.com/profile(_videos)?'
-             r'\?(\w+=\w+&)*user=(?P<name>\w+)'),
-            (r'^(http://)?(www\.)?youtube\.com/((rss/)?user/)?'
-             r'(?P<name>\w+)'),
-            (r'^(https?://)?gdata.youtube.com/feeds/base/users/(?P<name>\w+)'
-             ))]
-    feed_url_base = ('http://gdata.youtube.com/feeds/base/users/%s/'
-                    'uploads?alt=rss&v=2')
+    video_regex = re.compile(r'^https?://('
+                             r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v='
+                             r'|youtu.be/)(?P<video_id>[\w-]+)')
 
     methods = (YouTubeOEmbedMethod("http://www.youtube.com/oembed"),
                YouTubeApiMethod(), YouTubeScrapeMethod())
 
-    def get_feed_url(self, url, extra_params=None):
-        for regex in self.feed_regexes:
-            match = regex.match(url)
-            if match:
-                name = match.group('name')
-                url = self.feed_url_base % name
-                break
-        if extra_params:
-            url = '%s&%s' % (url, urllib.urlencode(extra_params))
-        return url
+    feed_class = YouTubeFeed
+    search_class = YouTubeSearch
 
-    def parse_feed_entry(self, entry):
-        """
-        Reusable method to parse a feedparser entry from a youtube rss feed.
-        Returns a dictionary mapping :class:`.Video` fields to values.
-
-        """
-        user = entry['author']
-        if 'published_parsed' in entry:
-            best_date = struct_time_to_datetime(entry['published_parsed'])
+    @staticmethod
+    def parse_api_video(video):
+        username = video['author'][0]['name']['$t']
+        if 'published' in video:
+            date_key = 'published'
         else:
-            best_date = struct_time_to_datetime(entry['updated_parsed'])
-        if ('summary_detail' in entry and
-            entry['summary_detail']['type'] == 'text/html'):
-            # HTML-ified description in RSS feeds
-            soup = BeautifulSoup(entry['summary']).findAll('span')[0]
+            date_key = 'updated'
+
+        media_group = video['media$group']
+        description = media_group['media$description']
+        if description['type'] != 'plain':
+            # HTML-ified description. SB: Is this correct? Added in
+            # 5ca9e928 originally.
+            soup = BeautifulSoup(description['$t']).findAll('span')[0]
             description = unicode(soup.string)
         else:
-            description = entry['summary']
+            description = description['$t']
+
+        thumbnail_url = None
+        for thumbnail in media_group['media$thumbnail']:
+            if thumbnail_url is None and thumbnail['yt$name'] == 'default':
+                thumbnail_url = thumbnail['url']
+            if thumbnail['yt$name'] == 'hqdefault':
+                thumbnail_url = thumbnail['url']
+                break
+        if '$t' in media_group['media$keywords']:
+            tags = media_group['media$keywords']['$t'].split(', ')
+        else:
+            tags = []
+        tags.extend(
+            [cat['$t'] for cat in media_group['media$category']])
         data = {
-            'link': entry['links'][0]['href'].split('&', 1)[0],
-            'title': entry['title'],
-            'description': description,
-            'thumbnail_url': get_entry_thumbnail_url(entry),
-            'publish_datetime': best_date,
-            'tags': [t['term'] for t in entry['tags']
-                    if not t['term'].startswith('http')],
-            'user': user,
-            'user_url': u'http://www.youtube.com/user/%s' % user,
-            'guid' : entry['id'],
+            'link': video['link'][0]['href'].split('&', 1)[0],
+            'title': video['title']['$t'],
+            'description': description.replace('\r', ''),
+            'thumbnail_url': thumbnail_url,
+            'publish_datetime': datetime.strptime(video[date_key]['$t'],
+                                                  "%Y-%m-%dT%H:%M:%S.000Z"),
+            'tags': tags,
+            'user': username,
+            'user_url': u'http://www.youtube.com/user/{0}'.format(username),
+            'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
+                        video['id']['$t'].split(':')[-1]),
+            'license': media_group['media$license']['href'],
+            'flash_enclosure_url': media_group['media$player']['url']
         }
-        if entry.id.startswith('tag:youtube.com'):
-            data['guid'] = 'http://gdata.youtube.com/feeds/api/videos/%s' % (
-                entry.id.split(':')[-1],)
-        if 'media_player' in entry: # only in search feeds/API?
-            data['flash_enclosure_url'] = entry['media_player']['url']
-        if data['thumbnail_url'].endswith('/default.jpg'):
-            # got a crummy version; increase the resolution
-            data['thumbnail_url'] = data['thumbnail_url'].replace(
-                '/default.jpg', '/hqdefault.jpg')
         return data
 
-    def get_feed_entry_count(self, feed, feed_response):
-        return int(feed_response.feed.get('opensearch_totalresults',
-                                          len(feed_response.entries)))
-
-    def get_search_url(self, search, extra_params=None):
-        params = {
-            'vq': search.query,
-        }
-        if extra_params is not None:
-            params.update(extra_params)
-        if search.order_by == 'relevant':
-            params['orderby'] = 'relevance'
-        elif search.order_by == 'latest':
-            params['orderby'] = 'published'
-        return 'http://gdata.youtube.com/feeds/api/videos?%s' % (
-            urllib.urlencode(params))
-
-    def get_next_page_url_params(self, response):
-        start_index = response['feed'].get('opensearch_startindex', None)
-        per_page = response['feed'].get('opensearch_itemsperpage', None)
-        total_results = response['feed'].get('opensearch_totalresults', None)
-        if start_index is None or per_page is None or total_results is None:
-            return None
-        new_start = int(start_index) + int(per_page)
-        if new_start > int(total_results):
-            return None
-        extra_params = {
-            'start-index': new_start,
-            'max-results': per_page
-        }
-        return extra_params
-
-    def get_next_search_page_url(self, search, search_response):
-        extra_params = self.get_next_page_url_params(search_response)
-        if not extra_params:
-            return None
-        return self.get_search_url(
-            search,
-            extra_params=extra_params)
-
-    def get_next_feed_page_url(self, feed, feed_response):
-        extra_params = self.get_next_page_url_params(feed_response)
-        if not extra_params:
-            return None
-        return self.get_feed_url(feed.url, extra_params=extra_params)
 
 registry.register(YouTubeSuite)

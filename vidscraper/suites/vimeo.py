@@ -207,7 +207,8 @@ class VimeoSearch(AdvancedVimeoApiMixin, VideoSearch):
     def __init__(self, query, order_by='relevant', **kwargs):
         super(VimeoSearch, self).__init__(query, order_by, **kwargs)
         if not self.has_api_keys():
-            raise UnhandledSearch
+            raise UnhandledSearch(u"{0} requires API keys.".format(
+                                  self.__class__.__name__))
 
     def data_from_response(self, response):
         return self._data_from_advanced_response(response)
@@ -318,7 +319,7 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
             elif data['group_id']:
                 return "group/{0}".format(data['group_id'])
 
-        raise ValueError
+        raise ValueError(u"No path buildable with given data.")
 
     def get_page_url_data(self, *args, **kwargs):
         data = super(VimeoFeed, self).get_page_url_data(*args, **kwargs)
@@ -360,7 +361,8 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
                 method_params = "group_id={0}".format(data['group_id'])
                 method = "groups.getVideos"
             else:
-                raise ValueError
+                raise ValueError(u"Method can't be calculated with given "
+                                 u"data.")
             data.update({
                 'method_params': method_params,
                 'method': method,

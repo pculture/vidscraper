@@ -595,7 +595,9 @@ class VideoSearch(BaseVideoIterator):
         self.raw_query = query
         self.order_by = order_by
         if order_by not in self.order_by_map:
-            raise UnhandledSearch
+            raise UnhandledSearch(u"{0} does not support an ordering called "
+                                  u"{1}".format(self.__class__.__name__,
+                                                order_by))
 
     def get_page_url_data(self, page_start, page_max):
         data = super(VideoSearch, self).get_page_url_data(page_start,

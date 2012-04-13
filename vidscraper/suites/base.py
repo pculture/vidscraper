@@ -112,7 +112,7 @@ class SuiteRegistry(object):
                 break
         else:
             if require_suite:
-                raise UnhandledURL
+                raise UnhandledURL(url)
             return Video(url, fields=fields, api_keys=api_keys)
 
         return suite.get_video(url, fields, api_keys)
@@ -327,7 +327,8 @@ class BaseSuite(object):
     def get_search(self, *args, **kwargs):
         """Returns an instance of :attr:`search_class`."""
         if self.search_class is None:
-            raise UnhandledSearch
+            raise UnhandledSearch(u"{0} does not support searches.".format(
+                                  self.__class__.__name__))
         return self.search_class(*args, **kwargs)
 
     def find_best_methods(self, missing_fields):

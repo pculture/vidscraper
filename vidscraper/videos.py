@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import datetime
+from datetime import datetime
 import json
 import math
 import urllib
@@ -62,6 +62,10 @@ class Video(object):
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
         'index', 'license'
     )
+    # This lets us easily check whether we're looking at a datetime field,
+    # since the fields are just values, not self-aware.
+    _datetime_fields = ('publish_datetime', 'file_url_expires')
+
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
     link = None
@@ -162,25 +166,66 @@ class Video(object):
 
     def items(self):
         """Iterator over (field, value) for requested fields."""
-        for mem in self.fields:
-            yield (mem, getattr(self, mem))
+        for field in self.fields:
+            yield (field, getattr(self, field))
 
-    def to_json(self, **kw):
-        """Returns the video JSON-ified.
+    def to_json(self, **kwargs):
+        """
+        Returns the video JSON-ified. For security reasons, the api keys are
+        not serialized.
 
         Takes keyword arguments and passes them to json.dumps().
 
         Example:
 
         >>> v.to_json(indent=2, sort_keys=True)
-        """
-        def json_dump_helper(obj):
-            if isinstance(obj, datetime.datetime):
-                return obj.isoformat()
-            raise TypeError("%r is not serializable" % (obj,))
 
-        kw['default'] = json_dump_helper
-        return json.dumps(dict(self.items()), **kw)
+        """
+        field_data = dict(self.items())
+        for field in self._datetime_fields:
+            dt = field_data.get(field, None)
+            if isinstance(dt, datetime):
+                field_data[field] = dt.isoformat()
+
+        video_data = {
+            'url': self.url,
+            'data': field_data
+        }
+        return json.dumps(video_data, **kwargs)
+
+    @classmethod
+    def from_json(cls, json_data, suite=None, api_keys=None, **kwargs):
+        """
+        De-JSON-ifies a video.
+
+        :param json_data: A JSON-formatted string.
+        :param suite: ``None``, or a suite to instantiate the deserialized
+                      video with.
+        :param api_keys: ``None``, or a dictionary of API keys to instantiate
+                         the deserialized video with.
+
+        Any additional keyword arguments will be passed to :func:`json.loads`.
+
+        """
+        video_data = json.loads(json_data, **kwargs)
+
+        video = cls(video_data['url'], fields=video_data['data'],
+                    suite=suite, api_keys=api_keys)
+
+        field_data = video_data['data']
+        for field in cls._datetime_fields:
+            dt = field_data.get(field, None)
+            if isinstance(dt, basestring):
+                format = "%Y-%m-%dT%H:%M:%S"
+                try:
+                    field_data[field] = datetime.strptime(dt, format)
+                except ValueError:
+                    # Maybe it has microseconds?
+                    format = "%Y-%m-%dT%H:%M:%S.%f"
+                    field_data[field] = datetime.strptime(dt, format)
+
+        video._apply(field_data)
+        return video
 
 
 class BaseVideoIterator(object):

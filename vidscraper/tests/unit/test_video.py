@@ -49,7 +49,7 @@ class VideoTestCase(unittest.TestCase):
         for i, item in enumerate(video.items()):
             self.assertEqual(item[0], fields[i])
 
-    def test_to_json(self):
+    def test_json(self):
         video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
         # we load the video data this way to avoid depending on the network
         video_data = CARAMELL_DANSEN_API_DATA.copy()
@@ -58,13 +58,11 @@ class VideoTestCase(unittest.TestCase):
 
         data_json = video.to_json()
         # verify that the data we expect is in the JSON output
+        self.assertTrue(video.url in data_json)
         self.assertTrue(video.title in data_json)
         self.assertTrue(video.publish_datetime.isoformat() in data_json)
-        # Verify that we can load the json back into Python.
-        data = json.loads(data_json)
-        # Verify that the data is restored correctly
-        for field, value in video_data.items():
-            if field == 'publish_datetime':
-                self.assertEqual(data[field], value.isoformat())
-            else:
-                self.assertEqual(data[field], value)
+
+        # Verify that we can also load that data as a video.
+        new_video = Video.from_json(data_json)
+        self.assertEqual(video.url, new_video.url)
+        self.assertEqual(dict(video.items()), dict(new_video.items()))

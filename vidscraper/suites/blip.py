@@ -117,9 +117,6 @@ class BlipSearch(FeedparserVideoSearch):
 
 
 class BlipSuite(BaseSuite):
-    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?(?<!.mp4)$'
-    feed_regex = video_regex
-
     new_video_path_re = re.compile(r'^/[\w-]+/[\w-]+-(?P<post_id>\d+)/?$')
     old_video_path_re = re.compile(r'^/file/\d+/?$', re.I)
 

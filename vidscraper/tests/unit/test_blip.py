@@ -29,7 +29,7 @@ import urlparse
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledSearch
+from vidscraper.exceptions import UnhandledSearch, UnhandledURL
 from vidscraper.suites import OEmbedMethod
 from vidscraper.suites.blip import BlipSuite, BlipApiMethod
 from vidscraper.tests.base import BaseTestCase
@@ -69,26 +69,26 @@ class BlipApiTestCase(BlipTestCase):
         self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
         self.video = self.suite.get_video(url=self.base_url)
 
-    def _test_video_api_url(self, video):
-        api_url = self.method.get_url(video)
-        parsed_url = urlparse.urlparse(api_url)
-        self.assertEqual(parsed_url[2], "/rss/4167881")
-
     def test_get_url(self):
-        self._test_video_api_url(self.video)
+        valid_urls = (
+            ('http://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/rss/4154053'),
+            ('http://blip.tv/file/4154053',
+             'http://blip.tv/file/4154053?skin=rss'),
+            ('http://blip.tv/file/4154053?foo=bar',
+             'http://blip.tv/file/4154053?skin=rss'),
+        )
+        invalid_urls = (
+            'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
+            'http://blip.tv/dashboard/episode/5944048',
+        )
+        for url, expected in valid_urls:
+            video = self.suite.get_video(url=url)
+            self.assertEquals(self.method.get_url(video), expected)
 
-    def test_get_url_overrides(self):
-        """GET parameters shouldn't affect the outcome."""
-        video = self.suite.get_video(url="%s?skin=json" % self.base_url)
-        self._test_video_api_url(video)
-
-    def test_get_url_old_url(self):
-        """Old urls should be parsed differently."""
-        self.video.url = 'http://blip.tv/file/1077145/'
-        api_url = self.method.get_url(self.video)
-        parsed_url = urlparse.urlsplit(api_url)
-        self.assertEqual(parsed_url[2], '/file/1077145/')
-        self.assertEqual(parsed_url[3], 'skin=rss')
+        for url in invalid_urls:
+            video = self.suite.get_video(url=url)
+            self.assertRaises(UnhandledURL, self.method.get_url, video)
 
     def test_process(self):
         api_file = self.get_data_file('blip/api.rss')

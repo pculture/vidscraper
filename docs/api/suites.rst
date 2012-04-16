@@ -43,11 +43,3 @@ Built-in Suites
 
 .. autoclass:: vidscraper.suites.BaseSuite
    :members:
-
-Suite Methods
-+++++++++++++
-
-.. autoclass:: vidscraper.suites.SuiteMethod
-   :members:
-
-.. autoclass:: vidscraper.suites.OEmbedMethod

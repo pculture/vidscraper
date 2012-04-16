@@ -30,7 +30,7 @@
 
 * :class:`.Video`, :class:`.VideoFeed`, and :class:`.VideoSearch` are now in
   :mod:`vidscraper.videos`.
-* :class:`SuiteMethods <.SuiteMethod>` were introduced as a more generic way
+* :class:`VideoLoaders <.VideoLoader>` were introduced as a more generic way
   to represent getting data for a single video.
 * :mod:`vidscraper.errors` was renamed to :mod:`vidscraper.exceptions`, and
   unused exceptions were removed. :exc:`.CantIdentifyUrl` is now called

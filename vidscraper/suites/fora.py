@@ -24,13 +24,16 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import re
 import urllib
 import urlparse
 
 from bs4 import BeautifulSoup, SoupStrainer
 
-from vidscraper.suites import BaseSuite, registry, SuiteMethod
+from vidscraper.exceptions import UnhandledURL
+from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import make_embed_code
+from vidscraper.videos import VideoLoader
 
 
 CONTENT_IDS = set(['program_title_text',])
@@ -45,15 +48,20 @@ def _strain_filter(name, attrs):
                 for key, value in attrs.iteritems()))
 
 
-class ForaScrapeMethod(SuiteMethod):
+class ForaScrapeLoader(VideoLoader):
     fields = set(['link', 'title', 'description', 'flash_enclosure_url',
                   'embed_code', 'thumbnail_url', 'publish_date', 'user',
                   'user_url'])
+    video_re = re.compile(r'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+')
 
-    def get_url(self, video):
-        return video.url
+    url_format = '{url}'
 
-    def process(self, response):
+    def get_url_data(self, url):
+        if not self.video_re.match(url):
+            raise UnhandledURL(url)
+        return {'url': url}
+
+    def get_video_data(self, response):
         strainer = SoupStrainer(_strain_filter)
         soup = BeautifulSoup(response.text, parse_only=strainer)
         soup = soup.find_all(True, recursive=False)
@@ -93,8 +101,7 @@ class ForaSuite(BaseSuite):
     only video pages and rss feeds.
 
     """
-    video_regex = 'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+'
-    methods = (ForaScrapeMethod(),)
+    loader_classes = (ForaScrapeLoader,)
 
 
 registry.register(ForaSuite)

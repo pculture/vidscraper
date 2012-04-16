@@ -26,11 +26,12 @@
 import unittest
 import json
 
+from vidscraper.tests.base import BaseTestCase
 from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_API_DATA
-from vidscraper.videos import Video
+from vidscraper.videos import Video, OEmbedLoader
 
 
-class VideoTestCase(unittest.TestCase):
+class VideoTestCase(BaseTestCase):
     def test_items(self):
         video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
 
@@ -66,3 +67,27 @@ class VideoTestCase(unittest.TestCase):
         new_video = Video.from_json(data_json)
         self.assertEqual(video.url, new_video.url)
         self.assertEqual(dict(video.items()), dict(new_video.items()))
+
+
+class OEmbedLoaderTestCase(BaseTestCase):
+    def test_get_video_data(self):
+        expected_data = {
+            'title': "Scaling the World's Largest Django Application",
+            'embed_code': '<iframe src="http://blip.tv/play/AYH9xikC.html" '
+                            'width="640" height="510" frameborder="0" '
+                            'allowfullscreen></iframe><embed '
+                            'type="application/x-shockwave-flash" '
+                            'src="http://a.blip.tv/api.swf#AYH9xikC" '
+                            'style="display:none"></embed>',
+            'thumbnail_url': "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png",
+            'user': 'djangocon',
+            'user_url': 'http://blip.tv/djangocon',
+        }
+        oembed_file = self.get_data_file('oembed.json')
+        response = self.get_response(oembed_file.read())
+        loader = OEmbedLoader("url")
+        data = loader.get_video_data(response)
+        self.assertEqual(set(data), set(loader.fields))
+        self.assertEqual(set(data), set(expected_data))
+        for key in expected_data:
+            self.assertEqual(data[key], expected_data[key])

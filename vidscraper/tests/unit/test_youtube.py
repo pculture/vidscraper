@@ -33,9 +33,9 @@ import feedparser
 import requests
 
 from vidscraper.exceptions import UnhandledURL
-from vidscraper.suites.youtube import (YouTubeSuite, YouTubeApiMethod,
-                                       YouTubeScrapeMethod,
-                                       YouTubeOEmbedMethod)
+from vidscraper.suites.youtube import (YouTubeSuite, YouTubeApiLoader,
+                                       YouTubeScrapeLoader,
+                                       YouTubeOEmbedLoader)
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -79,8 +79,7 @@ class YouTubeTestCase(BaseTestCase):
     def setUp(self):
         BaseTestCase.setUp(self)
         self.suite = YouTubeSuite()
-        self.base_url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
-        self.video = self.suite.get_video(url=self.base_url)
+        self.url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
 
 
 class YouTubeSuiteTestCase(YouTubeTestCase):
@@ -104,96 +103,95 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
 class YouTubeOembedTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.method = YouTubeOEmbedMethod("http://www.youtube.com/oembed")
+        self.loader = YouTubeOEmbedLoader(self.url)
 
-    def test_process_forbidden(self):
+    def test_forbidden(self):
         expected_data = {'is_embeddable': False}
         response = self.get_response('', code=requests.codes.forbidden)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertDictEqual(data, expected_data)
 
-    def test_process_unauthorized(self):
+    def test_unauthorized(self):
         expected_data = {'is_embeddable': False}
         response = self.get_response('', code=requests.codes.unauthorized)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertDictEqual(data, expected_data)
 
-    def test_process_404(self):
+    def test_404(self):
         response = self.get_response('', code=404)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertEqual(data, {})
 
 
 class YouTubeApiTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.method = YouTubeApiMethod()
+        self.loader = YouTubeApiLoader(self.url)
 
     def test_get_url(self):
-        api_url = self.method.get_url(self.video)
+        api_url = self.loader.get_url()
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2&alt=json")
-        video = self.suite.get_video(
-            url="http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
-        api_url = self.method.get_url(video)
+        loader = YouTubeApiLoader("http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
+        api_url = loader.get_url()
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/ZSh_c7-fZqQ?v=2&alt=json")
 
-    def test_process(self):
+    def test_get_video_data(self):
         api_file = self.get_data_file('youtube/api.json')
         response = self.get_response(api_file.read())
-        data = self.method.process(response)
-        self.assertEqual(set(data), self.method.fields)
+        data = self.loader.get_video_data(response)
+        self.assertEqual(set(data), self.loader.fields)
         data['tags'] = set(data['tags'])
         self.assertDictEqual(data, CARAMELL_DANSEN_API_DATA)
 
-    def test_process_forbidden(self):
+    def test_get_video_data__forbidden(self):
         expected_data = {'is_embeddable': False}
         response = self.get_response('', code=requests.codes.forbidden)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertDictEqual(data, expected_data)
 
-    def test_process_unauthorized(self):
+    def test_get_video_data__unauthorized(self):
         expected_data = {'is_embeddable': False}
         response = self.get_response('', code=requests.codes.unauthorized)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertDictEqual(data, expected_data)
 
-    def test_parse_api_response_restricted(self):
+    def test_get_video_data__restricted(self):
         api_file = self.get_data_file('youtube/restricted_api.json')
         response = self.get_response(api_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(data['description'],
                          "Like dolphins, whales communicate using sound. \
 Humpbacks especially have extremely complex communication systems.")
 
-    def test_parse_api_response_missing_keywords(self):
+    def test_get_video_data__missing_keywords(self):
         api_file = self.get_data_file('youtube/missing_keywords.json')
         response = self.get_response(api_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(data['tags'], ['Nonprofit'])
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.method = YouTubeScrapeMethod()
+        self.loader = YouTubeScrapeLoader(self.url)
 
     def test_get_url(self):
-        scrape_url = self.method.get_url(self.video)
+        scrape_url = self.loader.get_url()
         self.assertEqual(
             scrape_url,
             ('http://www.youtube.com/get_video_info?video_id=J_DV9b0x7v4&'
              'el=embedded&ps=default&eurl='))
 
-    def test_process(self):
+    def test_get_video_data(self):
         scrape_file = self.get_data_file('youtube/scrape.txt')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
-        self.assertEqual(set(data), self.method.fields)
+        data = self.loader.get_video_data(response)
+        self.assertEqual(set(data), self.loader.fields)
         expected_data = {
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
@@ -209,22 +207,22 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         }
         self.assertDictEqual(data, expected_data)
 
-    def test_parse_scrape_response_fail_150(self):
+    def test_get_video_data__fail_150(self):
         scrape_file = self.get_data_file('youtube/scrape2.txt')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertDictEqual(data, {'is_embeddable': False})
 
-    def test_parse_scrape_response_fail_other(self):
+    def test_get_video_data__fail_other(self):
         scrape_file = self.get_data_file('youtube/scrape2.txt')
         scrape_data = scrape_file.read().replace('150', 'other')
         response = self.get_response(scrape_data)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertEqual(data, {})
 
-    def test_process_402(self):
+    def test_get_video_data__402(self):
         response = self.get_response('', code=402)
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertEqual(data, {})
 
 

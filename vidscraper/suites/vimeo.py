@@ -40,40 +40,65 @@ except ImportError:
 import requests
 
 from vidscraper.exceptions import VideoDeleted, UnhandledURL, UnhandledSearch
-from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
+from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.utils.http import open_url_while_lying_about_agent
-from vidscraper.videos import VideoFeed, VideoSearch
+from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
+                               OEmbedLoader)
 
 
 # Documentation for the Vimeo APIs:
 # * http://vimeo.com/api
 
 
-class VimeoApiMethod(SuiteMethod):
+class VimeoPathMixin(object):
+    url_re = re.compile(r'https?://(?:[^/]+\.)?vimeo.com/(?P<video_id>\d+)')
+
+
+class VimeoOEmbedLoader(VimeoPathMixin, OEmbedLoader):
+    endpoint = u"http://vimeo.com/api/oembed.json"
+
+    def get_url_data(self, url):
+        if not self.url_re.match(url):
+            raise UnhandledURL(url)
+
+        return super(VimeoOEmbedLoader, self).get_url_data(url)
+
+
+class VimeoApiLoader(VimeoPathMixin, VideoLoader):
     fields = set(['link', 'title', 'description', 'tags', 'guid',
                   'publish_datetime', 'thumbnail_url', 'user', 'user_url',
                   'flash_enclosure_url', 'embed_code'])
 
-    def get_url(self, video):
-        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
-        return u"http://vimeo.com/api/v2/video/%s.json" % video_id
+    url_format = u"http://vimeo.com/api/v2/video/{video_id}.json"
 
-    def process(self, response):
+    def get_url_data(self, url):
+        match = self.url_re.match(url)
+        if match:
+            return match.groupdict()
+
+        raise UnhandledURL(url)
+
+    def get_video_data(self, response):
         parsed = json.loads(response.text)[0]
         return VimeoSuite.simple_api_video_to_data(parsed)
 
 
-class VimeoScrapeMethod(SuiteMethod):
+class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
     fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
                   'embed_code', 'file_url', 'file_url_mimetype',
                   'file_url_expires'])
 
-    def get_url(self, video):
-        video_id = VimeoSuite.video_regex.match(video.url).group('video_id')
-        return u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id
+    url_format = u"http://www.vimeo.com/moogaloop/load/clip:{video_id}"
 
-    def process(self, response):
+    def get_url_data(self, url):
+        match = self.url_re.match(url)
+        if match:
+            return match.groupdict()
+
+        raise UnhandledURL(url)
+
+    def get_video_data(self, response):
         doc = minidom.parseString(response.text)
         error_id = doc.getElementsByTagName('error_id').item(0)
         if (error_id is not None and
@@ -503,16 +528,7 @@ class VimeoSuite(BaseSuite):
     API key is required for this level of access.
 
     """
-    video_regex = re.compile(r'https?://([^/]+\.)?vimeo.com/(?P<video_id>\d+)')
-    api_regex = re.compile((r'http://(?:www\.)?vimeo.com/api/v./'
-                            r'(?:(?P<collection>channel|group)s/)?'
-                            r'(?P<name>\w+)'
-                            r'(?:/(?P<type>videos|likes))\.json'))
-    _tag_re = re.compile(r'>([\w ]+)</a>')
-
-
-    methods = (OEmbedMethod(u"http://vimeo.com/api/oembed.json"),
-               VimeoApiMethod(), VimeoScrapeMethod())
+    loader_classes = (VimeoOEmbedLoader, VimeoApiLoader, VimeoScrapeLoader)
     feed_class = VimeoFeed
     search_class = VimeoSearch
 

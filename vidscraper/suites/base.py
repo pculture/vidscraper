@@ -23,23 +23,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
 import json
 import operator
 import re
-import urllib
-import urllib2
-
-import feedparser
-import requests
-try:
-    from requests import async
-except RuntimeError:
-    async = None
 
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch
-from vidscraper.utils.feedparser import (struct_time_to_datetime,
-                                         get_item_thumbnail_url)
 from vidscraper.videos import Video
 
 
@@ -117,7 +105,7 @@ class SuiteRegistry(object):
         if require_loaders:
             raise UnhandledURL(url)
 
-        return Video(url, fields=fields, api_keys=api_keys)
+        return Video(url, fields=fields)
 
     def get_feed(self, url, last_modified=None, etag=None, start_index=1,
                  max_results=None, video_fields=None, api_keys=None):
@@ -234,7 +222,7 @@ class BaseSuite(object):
         Returns a set of all of the fields we could possibly get from this
         suite.
         """
-        return reduce(operator.or_, (m.fields for m in self.methods))
+        return reduce(operator.or_, (l.fields for l in self.loader_classes))
 
     def handles_video_url(self, url):
         """
@@ -281,7 +269,7 @@ class BaseSuite(object):
             loaders.append(loader)
         if not loaders:
             raise UnhandledURL(url)
-        return Video(url, self, *args, **kwargs)
+        return Video(url, loaders=loaders, fields=fields)
 
     def get_feed(self, url, *args, **kwargs):
         """Returns an instance of :attr:`feed_class`."""

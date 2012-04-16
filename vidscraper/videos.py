@@ -24,8 +24,10 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
+import itertools
 import json
 import math
+import operator
 import urllib
 import urllib2
 
@@ -210,15 +212,15 @@ class Video(object):
         best_loaders = self.get_best_loaders()
 
         if async is None:
-            responses = [requests.get(l.get_url(video), timeout=3)
+            responses = [requests.get(l.get_url(), timeout=3)
                          for l in best_loaders]
         else:
-            responses = async.map([async.get(l.get_url(video), timeout=3)
+            responses = async.map([async.get(l.get_url(), timeout=3)
                                    for l in best_loaders])
 
         data = {}
         for loader, response in itertools.izip(best_loaders, responses):
-            data.update(loader.process(response))
+            data.update(loader.get_video_data(response))
 
         return data
 
@@ -252,13 +254,11 @@ class Video(object):
         return json.dumps(video_data, **kwargs)
 
     @classmethod
-    def from_json(cls, json_data, suite=None, api_keys=None, **kwargs):
+    def from_json(cls, json_data, api_keys=None, **kwargs):
         """
         De-JSON-ifies a video.
 
         :param json_data: A JSON-formatted string.
-        :param suite: ``None``, or a suite to instantiate the deserialized
-                      video with.
         :param api_keys: ``None``, or a dictionary of API keys to instantiate
                          the deserialized video with.
 
@@ -267,8 +267,11 @@ class Video(object):
         """
         video_data = json.loads(json_data, **kwargs)
 
-        video = cls(video_data['url'], fields=video_data['data'],
-                    suite=suite, api_keys=api_keys)
+        from vidscraper.suites import registry
+        video = registry.get_video(video_data['url'],
+                                   fields=video_data['data'],
+                                   api_keys=api_keys,
+                                   require_loaders=False)
 
         field_data = video_data['data']
         for field in cls._datetime_fields:
@@ -305,7 +308,8 @@ class VideoLoader(object):
 
     def __init__(self, url, api_keys=None):
         self.url = url
-        self.url_data = self.get_url_data(video)
+        self.api_keys = api_keys if api_keys is not None else {}
+        self.url_data = self.get_url_data(url)
 
     def get_url_data(self, url):
         """
@@ -337,11 +341,13 @@ class VideoLoader(object):
         return {}
 
 
-def OEmbedLoader(VideoLoader):
+class OEmbedLoader(VideoLoader):
     """
     Basic OEmbed loader. Subclasses just need to provide an endpoint.
 
     """
+    fields = set(('title', 'user', 'user_url', 'thumbnail_url', 'embed_code'))
+
     #: The endpoint for the OEmbed API.
     endpoint = None
 

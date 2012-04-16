@@ -31,36 +31,71 @@ import urlparse
 import feedparser
 
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch
-from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
-from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
-                                        get_first_accepted_enclosure
+from vidscraper.suites import BaseSuite, registry
+from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
+                                         get_first_accepted_enclosure)
 from vidscraper.utils.http import clean_description_html
-from vidscraper.videos import FeedparserVideoFeed, FeedparserVideoSearch
+from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
+                               VideoLoader, OEmbedLoader)
 
 
-class BlipApiMethod(SuiteMethod):
+class BlipPathMixin(object):
+    new_path_re = re.compile(r'^/(?P<user>[\w-]+)/(?P<slug>[\w-]+)-(?P<post_id>\d+)/?$')
+    old_path_re = re.compile(r'^/file/(?P<item_id>\d+)/?$', re.I)
+
+    new_url_format = "http://blip.tv/rss/{post_id}"
+    old_url_format = "http://blip.tv/file/{item_id}?skin=rss"
+
+    def get_url_data(self, url):
+        parsed_url = urlparse.urlsplit(url)
+        if (parsed_url.scheme in ('http', 'https') and
+            parsed_url.netloc in ('blip.tv', 'www.blip.tv')):
+            match = self.new_path_re.match(parsed_url.path)
+            if match:
+                return match.groupdict()
+            else:
+                match = self.old_path_re.match(parsed_url.path)
+                if match:
+                    return match.groupdict()
+
+        raise UnhandledURL(url)
+
+    def _format_url(self, **kwargs):
+        try:
+            return self.new_url_format.format(**kwargs)
+        except KeyError:
+            return self.old_url_format.format(**kwargs)
+
+    def get_url(self):
+        return self._format_url(**self.url_data)
+
+
+class BlipApiLoader(BlipPathMixin, VideoLoader):
     fields = set(['guid', 'link', 'title', 'description', 'file_url',
                   'embed_code', 'thumbnail_url', 'tags', 'publish_datetime',
                   'user', 'user_url', 'license'])
 
-    def get_url(self, video):
-        parsed_url = urlparse.urlsplit(video.url)
-        new_match = BlipSuite.new_video_path_re.match(parsed_url.path)
-        if new_match:
-            post_id = int(new_match.group('post_id'))
-            new_parsed_url = parsed_url[:2] + ("/rss/%d" % post_id, None,
-                                               None)
-        elif BlipSuite.old_video_path_re.match(parsed_url.path):
-            new_parsed_url = parsed_url[:3] + ("skin=rss", None)
-        else:
-            # We shouldn't ever get here, so raise an exception.
-            raise UnhandledURL(video.url)
-
-        return urlparse.urlunsplit(new_parsed_url)
-
-    def process(self, response):
+    def get_video_data(self, response):
         parsed = feedparser.parse(response.text.encode('utf-8'))
         return BlipSuite.parse_feed_entry(parsed.entries[0])
+
+
+class BlipOEmbedLoader(BlipPathMixin, OEmbedLoader):
+    endpoint = u"http://blip.tv/oembed/"
+    # Technically, Blip would accept http://blip.tv/a/a-{post_id}, but we
+    # shouldn't try to leverage that if we don't need to.
+    new_url_format = u"http://blip.tv/{user}/{slug}-{post_id}"
+
+    def get_url_data(self, url):
+        url_data = super(BlipOEmbedLoader, self).get_url_data(url)
+        try:
+            new_url = self._format_url(**url_data)
+        except KeyError:
+            raise UnhandledURL(url)
+        return OEmbedLoader.get_url_data(self, new_url)
+
+    def get_url(self):
+        return OEmbedLoader.get_url(self)
 
 
 class BlipFeed(FeedparserVideoFeed):
@@ -117,28 +152,9 @@ class BlipSearch(FeedparserVideoSearch):
 
 
 class BlipSuite(BaseSuite):
-    new_video_path_re = re.compile(r'^/[\w-]+/[\w-]+-(?P<post_id>\d+)/?$')
-    old_video_path_re = re.compile(r'^/file/\d+/?$', re.I)
-
-    methods = (OEmbedMethod(u"http://blip.tv/oembed/"), BlipApiMethod())
-
+    loader_classes = (BlipOEmbedLoader, BlipApiLoader)
     feed_class = BlipFeed
     search_class = BlipSearch
-
-    def handles_video_url(self, url):
-        parsed_url = urlparse.urlsplit(url)
-        if parsed_url.scheme not in ('http', 'https'):
-            return False
-
-        if (not parsed_url.netloc == 'blip.tv' and
-            not parsed_url.netloc.endswith('.blip.tv')):
-            return False
-
-        if (self.new_video_path_re.match(parsed_url.path) or
-            self.old_video_path_re.match(parsed_url.path)):
-            return True
-
-        return False
 
     @staticmethod
     def parse_feed_entry(entry):

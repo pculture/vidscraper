@@ -25,7 +25,7 @@
 
 import datetime
 
-from vidscraper.suites.fora import ForaSuite, ForaScrapeMethod
+from vidscraper.suites.fora import ForaSuite, ForaScrapeLoader
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -37,19 +37,18 @@ class ForaTestCase(BaseTestCase):
 class ForaScrapeTestCase(ForaTestCase):
     def setUp(self):
         ForaTestCase.setUp(self)
-        self.method = ForaScrapeMethod()
-        self.base_url = "http://fora.tv/2011/08/08/Cradle_of_Gold_Hiram_Bingham_and_Machu_Picchu"
-        self.video = self.suite.get_video(url=self.base_url)
+        self.url = "http://fora.tv/2011/08/08/Cradle_of_Gold_Hiram_Bingham_and_Machu_Picchu"
+        self.loader = ForaScrapeLoader(self.url)
 
-    def test_get_url(self):
-        self.assertEqual(self.method.get_url(self.video), self.base_url)
+    def test_valid_urls(self):
+        self.assertEqual(self.loader.get_url(), self.url)
 
-    def test_process(self):
+    def test_get_video_data(self):
         scrape_file = self.get_data_file('fora/scrape.html')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.method.fields)
+        self.assertEqual(set(data), self.loader.fields)
         expected_data = {'embed_code': u"""<object width="400" height="264">
     <param name="flashvars" value="cliptype=full&clipid=%5Bu%2713996%27%5D&ie=%5Bu%27f%27%5D&webhost=%5Bu%27fora.tv%27%5D">
     <param name="movie" value="http://fora.tv/embedded_player">
@@ -74,7 +73,7 @@ class ForaScrapeTestCase(ForaTestCase):
     def test_process_description_html(self):
         scrape_file = self.get_data_file('fora/scrape2.html')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertEqual(data['description'], "Join Cornel West, Leith "
             "Mullings, Stanley Aronowitz, and Gary Younge as they discuss "
             "Manning Marable's new biography, <i>Malcolm X: A Life of "

@@ -481,15 +481,15 @@ class VideoFeed(BaseVideoIterator):
     populated with :meth:`data_from_response`. Fields which have not been
     populated will be ``None``.
 
-    .. attr:: video_count
+    .. attribute:: video_count
         The estimated number of videos for the feed.
 
-    .. attr:: last_modified
+    .. attribute:: last_modified
         A python datetime representing when the feed was last changed. Before
-        loading the feed, this will be equal to the ``last_modified`` date the
-        :class:`VideoFeed` was instantiated with.
+        loading the feed, this will be equal to the ``last_modified`` date
+        the :class:`VideoFeed` was instantiated with.
 
-    .. attr:: etag
+    .. attribute:: etag
         A marker representing a feed's current state. Before loading the feed,
         this will be equal to the ``etag`` the :class:`VideoFeed` was
         instantiated with.
@@ -571,7 +571,7 @@ class VideoSearch(BaseVideoIterator):
     populated with :meth:`data_from_response`. Fields which have not been
     populated will be ``None``.
 
-    .. attr:: video_count
+    .. attribute:: video_count
         The estimated number of total videos for this search.
 
     """

@@ -35,7 +35,8 @@ import requests
 from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites.youtube import (YouTubeSuite, YouTubeApiLoader,
                                        YouTubeScrapeLoader,
-                                       YouTubeOEmbedLoader)
+                                       YouTubeOEmbedLoader,
+                                       YouTubePathMixin)
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -91,13 +92,27 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
                  'thumbnail_url', 'link', 'user', 'guid',
                  'publish_datetime', 'tags', 'file_url_expires', 'license']))
 
-    def test_short_url(self):
-        url = 'http://youtu.be/J_DV9b0x7v4'
-        self.assertTrue(self.suite.handles_video_url(url))
 
-    def test_jumbled_param_url(self):
-        url = 'http://www.youtube.com/watch?feature=youtu.be&v=J_DV9b0x7v4'
-        self.assertTrue(self.suite.handles_video_url(url))
+class YouTubePathTestCase(YouTubeTestCase):
+    def test_valid_urls(self):
+        mixin = YouTubePathMixin()
+        valid_urls = (
+            ({'video_id': 'J_DV9b0x7v4'},
+             ('http://youtu.be/J_DV9b0x7v4',
+              'http://www.youtube.com/watch?feature=youtu.be&v=J_DV9b0x7v4',
+              'http://www.youtube.com/watch?&v=J_DV9b0x7v4')),
+            ({'video_id': "ZSh_c7-fZqQ"},
+             ("http://www.youtube.com/watch?v=ZSh_c7-fZqQ",)),
+        )
+        invalid_urls = (
+            'http://youtube.com/'
+        )
+        for expected, urls in valid_urls:
+            for url in urls:
+                self.assertEqual(mixin.get_url_data(url), expected)
+
+        for url in invalid_urls:
+            self.assertRaises(UnhandledURL, mixin.get_url_data, url)
 
 
 class YouTubeOembedTestCase(YouTubeTestCase):

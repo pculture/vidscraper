@@ -36,7 +36,7 @@ from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_first_accepted_enclosure)
 from vidscraper.utils.http import clean_description_html
 from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
-                               VideoLoader, OEmbedLoader)
+                               VideoLoader, OEmbedMixin)
 
 
 class BlipPathMixin(object):
@@ -60,14 +60,11 @@ class BlipPathMixin(object):
 
         raise UnhandledURL(url)
 
-    def _format_url(self, **kwargs):
-        try:
-            return self.new_url_format.format(**kwargs)
-        except KeyError:
-            return self.old_url_format.format(**kwargs)
-
     def get_url(self):
-        return self._format_url(**self.url_data)
+        try:
+            return self.new_url_format.format(**self.url_data)
+        except KeyError:
+            return self.old_url_format.format(**self.url_data)
 
 
 class BlipApiLoader(BlipPathMixin, VideoLoader):
@@ -80,22 +77,11 @@ class BlipApiLoader(BlipPathMixin, VideoLoader):
         return BlipSuite.parse_feed_entry(parsed.entries[0])
 
 
-class BlipOEmbedLoader(BlipPathMixin, OEmbedLoader):
+class BlipOEmbedLoader(OEmbedMixin, BlipPathMixin, VideoLoader):
     endpoint = u"http://blip.tv/oembed/"
     # Technically, Blip would accept http://blip.tv/a/a-{post_id}, but we
     # shouldn't try to leverage that if we don't need to.
     new_url_format = u"http://blip.tv/{user}/{slug}-{post_id}"
-
-    def get_url_data(self, url):
-        url_data = super(BlipOEmbedLoader, self).get_url_data(url)
-        try:
-            new_url = self._format_url(**url_data)
-        except KeyError:
-            raise UnhandledURL(url)
-        return OEmbedLoader.get_url_data(self, new_url)
-
-    def get_url(self):
-        return OEmbedLoader.get_url(self)
 
 
 class BlipFeed(FeedparserVideoFeed):

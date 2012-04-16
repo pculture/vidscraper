@@ -30,7 +30,7 @@ import urlparse
 
 from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry
-from vidscraper.videos import VideoLoader, OEmbedLoader
+from vidscraper.videos import VideoLoader, OEmbedMixin
 
 
 class UstreamPathMixin(object):
@@ -80,12 +80,9 @@ class UstreamApiLoader(UstreamPathMixin, VideoLoader):
         return data
 
 
-class UstreamOEmbedLoader(UstreamPathMixin, OEmbedLoader):
+class UstreamOEmbedLoader(OEmbedMixin, UstreamPathMixin, VideoLoader):
     endpoint = "http://www.ustream.tv/oembed/"
-
-    def get_url_data(self, url):
-        UstreamPathMixin.get_url_data(self, url)
-        return OEmbedLoader.get_url_data(self, url)
+    url_format = "http://www.ustream.tv/recorded/{id}"
 
 
 class UstreamSuite(BaseSuite):

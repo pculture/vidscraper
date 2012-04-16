@@ -44,7 +44,7 @@ from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedLoader)
+                               OEmbedMixin)
 
 
 # Information on the YouTube API can be found at the following links:
@@ -52,18 +52,35 @@ from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
 # * https://developers.google.com/youtube/2.0/reference
 
 
-class YouTubeApiLoader(VideoLoader):
+class YouTubePathMixin(object):
+    short_path_re = re.compile(r"^/(?P<video_id>[\w-]+)/?$")
+
+    def get_url_data(self, url):
+        parsed = urlparse.urlsplit(url)
+        video_id = None
+        if parsed.scheme in ('http', 'https'):
+            if (parsed.netloc in ('www.youtube.com', 'youtube.com') and
+                parsed.path in ('/watch', '/watch/')):
+                qsd = urlparse.parse_qs(parsed.query)
+                try:
+                    return {
+                        'video_id': qsd['v'][0]
+                    }
+                except (KeyError, IndexError):
+                    pass
+            elif parsed.netloc == 'youtu.be':
+                match = self.short_path_re.match(parsed.path)
+                if match:
+                    return match.groupdict()
+        raise UnhandledURL(url)
+
+
+class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
     fields = set(('link', 'title', 'description', 'guid', 'thumbnail_url',
                   'publish_datetime', 'tags', 'flash_enclosure_url', 'user',
                   'user_url', 'license'))
 
     url_format = u"http://gdata.youtube.com/feeds/api/videos/{video_id}?v=2&alt=json"
-
-    def get_url_data(self, url):
-        match = YouTubeSuite.video_regex.match(url)
-        if match:
-            return match.groupdict()
-        raise UnhandledURL(url)
 
     def get_video_data(self, response):
         if response.status_code in (401, 403):
@@ -73,7 +90,7 @@ class YouTubeApiLoader(VideoLoader):
         return YouTubeSuite.parse_api_video(entry)
 
 
-class YouTubeScrapeLoader(VideoLoader):
+class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
                   'file_url', 'file_url_mimetype', 'file_url_expires'))
 
@@ -90,12 +107,6 @@ class YouTubeScrapeLoader(VideoLoader):
         ]
 
     url_format = u"http://www.youtube.com/get_video_info?video_id={video_id}&el=embedded&ps=default&eurl="
-
-    def get_url_data(self, url):
-        match = YouTubeSuite.video_regex.match(url)
-        if match:
-            return match.groupdict()
-        raise UnhandledURL(url)
 
     def get_video_data(self, response):
         if response.status_code == 402:
@@ -146,13 +157,9 @@ class YouTubeScrapeLoader(VideoLoader):
         return data
 
 
-class YouTubeOEmbedLoader(OEmbedLoader):
+class YouTubeOEmbedLoader(OEmbedMixin, YouTubePathMixin, VideoLoader):
     endpoint = u"http://www.youtube.com/oembed"
-
-    def get_url_data(self, url):
-        if not YouTubeSuite.video_regex.match(url):
-            raise UnhandledURL(url)
-        return super(YouTubeOEmbedLoader, self).get_url_data(url)
+    url_format = u"http://www.youtube.com/watch?v={video_id}"
 
     def get_video_data(self, response):
         if response.status_code in (requests.codes.unauthorized,
@@ -265,10 +272,6 @@ class YouTubeSearch(VideoSearch):
 
 
 class YouTubeSuite(BaseSuite):
-    video_regex = re.compile(r'^https?://('
-                             r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v='
-                             r'|youtu.be/)(?P<video_id>[\w-]+)')
-
     loader_classes = (YouTubeOEmbedLoader, YouTubeApiLoader,
                       YouTubeScrapeLoader)
 

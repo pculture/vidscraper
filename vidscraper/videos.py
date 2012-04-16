@@ -341,9 +341,11 @@ class VideoLoader(object):
         return {}
 
 
-class OEmbedLoader(VideoLoader):
+class OEmbedMixin(object):
     """
-    Basic OEmbed loader. Subclasses just need to provide an endpoint.
+    Mixin to provide basic OEmbed functionality. Subclasses need to provide an
+    endpoint, define a get_url_data method, and provide a url_format - for the
+    video URL, not the oembed API URL.
 
     """
     fields = set(('title', 'user', 'user_url', 'thumbnail_url', 'embed_code'))
@@ -351,13 +353,15 @@ class OEmbedLoader(VideoLoader):
     #: The endpoint for the OEmbed API.
     endpoint = None
 
-    url_format = "{endpoint}?url={url}"
+    full_url_format = "{endpoint}?url={url}"
 
-    def get_url_data(self, url):
-        return {
-            'url': urllib.quote_plus(url),
-            'endpoint': self.endpoint
-        }
+    def get_video_url(self):
+        return super(OEmbedMixin, self).get_url()
+
+    def get_url(self):
+        url = self.get_video_url()
+        return self.full_url_format.format(url=urllib.quote_plus(url),
+                                           endpoint=self.endpoint)
 
     def get_video_data(self, response):
         parsed = json.loads(response.text)

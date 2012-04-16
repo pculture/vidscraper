@@ -28,7 +28,7 @@ import json
 
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_API_DATA
-from vidscraper.videos import Video, OEmbedLoader
+from vidscraper.videos import Video, OEmbedMixin
 
 
 class VideoTestCase(BaseTestCase):
@@ -69,7 +69,7 @@ class VideoTestCase(BaseTestCase):
         self.assertEqual(dict(video.items()), dict(new_video.items()))
 
 
-class OEmbedLoaderTestCase(BaseTestCase):
+class OEmbedMixinTestCase(BaseTestCase):
     def test_get_video_data(self):
         expected_data = {
             'title': "Scaling the World's Largest Django Application",
@@ -85,7 +85,7 @@ class OEmbedLoaderTestCase(BaseTestCase):
         }
         oembed_file = self.get_data_file('oembed.json')
         response = self.get_response(oembed_file.read())
-        loader = OEmbedLoader("url")
+        loader = OEmbedMixin()
         data = loader.get_video_data(response)
         self.assertEqual(set(data), set(loader.fields))
         self.assertEqual(set(data), set(expected_data))

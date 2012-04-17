@@ -241,17 +241,17 @@ class Video(object):
         >>> v.to_json(indent=2, sort_keys=True)
 
         """
-        field_data = dict(self.items())
+        data = dict(self.items())
         for field in self._datetime_fields:
-            dt = field_data.get(field, None)
+            dt = data.get(field, None)
             if isinstance(dt, datetime):
-                field_data[field] = dt.isoformat()
+                data[field] = dt.isoformat()
 
-        video_data = {
+        data.update({
             'url': self.url,
-            'data': field_data
-        }
-        return json.dumps(video_data, **kwargs)
+            'fields': self.fields
+        })
+        return json.dumps(data, **kwargs)
 
     @classmethod
     def from_json(cls, json_data, api_keys=None, **kwargs):
@@ -265,27 +265,26 @@ class Video(object):
         Any additional keyword arguments will be passed to :func:`json.loads`.
 
         """
-        video_data = json.loads(json_data, **kwargs)
+        data = json.loads(json_data, **kwargs)
 
         from vidscraper.suites import registry
-        video = registry.get_video(video_data['url'],
-                                   fields=video_data['data'],
+        video = registry.get_video(data['url'],
+                                   fields=data['fields'],
                                    api_keys=api_keys,
                                    require_loaders=False)
 
-        field_data = video_data['data']
         for field in cls._datetime_fields:
-            dt = field_data.get(field, None)
+            dt = data.get(field, None)
             if isinstance(dt, basestring):
                 format = "%Y-%m-%dT%H:%M:%S"
                 try:
-                    field_data[field] = datetime.strptime(dt, format)
+                    data[field] = datetime.strptime(dt, format)
                 except ValueError:
                     # Maybe it has microseconds?
                     format = "%Y-%m-%dT%H:%M:%S.%f"
-                    field_data[field] = datetime.strptime(dt, format)
+                    data[field] = datetime.strptime(dt, format)
 
-        video._apply(field_data)
+        video._apply(data)
         return video
 
 

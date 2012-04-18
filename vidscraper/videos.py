@@ -346,6 +346,10 @@ class OEmbedMixin(object):
     endpoint, define a get_url_data method, and provide a url_format - for the
     video URL, not the oembed API URL.
 
+    This is provided as a mixin rather than a subclass of :class:`VideoLoader`
+    so that it can be used on top of any class or mixin that overrides
+    :meth:`VideoLoader.get_url`.
+
     """
     fields = set(('title', 'user', 'user_url', 'thumbnail_url', 'embed_code'))
 

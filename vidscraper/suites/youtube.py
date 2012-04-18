@@ -44,7 +44,7 @@ from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedMixin)
+                               OEmbedLoaderMixin)
 
 
 # Information on the YouTube API can be found at the following links:
@@ -157,7 +157,7 @@ class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
         return data
 
 
-class YouTubeOEmbedLoader(OEmbedMixin, YouTubePathMixin, VideoLoader):
+class YouTubeOEmbedLoader(OEmbedLoaderMixin, YouTubePathMixin, VideoLoader):
     endpoint = u"http://www.youtube.com/oembed"
     url_format = u"http://www.youtube.com/watch?v={video_id}"
 

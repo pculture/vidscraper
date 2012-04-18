@@ -36,7 +36,7 @@ from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_first_accepted_enclosure)
 from vidscraper.utils.http import clean_description_html
 from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
-                               VideoLoader, OEmbedMixin)
+                               VideoLoader, OEmbedLoaderMixin)
 
 
 class BlipPathMixin(object):
@@ -77,7 +77,7 @@ class BlipApiLoader(BlipPathMixin, VideoLoader):
         return BlipSuite.parse_feed_entry(parsed.entries[0])
 
 
-class BlipOEmbedLoader(OEmbedMixin, BlipPathMixin, VideoLoader):
+class BlipOEmbedLoader(OEmbedLoaderMixin, BlipPathMixin, VideoLoader):
     endpoint = u"http://blip.tv/oembed/"
     # Technically, Blip would accept http://blip.tv/a/a-{post_id}, but we
     # shouldn't try to leverage that if we don't need to.

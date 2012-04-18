@@ -44,7 +44,7 @@ from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.utils.http import open_url_while_lying_about_agent
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedMixin)
+                               OEmbedLoaderMixin)
 
 
 # Documentation for the Vimeo APIs:
@@ -55,7 +55,7 @@ class VimeoPathMixin(object):
     url_re = re.compile(r'https?://(?:[^/]+\.)?vimeo.com/(?P<video_id>\d+)')
 
 
-class VimeoOEmbedLoader(VimeoPathMixin, OEmbedMixin, VideoLoader):
+class VimeoOEmbedLoader(VimeoPathMixin, OEmbedLoaderMixin, VideoLoader):
     endpoint = u"http://vimeo.com/api/oembed.json"
 
     def get_url_data(self, url):

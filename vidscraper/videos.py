@@ -340,7 +340,7 @@ class VideoLoader(object):
         return {}
 
 
-class OEmbedMixin(object):
+class OEmbedLoaderMixin(object):
     """
     Mixin to provide basic OEmbed functionality. Subclasses need to provide an
     endpoint, define a get_url_data method, and provide a url_format - for the
@@ -359,7 +359,7 @@ class OEmbedMixin(object):
     full_url_format = "{endpoint}?url={url}"
 
     def get_video_url(self):
-        return super(OEmbedMixin, self).get_url()
+        return super(OEmbedLoaderMixin, self).get_url()
 
     def get_url(self):
         url = self.get_video_url()

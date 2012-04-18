@@ -30,8 +30,7 @@ import urlparse
 import feedparser
 
 from vidscraper.exceptions import UnhandledSearch, UnhandledURL
-from vidscraper.suites import OEmbedMethod
-from vidscraper.suites.blip import BlipSuite, BlipApiMethod
+from vidscraper.suites.blip import BlipSuite, BlipApiLoader, BlipOEmbedLoader
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.videos import Video
 
@@ -63,39 +62,61 @@ class BlipTestCase(BaseTestCase):
 
 
 class BlipApiTestCase(BlipTestCase):
-    def setUp(self):
-        BlipTestCase.setUp(self)
-        self.method = BlipApiMethod()
-        self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
-        self.video = self.suite.get_video(url=self.base_url)
-
-    def test_get_url(self):
+    def test_valid_urls(self):
         valid_urls = (
             ('http://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
              'http://blip.tv/rss/4154053'),
-            ('http://blip.tv/file/4154053',
-             'http://blip.tv/file/4154053?skin=rss'),
-            ('http://blip.tv/file/4154053?foo=bar',
-             'http://blip.tv/file/4154053?skin=rss'),
+            ('https://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/rss/4154053'),
+            ('http://blip.tv/file/4135225',
+             'http://blip.tv/file/4135225?skin=rss'),
+            ('https://blip.tv/file/4135225',
+             'http://blip.tv/file/4135225?skin=rss'),
+            ('http://blip.tv/file/4135225?foo=bar',
+             'http://blip.tv/file/4135225?skin=rss'),
         )
         invalid_urls = (
             'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
             'http://blip.tv/dashboard/episode/5944048',
         )
         for url, expected in valid_urls:
-            video = self.suite.get_video(url=url)
-            self.assertEquals(self.method.get_url(video), expected)
+            loader = BlipApiLoader(url)
+            self.assertEquals(loader.get_url(), expected)
 
         for url in invalid_urls:
-            video = self.suite.get_video(url=url)
-            self.assertRaises(UnhandledURL, self.method.get_url, video)
+            self.assertRaises(UnhandledURL, BlipApiLoader, url)
 
-    def test_process(self):
+    def test_get_video_data(self):
+        loader = BlipApiLoader('http://blip.tv/file/4135225')
         api_file = self.get_data_file('blip/api.rss')
         response = self.get_response(api_file.read())
-        data = self.method.process(response)
-        self.assertEqual(set(data), self.method.fields)
+        data = loader.get_video_data(response)
+        self.assertEqual(set(data), loader.fields)
         self.assertEqual(data, DISQUS_DATA)
+
+
+class BlipOEmbedTestCase(BlipTestCase):
+    def test_valid_urls(self):
+        valid_urls = (
+            ('http://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Fdjangocon%2Fscaling-the-world-s-largest-django-application-4154053'),
+            ('https://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Fdjangocon%2Fscaling-the-world-s-largest-django-application-4154053'),
+            ('http://blip.tv/file/4135225',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Ffile%2F4135225%3Fskin%3Drss'),
+            ('https://blip.tv/file/4135225',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Ffile%2F4135225%3Fskin%3Drss'),
+        )
+        invalid_urls = (
+            'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
+            'http://blip.tv/dashboard/episode/5944048',
+        )
+        for url, expected in valid_urls:
+            loader = BlipOEmbedLoader(url)
+            self.assertEquals(loader.get_url(), expected)
+
+        for url in invalid_urls:
+            self.assertRaises(UnhandledURL, BlipOEmbedLoader, url)
 
 
 class BlipFeedTestCase(BlipTestCase):

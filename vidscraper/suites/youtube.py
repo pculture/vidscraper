@@ -40,10 +40,11 @@ feedparser._FeedParserMixin.namespaces[
 import requests
 
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch
-from vidscraper.suites import BaseSuite, registry, SuiteMethod, OEmbedMethod
+from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
-from vidscraper.videos import VideoFeed, VideoSearch
+from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
+                               OEmbedLoaderMixin)
 
 
 # Information on the YouTube API can be found at the following links:
@@ -51,16 +52,37 @@ from vidscraper.videos import VideoFeed, VideoSearch
 # * https://developers.google.com/youtube/2.0/reference
 
 
-class YouTubeApiMethod(SuiteMethod):
+class YouTubePathMixin(object):
+    short_path_re = re.compile(r"^/(?P<video_id>[\w-]+)/?$")
+
+    def get_url_data(self, url):
+        parsed = urlparse.urlsplit(url)
+        video_id = None
+        if parsed.scheme in ('http', 'https'):
+            if (parsed.netloc in ('www.youtube.com', 'youtube.com') and
+                parsed.path in ('/watch', '/watch/')):
+                qsd = urlparse.parse_qs(parsed.query)
+                try:
+                    return {
+                        'video_id': qsd['v'][0]
+                    }
+                except (KeyError, IndexError):
+                    pass
+            elif parsed.netloc == 'youtu.be':
+                match = self.short_path_re.match(parsed.path)
+                if match:
+                    return match.groupdict()
+        raise UnhandledURL(url)
+
+
+class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
     fields = set(('link', 'title', 'description', 'guid', 'thumbnail_url',
                   'publish_datetime', 'tags', 'flash_enclosure_url', 'user',
                   'user_url', 'license'))
 
-    def get_url(self, video):
-        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
-        return "http://gdata.youtube.com/feeds/api/videos/{0}?v=2&alt=json".format(video_id)
+    url_format = u"http://gdata.youtube.com/feeds/api/videos/{video_id}?v=2&alt=json"
 
-    def process(self, response):
+    def get_video_data(self, response):
         if response.status_code in (401, 403):
             return {'is_embeddable': False}
         parsed = json.loads(response.text)
@@ -68,7 +90,7 @@ class YouTubeApiMethod(SuiteMethod):
         return YouTubeSuite.parse_api_video(entry)
 
 
-class YouTubeScrapeMethod(SuiteMethod):
+class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
                   'file_url', 'file_url_mimetype', 'file_url_expires'))
 
@@ -84,12 +106,9 @@ class YouTubeScrapeMethod(SuiteMethod):
         (5, u'video/x-flv'), # 400x240
         ]
 
-    def get_url(self, video):
-        video_id = YouTubeSuite.video_regex.match(video.url).group('video_id')
-        return (u"http://www.youtube.com/get_video_info?video_id=%s&"
-                "el=embedded&ps=default&eurl=" % video_id)
+    url_format = u"http://www.youtube.com/get_video_info?video_id={video_id}&el=embedded&ps=default&eurl="
 
-    def process(self, response):
+    def get_video_data(self, response):
         if response.status_code == 402:
             # 402: Payment required.
             # A note in the previous code said this could happen when too many
@@ -138,14 +157,17 @@ class YouTubeScrapeMethod(SuiteMethod):
         return data
 
 
-class YouTubeOEmbedMethod(OEmbedMethod):
-    def process(self, response):
+class YouTubeOEmbedLoader(OEmbedLoaderMixin, YouTubePathMixin, VideoLoader):
+    endpoint = u"http://www.youtube.com/oembed"
+    url_format = u"http://www.youtube.com/watch?v={video_id}"
+
+    def get_video_data(self, response):
         if response.status_code in (requests.codes.unauthorized,
                                     requests.codes.forbidden):
             return {'is_embeddable': False}
         if response.status_code == 404:
             return {}
-        return OEmbedMethod.process(self, response)
+        return super(YouTubeOEmbedLoader, self).get_video_data(response)
 
 
 class YouTubeFeed(VideoFeed):
@@ -250,12 +272,8 @@ class YouTubeSearch(VideoSearch):
 
 
 class YouTubeSuite(BaseSuite):
-    video_regex = re.compile(r'^https?://('
-                             r'([^/]+\.)?youtube.com/(?:watch)?\?(\w+=[^&]+&)*v='
-                             r'|youtu.be/)(?P<video_id>[\w-]+)')
-
-    methods = (YouTubeOEmbedMethod("http://www.youtube.com/oembed"),
-               YouTubeApiMethod(), YouTubeScrapeMethod())
+    loader_classes = (YouTubeOEmbedLoader, YouTubeApiLoader,
+                      YouTubeScrapeLoader)
 
     feed_class = YouTubeFeed
     search_class = YouTubeSearch

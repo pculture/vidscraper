@@ -23,23 +23,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import itertools
 import json
 import operator
 import re
-import urllib
-import urllib2
-
-import feedparser
-import requests
-try:
-    from requests import async
-except RuntimeError:
-    async = None
 
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch
-from vidscraper.utils.feedparser import (struct_time_to_datetime,
-                                         get_item_thumbnail_url)
 from vidscraper.videos import Video
 
 
@@ -91,16 +79,17 @@ class SuiteRegistry(object):
             self._suites.remove(self._suite_dict[suite])
             del self._suite_dict[suite]
 
-    def get_video(self, url, fields=None, api_keys=None, require_suite=True):
+    def get_video(self, url, fields=None, api_keys=None, require_loaders=True):
         """
         Automatically determines which suite to use and scrapes ``url`` with
         that suite. The parameters ``url``, ``fields``, and ``api_keys`` have
         the same meaning as for :class:`.Video`.
 
-        :param require_suite: If ``True``, the video will only be returned if
-                              a suite is found. Otherwise,
-                              :exc:`.UnhandledURL` will be raised.
-        :type require_suite: boolean
+        :param require_loaders: If ``True``, a video will only be returned if
+                                a suite is found which can provide loaders.
+                                If ``False`` and no suite is found, a video
+                                with no loaders will be returned.
+        :type require_loaders: boolean
         :returns: :class:`.Video` instance.
 
         :raises UnhandledURL: If ``require_suite`` is ``True`` and no
@@ -108,14 +97,15 @@ class SuiteRegistry(object):
 
         """
         for suite in self.suites:
-            if suite.handles_video_url(url):
-                break
-        else:
-            if require_suite:
-                raise UnhandledURL(url)
-            return Video(url, fields=fields, api_keys=api_keys)
+            try:
+                return suite.get_video(url, fields=fields, api_keys=api_keys)
+            except UnhandledURL:
+                pass
 
-        return suite.get_video(url, fields, api_keys)
+        if require_loaders:
+            raise UnhandledURL(url)
+
+        return Video(url, fields=fields)
 
     def get_feed(self, url, last_modified=None, etag=None, start_index=1,
                  max_results=None, video_fields=None, api_keys=None):
@@ -171,62 +161,6 @@ class SuiteRegistry(object):
 registry = SuiteRegistry()
 
 
-class SuiteMethod(object):
-    """
-    This is a base class for suite data-fetching methods (for example, oembed,
-    API, or scraping). Currently, all of the base functionality should be
-    overridden; however, this class should still be subclassed in case shared
-    functionality is added later.
-
-    """
-    #: A set of fields provided by this method.
-    fields = set()
-
-    def get_url(self, video):
-        """
-        Returns the url to fetch for this method. Must be implemented by
-        subclasses.
-
-        """
-        raise NotImplementedError
-
-    def process(self, response):
-        """
-        Parse the :mod:`requests` response into a dictionary mapping
-        :class:`.Video` field names to values. Must be implemented by
-        subclasses.
-
-        """
-        raise NotImplementedError
-
-
-class OEmbedMethod(SuiteMethod):
-    """
-    Basic OEmbed support for any suite.
-
-    :param endpoint: The endpoint url for this suite's oembed API.
-
-    """
-    fields = set(['title', 'user', 'user_url', 'thumbnail_url', 'embed_code'])
-
-    def __init__(self, endpoint):
-        self.endpoint = endpoint
-
-    def get_url(self, video):
-        return u"%s?url=%s" % (self.endpoint, urllib.quote_plus(video.url))
-
-    def process(self, response):
-        parsed = json.loads(response.text)
-        data = {
-            'title': parsed['title'],
-            'user': parsed['author_name'],
-            'user_url': parsed['author_url'],
-            'thumbnail_url': parsed['thumbnail_url'],
-            'embed_code': parsed['html']
-        }
-        return data
-
-
 class BaseSuite(object):
     """
     This is a base class for suites, demonstrating the API which is expected
@@ -242,14 +176,14 @@ class BaseSuite(object):
     #: feed urls to check if they can be handled by this suite.
     feed_regex = None
 
-    #: A list or tuple of :class:`SuiteMethod` instances which will be used to
-    #: populate videos with data. These methods will be attempted in the order
-    #: they are given, so it's a good idea to order them by the effort they
+    #: A list or tuple of :class:`.VideoLoader` classes which will be used to
+    #: populate videos with data. These loaders will be run in the order they
+    #: are given, so it's a good idea to order them by the effort they would
     #: require; for example, OEmbed should generally come first, since the
     #: response is small and easy to parse compared to, say, a page scrape.
     #:
-    #: .. seealso:: :meth:`BaseSuite.run_methods`
-    methods = ()
+    #: .. seealso:: :meth:`.Video.run_loaders`
+    loader_classes = ()
 
     #: A :class:`VideoFeed` subclass that will be used to parse feeds for this
     #: suite.
@@ -288,7 +222,7 @@ class BaseSuite(object):
         Returns a set of all of the fields we could possibly get from this
         suite.
         """
-        return reduce(operator.or_, (m.fields for m in self.methods))
+        return reduce(operator.or_, (l.fields for l in self.loader_classes))
 
     def handles_video_url(self, url):
         """
@@ -298,9 +232,11 @@ class BaseSuite(object):
         that is not possible.
 
         """
-        if self.video_regex is None:
+        try:
+            self.get_video(url)
+        except UnhandledURL:
             return False
-        return bool(self.video_regex.match(url))
+        return True
 
     def handles_feed_url(self, url):
         """
@@ -314,9 +250,26 @@ class BaseSuite(object):
             return False
         return True
 
-    def get_video(self, url, *args, **kwargs):
-        """Returns a video using this suite."""
-        return Video(url, self, *args, **kwargs)
+    def get_video(self, url, fields=None, api_keys=None):
+        """
+        Returns a video using this suite's loaders.
+
+        :raises UnhandledURL: if none of this suite's loaders can handle the
+                              given url and api keys.
+
+        """
+        loaders = []
+
+        for cls in self.loader_classes:
+            try:
+                loader = cls(url, api_keys=api_keys)
+            except UnhandledURL:
+                continue
+
+            loaders.append(loader)
+        if not loaders:
+            raise UnhandledURL(url)
+        return Video(url, loaders=loaders, fields=fields)
 
     def get_feed(self, url, *args, **kwargs):
         """Returns an instance of :attr:`feed_class`."""
@@ -330,67 +283,3 @@ class BaseSuite(object):
             raise UnhandledSearch(u"{0} does not support searches.".format(
                                   self.__class__.__name__))
         return self.search_class(*args, **kwargs)
-
-    def find_best_methods(self, missing_fields):
-        """
-        Generates a dictionary where the keys are numbers of remaining fields
-        and the values are combinations of methods that promise to yield that
-        number of remaining fields, in the order that they are encountered.
-
-        """
-        # Our initial state is that we cover none of the missing fields, and
-        # that we use none of the available methods.
-        min_remaining = len(missing_fields)
-        best_methods = []
-
-        # Loop through all combinations of any size that can be made with the
-        # available methods.
-        for size in xrange(1, len(self.methods) + 1):
-            for methods in itertools.combinations(self.methods, size):
-                # First, build a set of the fields that are provided by the
-                # methods.
-                field_set = reduce(operator.or_, (m.fields for m in methods))
-                remaining = len(missing_fields - field_set)
-
-                # If these methods fill all the missing fields, take them
-                # immediately.
-                if not remaining:
-                    return methods
-
-                # Otherwise, note the methods iff they would decrease the 
-                # number of missing fields.
-                if remaining < min_remaining:
-                    best_methods = methods
-                    min_remaining = remaining
-        return best_methods
-
-
-    def run_methods(self, video):
-        """
-        Selects methods from :attr:`methods` which can be used in combination
-        to fill all missing fields on the ``video`` - or as many of them as
-        possible.
-
-        This will prefer the first listed methods and will prefer small
-        combinations of methods, so that the smallest number of smallest
-        possible responses will be fetched.
-
-        """
-        missing_fields = set(video.missing_fields)
-        if not missing_fields:
-            return
-
-        best_methods = self.find_best_methods(missing_fields)
-
-        if async is None:
-            responses = [requests.get(m.get_url(video), timeout=3)
-                         for m in best_methods]
-        else:
-            responses = async.map([async.get(m.get_url(video), timeout=3)
-                                   for m in best_methods])
-
-        data = {}
-        for method, response in itertools.izip(best_methods, responses):
-            data.update(method.process(response))
-
-        return data

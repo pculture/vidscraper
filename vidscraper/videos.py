@@ -24,12 +24,19 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
+import itertools
 import json
 import math
+import operator
 import urllib
 import urllib2
 
 import feedparser
+import requests
+try:
+    from requests import async
+except RuntimeError:
+    async = None
 
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch, VideoDeleted
 from vidscraper.utils.feedparser import (get_item_thumbnail_url,
@@ -44,14 +51,10 @@ class Video(object):
     returned by suite scraping, searching and feed parsing.
 
     :param url: The "pasted" url for the video.
-    :param suite: The suite to use for the video. This does not need to be a
-                  registered suite, but it does need to handle the video's
-                  ``url``. If no suite is provided, then the video will not be
-                  able to load additional data.
+    :param loaders: An iterable of :class:`VideoLoader` instances that will
+                    be used to load video data.
     :param fields: A list of fields which should be fetched for the video. This
-                  may be used to optimize the fetching process.
-    :param api_keys: A dictionary of API keys to use for this video. The keys
-                     needed depend on the suite being used for the video.
+                   will be used to optimize the fetching process.
 
     """
     # FIELDS
@@ -118,14 +121,13 @@ class Video(object):
     #: not populated during scraping.
     fields = None
 
-    def __init__(self, url, suite=None, fields=None, api_keys=None):
+    def __init__(self, url, loaders=None, fields=None):
         if fields is None:
             self.fields = list(self._all_fields)
         else:
             self.fields = [f for f in fields if f in self._all_fields]
         self.url = url
-        self.suite = suite
-        self.api_keys = api_keys if api_keys is not None else {}
+        self.loaders = loaders if loaders is not None else []
 
         # This private attribute is set to ``True`` when data is loaded into
         # the video by a scrape suite. It is *not* set when data is pre-loaded
@@ -143,12 +145,12 @@ class Video(object):
 
     def load(self):
         """
-        If the video has a :attr:`suite`, uses that suite to fetch the data
-        for the video's :attr:`fields`.
+        If the video hasn't been loaded before, runs the loaders and populates
+        the video's :attr:`fields`.
 
         """
-        if self.suite is not None and not self._loaded:
-            data = self.suite.run_methods(self)
+        if not self._loaded:
+            data = self.run_loaders()
             self._apply(data)
             self._loaded = True
 
@@ -163,6 +165,64 @@ class Video(object):
 
     def is_loaded(self):
         return self._loaded
+
+    def get_best_loaders(self):
+        """
+        Returns a list of loaders from :attr:`loaders` which can be used in
+        combination to fill all missing fields - or as many of them as
+        possible.
+
+        This will prefer the first listed loaders and will prefer small
+        combinations of loaders, so that the smallest number of smallest
+        possible responses will be fetched.
+
+        """
+        missing_fields = set(self.missing_fields)
+        # Our initial state is that we cover none of the missing fields, and
+        # that we use none of the available loaders.
+        min_remaining = len(missing_fields)
+        best_loaders = []
+
+        # Loop through all combinations of any size that can be made with the
+        # available loaders.
+        for size in xrange(1, len(self.loaders) + 1):
+            for loaders in itertools.combinations(self.loaders, size):
+                # First, build a set of the fields that are provided by the
+                # loaders.
+                field_set = reduce(operator.or_, (l.fields for l in loaders))
+                remaining = len(missing_fields - field_set)
+
+                # If these loaders fill all the missing fields, take them
+                # immediately.
+                if not remaining:
+                    return loaders
+
+                # Otherwise, note the loaders iff they would decrease the 
+                # number of missing fields.
+                if remaining < min_remaining:
+                    best_loaders = loaders
+                    min_remaining = remaining
+        return best_loaders
+
+    def run_loaders(self):
+        """
+        Runs :meth:`get_best_loaders` and then gets data from each loader.
+
+        """
+        best_loaders = self.get_best_loaders()
+
+        if async is None:
+            responses = [requests.get(l.get_url(), timeout=3)
+                         for l in best_loaders]
+        else:
+            responses = async.map([async.get(l.get_url(), timeout=3)
+                                   for l in best_loaders])
+
+        data = {}
+        for loader, response in itertools.izip(best_loaders, responses):
+            data.update(loader.get_video_data(response))
+
+        return data
 
     def items(self):
         """Iterator over (field, value) for requested fields."""
@@ -194,13 +254,11 @@ class Video(object):
         return json.dumps(data, **kwargs)
 
     @classmethod
-    def from_json(cls, json_data, suite=None, api_keys=None, **kwargs):
+    def from_json(cls, json_data, api_keys=None, **kwargs):
         """
         De-JSON-ifies a video.
 
         :param json_data: A JSON-formatted string.
-        :param suite: ``None``, or a suite to instantiate the deserialized
-                      video with.
         :param api_keys: ``None``, or a dictionary of API keys to instantiate
                          the deserialized video with.
 
@@ -209,8 +267,11 @@ class Video(object):
         """
         data = json.loads(json_data, **kwargs)
 
-        video = cls(data['url'], fields=data['fields'],
-                    suite=suite, api_keys=api_keys)
+        from vidscraper.suites import registry
+        video = registry.get_video(data['url'],
+                                   fields=data['fields'],
+                                   api_keys=api_keys,
+                                   require_loaders=False)
 
         for field in cls._datetime_fields:
             dt = data.get(field, None)
@@ -225,6 +286,96 @@ class Video(object):
 
         video._apply(data)
         return video
+
+
+class VideoLoader(object):
+    """
+    This is a base class for objects that fetch data for a video, for example
+    from an API or a page scrape.
+
+    :param url: The "pasted" url for which data should be loaded.
+    :param api_keys: A dictionary of API keys which may be needed to load data
+                     with this loader.
+
+    """
+    #: A set of fields this loader believes it can provide.
+    fields = set()
+
+    #: A format string which, paired with :attr:`url_data`, returns a suitable
+    #: url for this loader to fetch data from.
+    url_format = None
+
+    def __init__(self, url, api_keys=None):
+        self.url = url
+        self.api_keys = api_keys if api_keys is not None else {}
+        self.url_data = self.get_url_data(url)
+
+    def get_url_data(self, url):
+        """
+        Parses the url into data which can be used to construct a url this
+        loader can use to get data.
+
+        :raises: :exc:`UnhandledURL` if the url isn't handled by this loader.
+
+        """
+        raise UnhandledURL(url)
+
+    def get_url(self):
+        """
+        Returns a url which can be fetched to get a response that this loader
+        can process into data.
+
+        """
+        if self.url_format is None:
+            raise NotImplementedError
+        return self.url_format.format(**self.url_data)
+
+    def get_video_data(self, response):
+        """
+        Parses the given ``response`` and returns a data dictionary for
+        populating a :class:`Video` instance. By default, returns an empty
+        dictionary.
+
+        """
+        return {}
+
+
+class OEmbedLoaderMixin(object):
+    """
+    Mixin to provide basic OEmbed functionality. Subclasses need to provide an
+    endpoint, define a get_url_data method, and provide a url_format - for the
+    video URL, not the oembed API URL.
+
+    This is provided as a mixin rather than a subclass of :class:`VideoLoader`
+    so that it can be used on top of any class or mixin that overrides
+    :meth:`VideoLoader.get_url`.
+
+    """
+    fields = set(('title', 'user', 'user_url', 'thumbnail_url', 'embed_code'))
+
+    #: The endpoint for the OEmbed API.
+    endpoint = None
+
+    full_url_format = "{endpoint}?url={url}"
+
+    def get_video_url(self):
+        return super(OEmbedLoaderMixin, self).get_url()
+
+    def get_url(self):
+        url = self.get_video_url()
+        return self.full_url_format.format(url=urllib.quote_plus(url),
+                                           endpoint=self.endpoint)
+
+    def get_video_data(self, response):
+        parsed = json.loads(response.text)
+        data = {
+            'title': parsed['title'],
+            'user': parsed['author_name'],
+            'user_url': parsed['author_url'],
+            'thumbnail_url': parsed['thumbnail_url'],
+            'embed_code': parsed['html']
+        }
+        return data
 
 
 class BaseVideoIterator(object):
@@ -311,7 +462,7 @@ class BaseVideoIterator(object):
             video = registry.get_video(url,
                                        fields=self.video_fields,
                                        api_keys=self.api_keys,
-                                       require_suite=False)
+                                       require_loaders=False)
             video._apply(data)
             self._page_videos_count += 1
             yield video

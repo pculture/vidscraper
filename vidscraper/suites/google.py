@@ -24,20 +24,31 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import urlparse
 
 from bs4 import BeautifulSoup
 
-from vidscraper.suites import BaseSuite, registry, SuiteMethod
+from vidscraper.exceptions import UnhandledURL
+from vidscraper.suites import BaseSuite, registry
+from vidscraper.videos import VideoLoader
 
 
-class GoogleScrapeMethod(SuiteMethod):
+class GoogleScrapeLoader(VideoLoader):
     fields = set(['title', 'description', 'embed_code'])
     id_regex = re.compile(r'video-title|video-description|embed-video-code')
 
-    def get_url(self, video):
-        return video.url
+    url_format = '{url}'
 
-    def process(self, response):
+    def get_url_data(self, url):
+        parsed = urlparse.urlsplit(url)
+        if (parsed.scheme in ('http', 'https') and
+            parsed.netloc == 'video.google.com' and
+            parsed.path == '/videoplay' and
+            'docid' in parsed.query):
+            return {'url': url}
+        raise UnhandledURL(url)
+
+    def get_video_data(self, response):
         soup = BeautifulSoup(response.text).findAll(id=self.id_regex)
         data = {}
         for tag in soup:
@@ -54,8 +65,7 @@ class GoogleScrapeMethod(SuiteMethod):
 
 class GoogleSuite(BaseSuite):
     """Suite for scraping video pages from videos.google.com"""
-    video_regex = r'^https?://video.google.com/videoplay'
-    methods = (GoogleScrapeMethod(),)
+    loader_classes = (GoogleScrapeLoader,)
 
 
 registry.register(GoogleSuite)

@@ -25,7 +25,9 @@
 
 import datetime
 
-from vidscraper.suites.ustream import UstreamSuite, UstreamApiMethod
+from vidscraper.exceptions import UnhandledURL
+from vidscraper.suites.ustream import (UstreamSuite, UstreamApiLoader,
+                                       UstreamOEmbedLoader)
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -37,17 +39,19 @@ class UstreamTestCase(BaseTestCase):
 class UstreamApiTestCase(UstreamTestCase):
     def setUp(self):
         UstreamTestCase.setUp(self)
-        self.method = UstreamApiMethod()
-        self.base_url = "http://www.ustream.tv/recorded/16417223"
-        self.video = self.suite.get_video(self.base_url,
-                                          api_keys={'ustream_key': 'TEST_KEY'})
+        self.url = "http://www.ustream.tv/recorded/16417223"
+        self.loader = UstreamApiLoader(self.url,
+                                       api_keys={'ustream_key': 'TEST_KEY'})
+
+    def test_keys_required(self):
+        self.assertRaises(UnhandledURL, UstreamApiLoader, self.url)
 
     def test_get_url(self):
-        api_url = self.method.get_url(self.video)
+        api_url = self.loader.get_url()
         self.assertEqual(api_url,
             'http://api.ustream.tv/json/video/16417223/getInfo/?key=TEST_KEY')
 
-    def test_process(self):
+    def test_get_video_data(self):
         expected_data = {
             'embed_code': u"<iframe src='http://www.ustream.tv/flash/video/"
                            "16417223' width='320' height='260' />",
@@ -63,6 +67,14 @@ class UstreamApiTestCase(UstreamTestCase):
         }
         api_file = self.get_data_file('ustream/api.json')
         response = self.get_response(api_file.read())
-        data = self.method.process(response)
-        self.assertEqual(set(data), self.method.fields)
+        data = self.loader.get_video_data(response)
+        self.assertEqual(set(data), self.loader.fields)
         self.assertDictEqual(data, expected_data)
+
+
+class UstreamOEmbedTestCase(UstreamTestCase):
+    def test_valid_urls(self):
+        url = "http://www.ustream.tv/recorded/16417223"
+        result = UstreamOEmbedLoader(url).get_url()
+        expected = "http://www.ustream.tv/oembed/?url=http%3A%2F%2Fwww.ustream.tv%2Frecorded%2F16417223"
+        self.assertEqual(result, expected)

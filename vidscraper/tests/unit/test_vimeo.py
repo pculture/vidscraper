@@ -28,8 +28,8 @@ import json
 import urlparse
 
 from vidscraper.exceptions import VideoDeleted
-from vidscraper.suites.vimeo import (VimeoSuite, VimeoApiMethod,
-                                     VimeoScrapeMethod, VimeoFeed,
+from vidscraper.suites.vimeo import (VimeoSuite, VimeoApiLoader,
+                                     VimeoScrapeLoader, VimeoFeed,
                                      VimeoSearch)
 from vidscraper.tests.base import BaseTestCase
 
@@ -37,8 +37,6 @@ from vidscraper.tests.base import BaseTestCase
 class VimeoTestCase(BaseTestCase):
     def setUp(self):
         self.suite = VimeoSuite()
-        self.base_url = "http://vimeo.com/2"
-        self.video = self.suite.get_video(self.base_url)
 
 
 class VimeoSuiteTestCase(VimeoTestCase):
@@ -53,14 +51,14 @@ class VimeoSuiteTestCase(VimeoTestCase):
     
 class VimeoApiTestCase(VimeoTestCase):
     def setUp(self):
-        VimeoTestCase.setUp(self)
-        self.method = VimeoApiMethod()
+        super(VimeoApiTestCase, self).setUp()
+        self.loader = VimeoApiLoader("http://vimeo.com/2")
 
     def test_get_url(self):
-        api_url = self.method.get_url(self.video)
+        api_url = self.loader.get_url()
         self.assertEqual(api_url, 'http://vimeo.com/api/v2/video/2.json')
 
-    def test_process(self):
+    def test_get_video_data(self):
         expected_data = {
             'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
             'link': u'http://vimeo.com/2',
@@ -79,20 +77,21 @@ class VimeoApiTestCase(VimeoTestCase):
         }
         api_file = self.get_data_file('vimeo/api.json')
         response = self.get_response(api_file.read())
-        data = self.method.process(response)
-        self.assertEqual(set(data), self.method.fields)
+        data = self.loader.get_video_data(response)
+        self.assertEqual(set(data), self.loader.fields)
         self.assertDictEqual(data, expected_data)
+
 
 class VimeoScrapeTestCase(VimeoTestCase):
     def setUp(self):
-        VimeoTestCase.setUp(self)
-        self.method = VimeoScrapeMethod()
+        super(VimeoScrapeTestCase, self).setUp()
+        self.loader = VimeoScrapeLoader("http://vimeo.com/2")
 
     def test_get_url(self):
-        scrape_url = self.method.get_url(self.video)
+        scrape_url = self.loader.get_url()
         self.assertEqual(scrape_url, u'http://www.vimeo.com/moogaloop/load/clip:2')
 
-    def test_process(self):
+    def test_get_video_data(self):
         expected_data = {
             'title': u'Good morning, universe',
             'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
@@ -106,15 +105,16 @@ class VimeoScrapeTestCase(VimeoTestCase):
         }
         scrape_file = self.get_data_file('vimeo/scrape.xml')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
-        self.assertEqual(set(data), self.method.fields)
+        data = self.loader.get_video_data(response)
+        self.assertEqual(set(data), self.loader.fields)
         self.assertDictEqual(data, expected_data)
 
-    def test_process_noembed(self):
+    def test_get_video_data__noembed(self):
         scrape_file = self.get_data_file('vimeo/scrape_noembed.xml')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertEqual(data, {'is_embeddable': False})
+
 
 class VimeoSimpleFeedTestCase(VimeoTestCase):
     """

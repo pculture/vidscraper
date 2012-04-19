@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from vidscraper.suites.google import GoogleSuite, GoogleScrapeMethod
+from vidscraper.suites.google import GoogleSuite, GoogleScrapeLoader
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -35,19 +35,18 @@ class GoogleTestCase(BaseTestCase):
 class GoogleScrapeTestCase(GoogleTestCase):
     def setUp(self):
         GoogleTestCase.setUp(self)
-        self.method = GoogleScrapeMethod()
-        self.base_url = "http://video.google.com/videoplay?docid=3372610739323185039"
-        self.video = self.suite.get_video(self.base_url)
+        self.url = "http://video.google.com/videoplay?docid=3372610739323185039"
+        self.loader = GoogleScrapeLoader(self.url)
 
     def test_get_url(self):
-        self.assertEqual(self.method.get_url(self.video), self.base_url)
+        self.assertEqual(self.loader.get_url(), self.url)
 
-    def test_process(self):
+    def test_get_video_data(self):
         scrape_file = self.get_data_file('google/scrape.html')
         response = self.get_response(scrape_file.read())
-        data = self.method.process(response)
+        data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.method.fields)
+        self.assertEqual(set(data), self.loader.fields)
         expected_data = {
             'title': "Tom and Jerry. Texas",
             'description': 'Tom and Jerry.',

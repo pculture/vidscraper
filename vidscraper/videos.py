@@ -213,7 +213,9 @@ class Video(object):
         best_loaders = self.get_best_loaders()
 
         headers = {
-            'User-Agent': 'Mozilla/5.0 python-vidscraper/%s' % __version__
+            'User-Agent':
+                'Mozilla/5.0 (X11; Linux) Safari/536.10 vidscraper/%s' % (
+                __version__,)
             }
 
         if async is None:

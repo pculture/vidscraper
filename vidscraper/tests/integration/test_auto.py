@@ -63,8 +63,8 @@ class AutoIntegrationTestCase(unittest.TestCase):
         self.assertEqual(
             feed.thumbnail_url,
             'http://www.youtube.com/img/pic_youtubelogo_123x63.gif')
-        self.assertEqual(feed.webpage,
-                         'http://www.youtube.com/user/AssociatedPress/videos')
+        # YouTube changes this sometimes, so just make sure it's there
+        self.assertTrue(feed.webpage)
         self.assertTrue(feed.etag is not None)
         self.assertTrue(feed.video_count > 55000)
         self.assertEqual(feed.guid,

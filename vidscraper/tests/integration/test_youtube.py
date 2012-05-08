@@ -184,7 +184,6 @@ Caramelldansen""",
             'url': 'http://www.youtube.com/user/AssociatedPress',
             'title': u'Uploads by AssociatedPress',
             'description': None,
-            'webpage': u'http://www.youtube.com/user/AssociatedPress/videos',
             'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
             'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
             }
@@ -192,6 +191,9 @@ Caramelldansen""",
             self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
                     key, value, getattr(feed, key)))
 
+        # YouTube changes the channel URL sometimes, so just make sure it's
+        # there
+        self.assertTrue(feed.webpage)
         self.assertTrue(feed.video_count > 55000, feed.video_count)
 
     def test_feed_18790(self):

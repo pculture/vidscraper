@@ -38,6 +38,7 @@ try:
 except RuntimeError:
     async = None
 
+from vidscraper import __version__
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch, VideoDeleted
 from vidscraper.utils.feedparser import (get_item_thumbnail_url,
                                          struct_time_to_datetime)
@@ -211,11 +212,17 @@ class Video(object):
         """
         best_loaders = self.get_best_loaders()
 
+        headers = {
+            'User-Agent': 'Mozilla/5.0 python-vidscraper/%s' % __version__
+            }
+
         if async is None:
-            responses = [requests.get(l.get_url(), timeout=3)
+            responses = [requests.get(l.get_url(), timeout=3,
+                                      headers=headers)
                          for l in best_loaders]
         else:
-            responses = async.map([async.get(l.get_url(), timeout=3)
+            responses = async.map([async.get(l.get_url(), timeout=3,
+                                             headers=headers)
                                    for l in best_loaders])
 
         data = {}

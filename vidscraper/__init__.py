@@ -24,14 +24,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+__version__ = '0.6-a'
+
+
 import sys
 from optparse import OptionParser
 
 from vidscraper.suites import registry
 from vidscraper.videos import Video, VideoSearch, VideoFeed
 
-
-__version__ = '0.6-a'
 
 
 def handles_video_url(url):

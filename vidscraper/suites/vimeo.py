@@ -27,8 +27,6 @@ import time
 import datetime
 import json
 import re
-import urllib
-import urllib2
 import urlparse
 import warnings
 from xml.dom import minidom
@@ -42,7 +40,6 @@ import requests
 from vidscraper.exceptions import VideoDeleted, UnhandledURL, UnhandledSearch
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
-from vidscraper.utils.http import open_url_while_lying_about_agent
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
                                OEmbedLoaderMixin)
 

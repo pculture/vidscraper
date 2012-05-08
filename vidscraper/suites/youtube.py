@@ -39,9 +39,8 @@ feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 import requests
 
-from vidscraper.exceptions import UnhandledURL, UnhandledSearch
+from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry
-from vidscraper.utils.feedparser import get_entry_thumbnail_url
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
                                OEmbedLoaderMixin)
@@ -57,7 +56,6 @@ class YouTubePathMixin(object):
 
     def get_url_data(self, url):
         parsed = urlparse.urlsplit(url)
-        video_id = None
         if parsed.scheme in ('http', 'https'):
             if (parsed.netloc in ('www.youtube.com', 'youtube.com') and
                 parsed.path in ('/watch', '/watch/')):

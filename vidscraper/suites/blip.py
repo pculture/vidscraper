@@ -25,12 +25,11 @@
 
 from datetime import datetime
 import re
-import urllib
 import urlparse
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledURL, UnhandledSearch
+from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_first_accepted_enclosure)

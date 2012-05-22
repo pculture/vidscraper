@@ -52,9 +52,12 @@ class VimeoSuiteTestCase(VimeoTestCase):
         self.assertEqual(
             self.suite.available_fields,
             set(['embed_code', 'description', 'flash_enclosure_url',
-                 'user_url', 'publish_datetime', 'file_url_mimetype', 'title',
-                 'file_url', 'thumbnail_url', 'link',
-                 'user', 'guid', 'tags', 'file_url_expires']))
+                 'user_url', 'publish_datetime', #'file_url_mimetype',
+                 'title',
+                 #'file_url',
+                 'thumbnail_url', 'link',
+                 'user', 'guid', 'tags'#, 'file_url_expires'
+                 ]))
 
 class VimeoOembedTestCase(VimeoTestCase):
     def test_get_oembed_url(self):
@@ -108,184 +111,184 @@ class VimeoApiTestCase(VimeoTestCase):
         }
         self.assertEqual(data, expected_data)
 
-class VimeoScrapeTestCase(VimeoTestCase):
-    def get_scrape_url(self):
-        scrape_url = self.suite.get_scrape_url(self.video)
-        self.assertEqual(scrape_url, 'http://vimeo.com/moogaloop/load/clip:2')
+# class VimeoScrapeTestCase(VimeoTestCase):
+#     def get_scrape_url(self):
+#         scrape_url = self.suite.get_scrape_url(self.video)
+#         self.assertEqual(scrape_url, 'http://vimeo.com/moogaloop/load/clip:2')
 
-    def test_parse_scrape_response(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.xml'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.scrape_fields)
-        expected_data = {
-            'title': u'Good morning, universe',
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
-            'link': u'http://vimeo.com/2',
-            'user': u'Jake Lodwick',
-            'user_url': u'http://vimeo.com/jakob',
-            'embed_code': '<object width="400" height="300"><param name="allowfullscreen" value="true" /><param name="allowscriptaccess" value="always" /><param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" /><embed src="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="300"></embed></object><p><a href="http://vimeo.com/2">Good morning, universe</a> from <a href="http://vimeo.com/jakob">Jake Lodwick</a> on <a href="http://vimeo.com">Vimeo</a>.</p>',
-            'file_url_expires': datetime.datetime(2011, 11, 29, 19, 11, 40),
-            'file_url_mimetype': u'video/x-flv',
-            'file_url': 'http://www.vimeo.com/moogaloop/play/clip:2/e82cb5d075e82a8cd790a1710e8b1d2f/1322593900/?q=sd'
-        }
-        for key in data:
-            self.assertEqual(data[key], expected_data[key])
+#     def test_parse_scrape_response(self):
+#         scrape_file = open(os.path.join(self.data_file_dir, 'scrape.xml'))
+#         data = self.suite.parse_scrape_response(scrape_file.read())
+#         self.assertTrue(isinstance(data, dict))
+#         self.assertEqual(set(data), self.suite.scrape_fields)
+#         expected_data = {
+#             'title': u'Good morning, universe',
+#             'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
+#             'link': u'http://vimeo.com/2',
+#             'user': u'Jake Lodwick',
+#             'user_url': u'http://vimeo.com/jakob',
+#             'embed_code': '<object width="400" height="300"><param name="allowfullscreen" value="true" /><param name="allowscriptaccess" value="always" /><param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" /><embed src="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="300"></embed></object><p><a href="http://vimeo.com/2">Good morning, universe</a> from <a href="http://vimeo.com/jakob">Jake Lodwick</a> on <a href="http://vimeo.com">Vimeo</a>.</p>',
+#             'file_url_expires': datetime.datetime(2011, 11, 29, 19, 11, 40),
+#             'file_url_mimetype': u'video/x-flv',
+#             'file_url': 'http://www.vimeo.com/moogaloop/play/clip:2/e82cb5d075e82a8cd790a1710e8b1d2f/1322593900/?q=sd'
+#         }
+#         for key in data:
+#             self.assertEqual(data[key], expected_data[key])
 
-    def test_parse_scrape_response_noembed(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape_noembed.xml'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
-        self.assertEqual(data, {
-                'is_embedable': False})
+#     def test_parse_scrape_response_noembed(self):
+#         scrape_file = open(os.path.join(self.data_file_dir, 'scrape_noembed.xml'))
+#         data = self.suite.parse_scrape_response(scrape_file.read())
+#         self.assertEqual(data, {
+#                 'is_embedable': False})
 
-class VimeoFeedTestCase(VimeoTestCase):
-    def setUp(self):
-        VimeoTestCase.setUp(self)
-        feed_file = open(os.path.join(self.data_file_dir, 'feed.json'))
-        response = json.loads(feed_file.read())
-        self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
-        self.feed._first_response = response
-        self.entries = self.suite.get_feed_entries(self.feed, response)
-        info_file = open(os.path.join(self.data_file_dir, 'info.json'))
-        self.info_response = json.load(info_file)
+# class VimeoFeedTestCase(VimeoTestCase):
+#     def setUp(self):
+#         VimeoTestCase.setUp(self)
+#         feed_file = open(os.path.join(self.data_file_dir, 'feed.json'))
+#         response = json.loads(feed_file.read())
+#         self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
+#         self.feed._first_response = response
+#         self.entries = self.suite.get_feed_entries(self.feed, response)
+#         info_file = open(os.path.join(self.data_file_dir, 'info.json'))
+#         self.info_response = json.load(info_file)
 
-    def test_get_feed_url(self):
-        self.assertEqual(
-            self.suite.get_feed_url('http://vimeo.com/jakob/videos/rss'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url(
-                'http://vimeo.com/channels/whitehouse/videos/rss'),
-            'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url('http://vimeo.com/jakob/videos'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url('http://vimeo.com/jakob'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
-        self.assertEqual(
-            self.suite.get_feed_url(
-                'http://vimeo.com/api/v2/jakob/videos.json'),
-            'http://vimeo.com/api/v2/jakob/videos.json')
+#     def test_get_feed_url(self):
+#         self.assertEqual(
+#             self.suite.get_feed_url('http://vimeo.com/jakob/videos/rss'),
+#             'http://vimeo.com/api/v2/jakob/videos.json')
+#         self.assertEqual(
+#             self.suite.get_feed_url(
+#                 'http://vimeo.com/channels/whitehouse/videos/rss'),
+#             'http://vimeo.com/api/v2/channel/whitehouse/videos.json')
+#         self.assertEqual(
+#             self.suite.get_feed_url('http://vimeo.com/jakob/videos'),
+#             'http://vimeo.com/api/v2/jakob/videos.json')
+#         self.assertEqual(
+#             self.suite.get_feed_url('http://vimeo.com/jakob'),
+#             'http://vimeo.com/api/v2/jakob/videos.json')
+#         self.assertEqual(
+#             self.suite.get_feed_url(
+#                 'http://vimeo.com/api/v2/jakob/videos.json'),
+#             'http://vimeo.com/api/v2/jakob/videos.json')
 
-    def test_get_feed_title(self):
-        self.assertEqual(
-            self.suite.get_feed_title(self.feed, self.info_response),
-            "Jake Lodwick's videos on Vimeo")
+#     def test_get_feed_title(self):
+#         self.assertEqual(
+#             self.suite.get_feed_title(self.feed, self.info_response),
+#             "Jake Lodwick's videos on Vimeo")
 
-    def test_get_feed_title_likes(self):
-        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
-        self.assertEqual(
-            self.suite.get_feed_title(self.feed, self.info_response),
-            "Videos Jake Lodwick likes on Vimeo")        
+#     def test_get_feed_title_likes(self):
+#         self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
+#         self.assertEqual(
+#             self.suite.get_feed_title(self.feed, self.info_response),
+#             "Videos Jake Lodwick likes on Vimeo")        
 
-    def test_get_feed_entry_count(self):
-        self.assertEqual(
-            self.suite.get_feed_entry_count(self.feed, self.info_response),
-            359)
+#     def test_get_feed_entry_count(self):
+#         self.assertEqual(
+#             self.suite.get_feed_entry_count(self.feed, self.info_response),
+#             359)
 
-    def test_get_feed_entry_count_likes(self):
-        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
-        self.assertEqual(
-            self.suite.get_feed_entry_count(self.feed, self.info_response),
-            1333)        
+#     def test_get_feed_entry_count_likes(self):
+#         self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
+#         self.assertEqual(
+#             self.suite.get_feed_entry_count(self.feed, self.info_response),
+#             1333)        
 
-    def test_get_feed_description(self):
-        self.assertEqual(
-            self.suite.get_feed_description(self.feed, self.info_response),
-            "")
+#     def test_get_feed_description(self):
+#         self.assertEqual(
+#             self.suite.get_feed_description(self.feed, self.info_response),
+#             "")
 
-    def test_get_feed_webpage(self):
-        self.assertEqual(
-            self.suite.get_feed_webpage(self.feed, self.info_response),
-            "http://vimeo.com/jakob/videos")
+#     def test_get_feed_webpage(self):
+#         self.assertEqual(
+#             self.suite.get_feed_webpage(self.feed, self.info_response),
+#             "http://vimeo.com/jakob/videos")
 
-    def test_feed_webpage_likes(self):
-        self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
-        self.assertEqual(
-            self.suite.get_feed_webpage(self.feed, self.info_response),
-            "http://vimeo.com/jakob/likes")
+#     def test_feed_webpage_likes(self):
+#         self.feed.url = self.feed.url.replace('videos.json', 'likes.json')
+#         self.assertEqual(
+#             self.suite.get_feed_webpage(self.feed, self.info_response),
+#             "http://vimeo.com/jakob/likes")
 
-    def test_get_feed_thumbnail_url(self):
-        self.assertEqual(
-            self.suite.get_feed_thumbnail_url(self.feed, self.info_response),
-            "http://b.vimeocdn.com/ps/137/734/1377340_300.jpg")
+#     def test_get_feed_thumbnail_url(self):
+#         self.assertEqual(
+#             self.suite.get_feed_thumbnail_url(self.feed, self.info_response),
+#             "http://b.vimeocdn.com/ps/137/734/1377340_300.jpg")
 
-    def test_get_feed_guid(self):
-        self.assertEqual(
-            self.suite.get_feed_guid(self.feed, self.info_response),
-            None)
+#     def test_get_feed_guid(self):
+#         self.assertEqual(
+#             self.suite.get_feed_guid(self.feed, self.info_response),
+#             None)
 
-    def test_get_feed_last_modified(self):
-        self.assertEqual(
-            self.suite.get_feed_last_modified(self.feed, self.info_response),
-            None)
+#     def test_get_feed_last_modified(self):
+#         self.assertEqual(
+#             self.suite.get_feed_last_modified(self.feed, self.info_response),
+#             None)
 
-    def test_get_feed_etag(self):
-        self.assertEqual(
-            self.suite.get_feed_etag(self.feed, self.info_response),
-            None)
+#     def test_get_feed_etag(self):
+#         self.assertEqual(
+#             self.suite.get_feed_etag(self.feed, self.info_response),
+#             None)
 
-    def test_parse_feed_entry_0(self):
-        data = self.suite.parse_feed_entry(self.entries[0])
-        self.assertTrue(isinstance(data, dict))
-        expected_data = {
-            'title': u'Grandfather recollects end of WWII',
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/'
-                          u'24714980" width="320" height="240" frameborder="0" '
-                          u'webkitAllowFullScreen allowFullScreen></iframe>',
-            'publish_datetime': datetime.datetime(2011, 6, 6, 6, 45, 32),
-            'link': u'http://vimeo.com/24714980',
-            'description': '',
-            'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=24714980",
-            'user': u"Jake Lodwick",
-            'user_url': u"http://vimeo.com/jakob",
-            "tags": [],
-            'guid': u'tag:vimeo,2011-06-06:clip24714980',
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
-        }
-        self.assertEqual(data, expected_data)
+#     def test_parse_feed_entry_0(self):
+#         data = self.suite.parse_feed_entry(self.entries[0])
+#         self.assertTrue(isinstance(data, dict))
+#         expected_data = {
+#             'title': u'Grandfather recollects end of WWII',
+#             'embed_code': u'<iframe src="http://player.vimeo.com/video/'
+#                           u'24714980" width="320" height="240" frameborder="0" '
+#                           u'webkitAllowFullScreen allowFullScreen></iframe>',
+#             'publish_datetime': datetime.datetime(2011, 6, 6, 6, 45, 32),
+#             'link': u'http://vimeo.com/24714980',
+#             'description': '',
+#             'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=24714980",
+#             'user': u"Jake Lodwick",
+#             'user_url': u"http://vimeo.com/jakob",
+#             "tags": [],
+#             'guid': u'tag:vimeo,2011-06-06:clip24714980',
+#             'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
+#         }
+#         self.assertEqual(data, expected_data)
 
-    def test_parse_feed_entry_1(self):
-        data = self.suite.parse_feed_entry(self.entries[1])
-        self.assertTrue(isinstance(data, dict))
-        expected_data = {
-            'link': u"http://vimeo.com/23833511",
-            'title': u"Santa vs. The Easter Bunny",
-            'description': u'A pre-Jackass prank and one of my first '
-                            'edited-on-a-computer videos.<br />\n<br />\nShot '
-                            'on December 23rd, 1999 as Towson Town Center, '
-                            'Maryland, USA.<br />\n<br />\nJake Lodwick as '
-                            'Santa<br />\nMatt Cockey as The Easter Bunny'
-                            '<br />\n<br />\nShot by Ryan Welch, Tim Donahue, '
-                            'and Will Cockey.<br />\nEscape driver: Wilson '
-                            'Taliaferro.',
-            'publish_datetime': datetime.datetime(2011, 5, 16, 20, 1, 30),
-            'user': u"Jake Lodwick",
-            'user_url': u"http://vimeo.com/jakob",
-            'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
-            'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
-            'tags': [u'archives', u'santa', u'easter bunny'],
-            'guid': u'tag:vimeo,2011-05-16:clip23833511',
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
-        }
-        self.maxDiff = None
-        self.assertEqual(data, expected_data)
+#     def test_parse_feed_entry_1(self):
+#         data = self.suite.parse_feed_entry(self.entries[1])
+#         self.assertTrue(isinstance(data, dict))
+#         expected_data = {
+#             'link': u"http://vimeo.com/23833511",
+#             'title': u"Santa vs. The Easter Bunny",
+#             'description': u'A pre-Jackass prank and one of my first '
+#                             'edited-on-a-computer videos.<br />\n<br />\nShot '
+#                             'on December 23rd, 1999 as Towson Town Center, '
+#                             'Maryland, USA.<br />\n<br />\nJake Lodwick as '
+#                             'Santa<br />\nMatt Cockey as The Easter Bunny'
+#                             '<br />\n<br />\nShot by Ryan Welch, Tim Donahue, '
+#                             'and Will Cockey.<br />\nEscape driver: Wilson '
+#                             'Taliaferro.',
+#             'publish_datetime': datetime.datetime(2011, 5, 16, 20, 1, 30),
+#             'user': u"Jake Lodwick",
+#             'user_url': u"http://vimeo.com/jakob",
+#             'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
+#             'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
+#             'tags': [u'archives', u'santa', u'easter bunny'],
+#             'guid': u'tag:vimeo,2011-05-16:clip23833511',
+#             'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
+#         }
+#         self.maxDiff = None
+#         self.assertEqual(data, expected_data)
 
-    def test_next_feed_url(self):
-        self.feed.url = "http://vimeo.com/nothing/here/?page=1"
-        next_url = self.suite.get_next_feed_page_url(self.feed, None)
-        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+#     def test_next_feed_url(self):
+#         self.feed.url = "http://vimeo.com/nothing/here/?page=1"
+#         next_url = self.suite.get_next_feed_page_url(self.feed, None)
+#         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
-        delattr(self.feed, LAST_URL_CACHE)
-        self.feed.url = "http://vimeo.com/nothing/here/"
-        next_url = self.suite.get_next_feed_page_url(self.feed, None)
-        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+#         delattr(self.feed, LAST_URL_CACHE)
+#         self.feed.url = "http://vimeo.com/nothing/here/"
+#         next_url = self.suite.get_next_feed_page_url(self.feed, None)
+#         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
-        delattr(self.feed, LAST_URL_CACHE)
-        self.feed.url = "http://vimeo.com/nothing/here/?page=notanumber"
-        next_url = self.suite.get_next_feed_page_url(self.feed, None)
-        self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
+#         delattr(self.feed, LAST_URL_CACHE)
+#         self.feed.url = "http://vimeo.com/nothing/here/?page=notanumber"
+#         next_url = self.suite.get_next_feed_page_url(self.feed, None)
+#         self.assertEqual(next_url, "http://vimeo.com/nothing/here/?page=2")
 
 
 class VimeoSearchTestCase(VimeoTestCase):

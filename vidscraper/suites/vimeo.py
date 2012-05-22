@@ -65,9 +65,10 @@ class VimeoSuite(BaseSuite):
     api_fields = set(['link', 'title', 'description', 'tags', 'guid',
                       'publish_datetime', 'thumbnail_url', 'user', 'user_url',
                       'flash_enclosure_url', 'embed_code'])
-    scrape_fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
-                         'embed_code', 'file_url', 'file_url_mimetype',
-                         'file_url_expires'])
+    scrape_fields = frozenset()
+    #scrape_fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
+    #                     'embed_code', 'file_url', 'file_url_mimetype',
+    #                     'file_url_expires'])
     oembed_endpoint = u"http://vimeo.com/api/oembed.json"
 
     def __init__(self, *args, **kwargs):
@@ -114,51 +115,52 @@ allowFullScreen></iframe>""" % video_id
         }
         return data
 
-    def get_scrape_url(self, video):
-        video_id = self.video_regex.match(video.url).group('video_id')
-        return u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id
+    # def get_scrape_url(self, video):
+    #     video_id = self.video_regex.match(video.url).group('video_id')
+    #     return u"http://www.vimeo.com/moogaloop/load/clip:%s" % video_id
 
-    def parse_scrape_response(self, response_text):
-        doc = minidom.parseString(response_text)
-        error_id = doc.getElementsByTagName('error_id').item(0)
-        if (error_id is not None and
-            error_id.firstChild.data == 'embed_blocked'):
-            return {
-                'is_embedable': False
-                }
-        xml_data = {}
-        for key in ('url', 'caption', 'thumbnail', 'uploader_url',
-                    'uploader_display_name', 'isHD', 'embed_code',
-                    'request_signature', 'request_signature_expires',
-                    'nodeId'):
-            item = doc.getElementsByTagName(key).item(0)
-            str_data = item.firstChild.data
-            if isinstance(str_data, unicode):
-                xml_data[key] = str_data # actually Unicode
-            else:
-                xml_data[key] = str_data.decode('utf8')
 
-        data = {
-            'link': xml_data['url'],
-            'user': xml_data['uploader_display_name'],
-            'user_url': xml_data['uploader_url'],
-            'title': xml_data['caption'],
-            'thumbnail_url': xml_data['thumbnail'],
-            'embed_code': xml_data['embed_code'],
-            'file_url_expires': struct_time_to_datetime(time.gmtime(
-                    int(xml_data['request_signature_expires']))),
-            'file_url_mimetype': u'video/x-flv',
-            }
-        base_file_url = (
-            'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
-            '%(request_signature)s/%(request_signature_expires)s'
-            '/?q=' % xml_data)
-        if xml_data['isHD'] == '1':
-            data['file_url'] = base_file_url + 'hd'
-        else:
-            data['file_url'] = base_file_url + 'sd'
+    # def parse_scrape_response(self, response_text):
+    #     doc = minidom.parseString(response_text)
+    #     error_id = doc.getElementsByTagName('error_id').item(0)
+    #     if (error_id is not None and
+    #         error_id.firstChild.data == 'embed_blocked'):
+    #         return {
+    #             'is_embedable': False
+    #             }
+    #     xml_data = {}
+    #     for key in ('url', 'caption', 'thumbnail', 'uploader_url',
+    #                 'uploader_display_name', 'isHD', 'embed_code',
+    #                 'request_signature', 'request_signature_expires',
+    #                 'nodeId'):
+    #         item = doc.getElementsByTagName(key).item(0)
+    #         str_data = item.firstChild.data
+    #         if isinstance(str_data, unicode):
+    #             xml_data[key] = str_data # actually Unicode
+    #         else:
+    #             xml_data[key] = str_data.decode('utf8')
 
-        return data
+    #     data = {
+    #         'link': xml_data['url'],
+    #         'user': xml_data['uploader_display_name'],
+    #         'user_url': xml_data['uploader_url'],
+    #         'title': xml_data['caption'],
+    #         'thumbnail_url': xml_data['thumbnail'],
+    #         'embed_code': xml_data['embed_code'],
+    #         'file_url_expires': struct_time_to_datetime(time.gmtime(
+    #                 int(xml_data['request_signature_expires']))),
+    #         'file_url_mimetype': u'video/x-flv',
+    #         }
+    #     base_file_url = (
+    #         'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
+    #         '%(request_signature)s/%(request_signature_expires)s'
+    #         '/?q=' % xml_data)
+    #     if xml_data['isHD'] == '1':
+    #         data['file_url'] = base_file_url + 'hd'
+    #     else:
+    #         data['file_url'] = base_file_url + 'sd'
+
+    #     return data
 
 
     def _get_user_api_url(self, user, type):

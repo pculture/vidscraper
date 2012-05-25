@@ -184,14 +184,14 @@ Caramelldansen""",
             'url': u'http://gdata.youtube.com/feeds/base/users/AssociatedPress/uploads?alt=rss&v=2',
             'title': u'Uploads by AssociatedPress',
             'description': u'',
-            'webpage': u'http://www.youtube.com/user/AssociatedPress/videos',
             'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
             'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
             }
         for key, value in expected.items():
             self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
                     key, value, getattr(feed, key)))
-
+        # YouTube changes this sometimes, so just make sure it's there
+        self.assertTrue(feed.webpage)
         self.assertTrue(feed.entry_count > 55000, feed.entry_count)
 
     def test_feed_18790(self):

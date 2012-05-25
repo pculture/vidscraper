@@ -205,6 +205,11 @@ class Video(object):
         # from a feed or a search.
         self._loaded = False
 
+        # This private attribute is filled with any errors that show up during
+        # data loading. The keys will be the methods, and the values will be
+        # the exceptions.
+        self._errors = {}
+
     @property
     def missing_fields(self):
         """
@@ -753,9 +758,12 @@ class BaseSuite(object):
             try:
                 response_text = urllib2.urlopen(url, timeout=5).read()
             except Exception, exc:
-                # if an exception is raised in this method, it isn't caught and
-                # shows up to the user
-                data = getattr(self, 'parse_%s_error' % method)(exc)
+                # If an error is raised, pass it on to the suite for handling.
+                # If it gets reraised, store it and go on to the next method.
+                try:
+                    data = getattr(self, 'parse_%s_error' % method)(exc)
+                except Exception, exc:
+                    video._errors[method] = exc
             else:
                 data = getattr(self, "parse_%s_response" % method)(response_text)
             self.apply_video_data(video, data)

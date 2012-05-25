@@ -56,5 +56,6 @@ class AutoFunctionalTestCase(unittest.TestCase):
         self.assertEqual(
             feed.thumbnail_url,
             'http://www.youtube.com/img/pic_youtubelogo_123x63.gif')
-        self.assertTrue('AssociatedPress' in feed.webpage)
+        # YouTube changes this sometimes, so just make sure it's there
+        self.assertTrue(feed.webpage)
         self.assertTrue(feed.entry_count > 50000)

@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import pickle
 import re
 import urllib
 import urllib2
@@ -209,6 +210,18 @@ class Video(object):
         # data loading. The keys will be the methods, and the values will be
         # the exceptions.
         self._errors = {}
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # yes, this can lose data, but it's better than not being pickled at
+        # all
+        errors = state['_errors']
+        for key, value in errors.items():
+            try:
+                pickle.dumps(value)
+            except Exception:
+                errors[key] = repr(value)
+        return state
 
     @property
     def missing_fields(self):

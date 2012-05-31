@@ -777,6 +777,7 @@ class BaseSuite(object):
                     data = getattr(self, 'parse_%s_error' % method)(exc)
                 except Exception, exc:
                     video._errors[method] = exc
+                    continue
             else:
                 data = getattr(self, "parse_%s_response" % method)(response_text)
             self.apply_video_data(video, data)

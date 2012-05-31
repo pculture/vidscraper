@@ -7,8 +7,9 @@ from vidscraper.suites import Video
 class MockException(object):
     """
     This exception isn't pickleable because it defines __slots__ but not
-    __getstate__.  `urllib2.HTTPError` also has this issue, but it's harder to
-    instantiate during a test.
+    __getstate__. It lets us easily test behavior with unpickleable
+    exceptions.
+
     """
     __slots__ = ('a', 'b', 'c')
 
@@ -71,7 +72,8 @@ class VideoTestCase(unittest.TestCase):
     def test_pickle_with_unpickleable_exception(self):
         """
         If the :class:`Video` instance has errors, it is still pickleable even
-        if the exception isn't.
+        if the exception isn't. (A common example of an unpickleable
+        exception would be a `urllib2.HTTPError`.)
         """
         self.video._errors['scrape'] = MockException()
         data = pickle.dumps(self.video)

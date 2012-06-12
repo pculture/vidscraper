@@ -129,6 +129,7 @@ class Video(object):
             self.fields = [f for f in fields if f in self._all_fields]
         self.url = url
         self.loaders = loaders if loaders is not None else []
+        self._errors = {}
 
         # This private attribute is set to ``True`` when data is loaded into
         # the video by a scrape suite. It is *not* set when data is pre-loaded
@@ -229,7 +230,10 @@ class Video(object):
 
         data = {}
         for loader, response in itertools.izip(best_loaders, responses):
-            data.update(loader.get_video_data(response))
+            try:
+                data.update(loader.get_video_data(response))
+            except Exception, exc:
+                self._errors[loader] = exc
 
         return data
 

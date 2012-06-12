@@ -2,6 +2,7 @@ from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import convert_entities, make_embed_code
 from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
+                                         get_entry_enclosures,
                                          get_entry_thumbnail_url,
                                          struct_time_to_datetime)
 from vidscraper.videos import FeedparserVideoFeed
@@ -45,12 +46,19 @@ class GenericFeed(FeedparserVideoFeed):
             description = item.get('summary', '')
 
         embed_code = None
+        file_url = file_url_mimetype = file_url_length = None
         if 'media_player' in item:
             player = item['media_player']
             if player.get('content'):
                 embed_code = convert_entities(player['content'])
             elif 'url' in player:
-                embed_code = make_embed_code(player['url'], '')
+                file_url = player['url']
+                file_url_mimetype = player.get('type',
+                                               'application/x-shockwave-flash')
+        if enclosure:
+            file_url = enclosure.get('url')
+            file_url_mimetype = enclosure.get('type')
+            file_url_length = enclosure.get('filesize') or enclosure.get('length')
         if 'media_license' in item:
             license = item['media_license']['href']
         else:
@@ -60,11 +68,9 @@ class GenericFeed(FeedparserVideoFeed):
             'title': convert_entities(item['title']),
             'description': description,
             'thumbnail_url': get_entry_thumbnail_url(item),
-            'file_url': enclosure.get('url') if enclosure else None,
-            'file_url_mimetype': enclosure.get('type') if enclosure else None,
-            'file_url_length': ((enclosure.get('filesize') or
-                                enclosure.get('length'))
-                                if enclosure else None),
+            'file_url': file_url,
+            'file_url_mimetype': file_url_mimetype,
+            'file_url_length': file_url_length,
             'publish_datetime': best_date,
             'guid': item.get('id'),
             'embed_code': embed_code,

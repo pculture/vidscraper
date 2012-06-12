@@ -37,10 +37,26 @@ def struct_time_to_datetime(struct_time):
     """
     return datetime.datetime(*struct_time[:6])
 
+def _valid_enclosure_list(list_):
+    """
+    An enclosure list is valid if it has items which contain data.  Containing
+    a blank item does not qualify as valid.
+    """
+    if not list_:
+        return False
+    if not list_[0]:
+        return False
+    return True
 
 def get_entry_enclosures(entry):
     """Returns a list of enclosures or media_content for the entry."""
-    return entry.get('media_content') or entry.get('enclosures') or []
+    media_content = entry.get('media_content')
+    if _valid_enclosure_list(media_content):
+        return media_content
+    enclosures = entry.get('enclosures')
+    if _valid_enclosure_list(enclosures):
+        return enclosures
+    return []
 
 
 def get_first_accepted_enclosure(entry):

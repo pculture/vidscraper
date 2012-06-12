@@ -34,9 +34,9 @@ import urllib2
 import feedparser
 import requests
 try:
-    from requests import async
-except RuntimeError:
-    async = None
+    import grequests
+except (RuntimeError, ImportError):
+    grequests = None
 
 from vidscraper import __version__
 from vidscraper.exceptions import UnhandledURL, UnhandledSearch, VideoDeleted
@@ -218,14 +218,14 @@ class Video(object):
                 __version__,)
             }
 
-        if async is None:
+        if grequests is None:
             responses = [requests.get(l.get_url(), timeout=3,
                                       headers=headers)
                          for l in best_loaders]
         else:
-            responses = async.map([async.get(l.get_url(), timeout=3,
-                                             headers=headers)
-                                   for l in best_loaders])
+            responses = grequests.map([grequests.get(l.get_url(), timeout=3,
+                                                     headers=headers)
+                                       for l in best_loaders])
 
         data = {}
         for loader, response in itertools.izip(best_loaders, responses):

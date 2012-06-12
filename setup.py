@@ -16,7 +16,7 @@ setup(
         'oauth2>=1.5.211',
         'feedparser>=5.1.2',
         'beautifulsoup4>=4.0.2',
-        'requests>=0.10.8',
+        'requests>=0.13.0',
     ],
     test_suite='vidscraper.tests',
     classifiers=(

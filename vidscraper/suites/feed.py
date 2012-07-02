@@ -1,4 +1,3 @@
-from vidscraper.exceptions import UnhandledURL
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import convert_entities, make_embed_code
 from vidscraper.utils.feedparser import (get_first_accepted_enclosure,

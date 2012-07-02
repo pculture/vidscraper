@@ -25,11 +25,7 @@
 
 import datetime
 import json
-import urllib
-import urllib2
-import urlparse
 
-import feedparser
 import requests
 
 from vidscraper.exceptions import UnhandledURL

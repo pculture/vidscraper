@@ -23,9 +23,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import unittest
-import json
-
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_API_DATA
 from vidscraper.videos import Video, OEmbedLoaderMixin

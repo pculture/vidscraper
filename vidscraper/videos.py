@@ -28,6 +28,7 @@ import itertools
 import json
 import math
 import operator
+import pickle
 import urllib
 import urllib2
 
@@ -39,7 +40,7 @@ except (RuntimeError, ImportError):
     grequests = None
 
 from vidscraper import __version__
-from vidscraper.exceptions import UnhandledURL, UnhandledSearch, VideoDeleted
+from vidscraper.exceptions import UnhandledURL, UnhandledSearch
 from vidscraper.utils.feedparser import (get_item_thumbnail_url,
                                          struct_time_to_datetime)
 from vidscraper.utils.search import (search_string_from_terms,
@@ -135,6 +136,18 @@ class Video(object):
         # the video by a scrape suite. It is *not* set when data is pre-loaded
         # from a feed or a search.
         self._loaded = False
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # yes, this can lose data, but it's better than not being pickled at
+        # all
+        errors = state['_errors']
+        for key, value in errors.items():
+            try:
+                pickle.dumps(value)
+            except Exception:
+                errors[key] = repr(value)
+        return state
 
     @property
     def missing_fields(self):

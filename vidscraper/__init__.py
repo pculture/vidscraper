@@ -34,7 +34,6 @@ from vidscraper.suites import registry
 from vidscraper.videos import Video, VideoSearch, VideoFeed
 
 
-
 def handles_video_url(url):
     """
     Returns True if vidscraper can scrape this url, and False if

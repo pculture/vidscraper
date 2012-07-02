@@ -24,15 +24,12 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import urllib
-import urlparse
 
 import feedparser
 
 from vidscraper.exceptions import UnhandledSearch, UnhandledURL
 from vidscraper.suites.blip import BlipSuite, BlipApiLoader, BlipOEmbedLoader
 from vidscraper.tests.base import BaseTestCase
-from vidscraper.videos import Video
 
 
 DISQUS_DATA = {

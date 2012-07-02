@@ -25,12 +25,10 @@
 
 import datetime
 import json
-import urlparse
 
 from vidscraper.exceptions import VideoDeleted
 from vidscraper.suites.vimeo import (VimeoSuite, VimeoApiLoader,
-                                     VimeoScrapeLoader, VimeoFeed,
-                                     VimeoSearch)
+                                     VimeoScrapeLoader)
 from vidscraper.tests.base import BaseTestCase
 
 

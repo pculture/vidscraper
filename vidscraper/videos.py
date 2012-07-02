@@ -65,7 +65,7 @@ class Video(object):
         'file_url_mimetype', 'file_url_length', 'file_url_expires',
         'flash_enclosure_url', 'is_embeddable', 'embed_code',
         'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid',
-        'index', 'license'
+        'license'
     )
     # This lets us easily check whether we're looking at a datetime field,
     # since the fields are just values, not self-aware.

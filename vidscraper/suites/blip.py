@@ -24,41 +24,129 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
-import urllib
+import re
 import urlparse
 
 import feedparser
 
+from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
-from vidscraper.utils.feedparser import get_entry_thumbnail_url, \
-                                        get_first_accepted_enclosure
+from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
+                                         get_first_accepted_enclosure)
 from vidscraper.utils.http import clean_description_html
+from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
+                               VideoLoader, OEmbedLoaderMixin)
+
+
+class BlipPathMixin(object):
+    new_path_re = re.compile(r'^/(?P<user>[\w-]+)/(?P<slug>[\w-]+)-(?P<post_id>\d+)/?$')
+    old_path_re = re.compile(r'^/file/(?P<item_id>\d+)/?$', re.I)
+
+    new_url_format = "http://blip.tv/rss/{post_id}"
+    old_url_format = "http://blip.tv/file/{item_id}?skin=rss"
+
+    def get_url_data(self, url):
+        parsed_url = urlparse.urlsplit(url)
+        if (parsed_url.scheme in ('http', 'https') and
+            parsed_url.netloc in ('blip.tv', 'www.blip.tv')):
+            match = self.new_path_re.match(parsed_url.path)
+            if match:
+                return match.groupdict()
+            else:
+                match = self.old_path_re.match(parsed_url.path)
+                if match:
+                    return match.groupdict()
+
+        raise UnhandledVideo(url)
+
+    def get_url(self):
+        try:
+            return self.new_url_format.format(**self.url_data)
+        except KeyError:
+            return self.old_url_format.format(**self.url_data)
+
+
+class BlipApiLoader(BlipPathMixin, VideoLoader):
+    fields = set(['guid', 'link', 'title', 'description', 'file_url',
+                  'embed_code', 'thumbnail_url', 'tags', 'publish_datetime',
+                  'user', 'user_url', 'license'])
+
+    def get_video_data(self, response):
+        parsed = feedparser.parse(response.text.encode('utf-8'))
+        return BlipSuite.parse_feed_entry(parsed.entries[0])
+
+
+class BlipOEmbedLoader(OEmbedLoaderMixin, BlipPathMixin, VideoLoader):
+    endpoint = u"http://blip.tv/oembed/"
+    # Technically, Blip would accept http://blip.tv/a/a-{post_id}, but we
+    # shouldn't try to leverage that if we don't need to.
+    new_url_format = u"http://blip.tv/{user}/{slug}-{post_id}"
+
+
+class BlipFeed(FeedparserVideoFeed):
+    """
+    Supports the following known blip feeds:
+
+    * blip.tv/rss: All most recent posts.
+    * blip.tv/<show>/rss: Most recent posts by a show.
+
+    Any of the following are valid inputs:
+
+    * http://blip.tv/
+    * http://blip.tv/rss
+    * http://blip.tv?skin=rss
+    * http://blip.tv/<show>
+    * http://blip.tv/<show>/rss
+    * http://blip.tv/<show>?skin=rss
+
+    .. seealso:: http://wiki.blip.tv/index.php/Video_Browsing_API
+                 http://wiki.blip.tv/index.php/RSS_Output_Format
+
+    """
+    path_re = re.compile(r'^(?:|/rss|(?:/(?P<show>[\w-]+))(?:/rss)?)/?$')
+    page_url_format = "http://blip.tv/{show_path}rss?page={page}&pagelen=100"
+    per_page = 100
+
+    def get_url_data(self, url):
+        parsed_url = urlparse.urlsplit(url)
+        if parsed_url.scheme in ('http', 'https'):
+            if parsed_url.netloc == 'blip.tv':
+                match = self.path_re.match(parsed_url.path)
+                if match:
+                    return match.groupdict()
+
+        raise UnhandledFeed(url)
+
+    def get_page_url_data(self, *args, **kwargs):
+        data = super(BlipFeed, self).get_page_url_data(*args, **kwargs)
+        show = self.url_data['show']
+        data['show_path'] = '{0}/'.format(show) if show is not None else ''
+        return data
+
+    def get_video_data(self, item):
+        return BlipSuite.parse_feed_entry(item)
+
+
+class BlipSearch(FeedparserVideoSearch):
+    page_url_format = "http://blip.tv/rss?page={page}&search={query}"
+    # pagelen doesn't work with searches. Huh.
+    per_page = 10
+
+    def get_video_data(self, item):
+        return BlipSuite.parse_feed_entry(item)
 
 
 class BlipSuite(BaseSuite):
-    video_regex = r'^https?://(?P<subsite>[a-zA-Z]+\.)?blip.tv(?:/.*)?(?<!.mp4)$'
-    feed_regex = video_regex
+    loader_classes = (BlipOEmbedLoader, BlipApiLoader)
+    feed_class = BlipFeed
+    search_class = BlipSearch
 
-    api_fields = set(['guid', 'link', 'title', 'description', 'file_url',
-                      'embed_code', 'thumbnail_url', 'tags',
-                      'publish_datetime', 'user', 'user_url', 'license'])
-
-    oembed_endpoint = u"http://blip.tv/oembed/"
-    oembed_fields = set(['user', 'user_url', 'embed_code', 'thumbnail_url',
-            'title'])
-
-    def get_feed_url(self, url):
-        if not url.endswith('/rss'):
-            if url.endswith('/'):
-                return url + 'rss'
-            else:
-                return url + '/rss'
-        return url
-
-    def parse_feed_entry(self, entry):
+    @staticmethod
+    def parse_feed_entry(entry):
         """
-        Reusable method to parse a feedparser entry from a blip rss feed into
-        a dictionary mapping :class:`.Video` fields to values.
+        Parses a feedparser entry from a blip rss feed into a dictionary
+        mapping :class:`.Video` fields to values. This is used for blip feeds
+        and blip API requests (since those can also be done with feeds.)
 
         """
         enclosure = get_first_accepted_enclosure(entry)
@@ -83,31 +171,5 @@ class BlipSuite(BaseSuite):
             data['license'] = entry['license']
         return data
 
-    def get_next_feed_page_url(self, feed, feed_response):
-        parsed = urlparse.urlparse(feed_response.href)
-        params = urlparse.parse_qs(parsed.query)
-        try:
-            page = int(params.get('page', ['1'])[0])
-        except ValueError:
-            page = 1
-        params['page'] = unicode(page + 1)
-        return "%s?%s" % (urlparse.urlunparse(parsed[:4] + (None, None)),
-                          urllib.urlencode(params, True))
 
-    def get_api_url(self, video):
-        if '-' not in video.url:
-            # http://blip.tv/file/1077145/
-            # oh no, an older URL; get the redirected URL
-            resp = urllib.urlopen(video.url)
-            video.url = resp.geturl()
-            resp.close()
-        parsed_url = urlparse.urlparse(video.url)
-        post_id = parsed_url[2].rsplit('-', 1)[1]
-        new_parsed_url = parsed_url[:2] + ("/rss/%s" % post_id,
-                                            None, None, None)
-        return urlparse.urlunparse(new_parsed_url)
-
-    def parse_api_response(self, response_text):
-        parsed = feedparser.parse(response_text)
-        return self.parse_feed_entry(parsed.entries[0])
 registry.register(BlipSuite)

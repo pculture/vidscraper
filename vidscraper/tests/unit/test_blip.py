@@ -24,129 +24,96 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import os
-import unittest
-import urllib
-import urlparse
 
-from vidscraper.errors import CantIdentifyUrl
-from vidscraper.suites import Video
-from vidscraper.suites.blip import BlipSuite
+import feedparser
+
+from vidscraper.exceptions import UnhandledSearch, UnhandledVideo
+from vidscraper.suites.blip import BlipSuite, BlipApiLoader, BlipOEmbedLoader
+from vidscraper.tests.base import BaseTestCase
 
 
-class BlipTestCase(unittest.TestCase):
+DISQUS_DATA = {
+    'guid': u'4809E60A-C2AB-11DF-BBAC-A6337D0214E0',
+    'link': "http://blip.tv/file/4135225",
+    'title': "Scaling the World's Largest Django Application",
+    'description': "<p>Disqus, one of the largest Django applications in "
+                    "the world, will explain how they deal with scaling "
+                    "complexities in a small startup.</p>",
+    'file_url': "http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv",
+    'embed_code': '<embed src="http://blip.tv/play/AYH9xikC" '
+                    'type="application/x-shockwave-flash" width="480" '
+                    'height="390" wmode="transparent" '
+                    'allowscriptaccess="always" allowfullscreen="true" >'
+                    '</embed>',
+    'publish_datetime': datetime.datetime(2010, 9, 17, 22, 31, 14),
+    'thumbnail_url': "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png",
+    'tags': [u'shmpe', u'djangocon', u'2010'],
+    'user': 'djangocon',
+    'user_url': 'http://djangocon.blip.tv/',
+    'license': 'http://creativecommons.org/licenses/by-nc-sa/3.0/',
+}
+
+class BlipTestCase(BaseTestCase):
     def setUp(self):
         self.suite = BlipSuite()
 
-    @property
-    def data_file_dir(self):
-        if not hasattr(self, '_data_file_dir'):
-            test_dir = os.path.abspath(os.path.dirname(
-                                                os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'blip')
-        return self._data_file_dir
-
-    def _check_disqus_data(self, data):
-        """Check that data for a specific post is parsed as expected."""
-        self.assertEqual(data['guid'], u'4809E60A-C2AB-11DF-BBAC-A6337D0214E0')
-        self.assertEqual(data['link'], "http://blip.tv/file/4135225")
-        self.assertEqual(data['title'],
-                        "Scaling the World's Largest Django Application")
-        self.assertEqual(data['description'],
-                        "<p>Disqus, one of the largest Django applications in "
-                        "the world, will explain how they deal with scaling "
-                        "complexities in a small startup.</p>")
-        self.assertEqual(data['file_url'], "http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv")
-        self.assertEqual(data['embed_code'],
-                        '<embed src="http://blip.tv/play/AYH9xikC" '
-                        'type="application/x-shockwave-flash" width="480" '
-                        'height="390" wmode="transparent" '
-                        'allowscriptaccess="always" allowfullscreen="true" >'
-                        '</embed>')
-        self.assertEqual(data['publish_datetime'],
-                         datetime.datetime(2010, 9, 17, 22, 31, 14))
-        self.assertEqual(data['thumbnail_url'],
-                        "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png")
-        self.assertEqual(data['tags'],
-                        [u'shmpe', u'djangocon', u'2010'])
-        self.assertEqual(data['user'], 'djangocon')
-        self.assertEqual(data['user_url'], 'http://djangocon.blip.tv/')
-        self.assertEqual(data['license'],
-                         'http://creativecommons.org/licenses/by-nc-sa/3.0/')
-        
-
 
 class BlipApiTestCase(BlipTestCase):
-    def setUp(self):
-        BlipTestCase.setUp(self)
-        self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
-        self.video = self.suite.get_video(url=self.base_url)
+    def test_valid_urls(self):
+        valid_urls = (
+            ('http://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/rss/4154053'),
+            ('https://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/rss/4154053'),
+            ('http://blip.tv/file/4135225',
+             'http://blip.tv/file/4135225?skin=rss'),
+            ('https://blip.tv/file/4135225',
+             'http://blip.tv/file/4135225?skin=rss'),
+            ('http://blip.tv/file/4135225?foo=bar',
+             'http://blip.tv/file/4135225?skin=rss'),
+        )
+        invalid_urls = (
+            'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
+            'http://blip.tv/dashboard/episode/5944048',
+        )
+        for url, expected in valid_urls:
+            loader = BlipApiLoader(url)
+            self.assertEquals(loader.get_url(), expected)
 
-    def _test_video_api_url(self, video):
-        api_url = self.suite.get_api_url(video)
-        parsed_url = urlparse.urlparse(api_url)
-        self.assertEqual(parsed_url[2], "/rss/4167881")
+        for url in invalid_urls:
+            self.assertRaises(UnhandledVideo, BlipApiLoader, url)
 
-    def test_get_api_url(self):
-        self._test_video_api_url(self.video)
-
-    def test_get_api_url_old_url(self):
-        self.video.url = 'http://blip.tv/file/1077145/'
-        api_url = self.suite.get_api_url(self.video)
-        parsed_url = urlparse.urlparse(api_url)
-        self.assertEqual(parsed_url[2], '/rss/1083325')
-
-    def test_get_api_url_overrides(self):
-        video = self.suite.get_video(url="%s?skin=json" % self.base_url)
-        self._test_video_api_url(video)
-
-    def test_parse_api_response(self):
-        api_file = open(os.path.join(self.data_file_dir, 'api.rss'))
-        data = self.suite.parse_api_response(api_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.api_fields)
-        self._check_disqus_data(data)
+    def test_get_video_data(self):
+        loader = BlipApiLoader('http://blip.tv/file/4135225')
+        api_file = self.get_data_file('blip/api.rss')
+        response = self.get_response(api_file.read())
+        data = loader.get_video_data(response)
+        self.assertEqual(set(data), loader.fields)
+        self.assertEqual(data, DISQUS_DATA)
 
 
-class BlipOembedTestCase(BlipTestCase):
-    def setUp(self):
-        BlipTestCase.setUp(self)
-        self.base_url = "http://blip.tv/djangocon/lightning-talks-day-1-4167881"
-        self.video = self.suite.get_video(url=self.base_url)
+class BlipOEmbedTestCase(BlipTestCase):
+    def test_valid_urls(self):
+        valid_urls = (
+            ('http://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Fdjangocon%2Fscaling-the-world-s-largest-django-application-4154053'),
+            ('https://blip.tv/djangocon/scaling-the-world-s-largest-django-application-4154053',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Fdjangocon%2Fscaling-the-world-s-largest-django-application-4154053'),
+            ('http://blip.tv/file/4135225',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Ffile%2F4135225%3Fskin%3Drss'),
+            ('https://blip.tv/file/4135225',
+             'http://blip.tv/oembed/?url=http%3A%2F%2Fblip.tv%2Ffile%2F4135225%3Fskin%3Drss'),
+        )
+        invalid_urls = (
+            'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
+            'http://blip.tv/dashboard/episode/5944048',
+        )
+        for url, expected in valid_urls:
+            loader = BlipOEmbedLoader(url)
+            self.assertEquals(loader.get_url(), expected)
 
-    def test_get_oembed_url(self):
-        escaped_url = urllib.quote_plus(self.video.url)
-        expected = "http://blip.tv/oembed/?url=%s" % escaped_url
-        oembed_url = self.suite.get_oembed_url(self.video)
-        self.assertEqual(oembed_url, expected)
-
-    def test_parse_oembed_response(self):
-        oembed_file = open(os.path.join(
-                            self.data_file_dir, 'oembed.json'))
-        data = self.suite.parse_oembed_response(oembed_file.read())
-        self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.oembed_fields)
-        self._check_disqus_data(data)
-
-    def _check_disqus_data(self, data):
-        """
-        OEmbed doesn't return as much data - and what it does return is ever so
-        slightly different.
-
-        """
-        self.assertEqual(data['title'],
-                        "Scaling the World's Largest Django Application")
-        self.assertEqual(data['embed_code'],
-                        '<iframe src="http://blip.tv/play/AYH9xikC.html" '
-                        'width="640" height="510" frameborder="0" '
-                        'allowfullscreen></iframe><embed '
-                        'type="application/x-shockwave-flash" '
-                        'src="http://a.blip.tv/api.swf#AYH9xikC" '
-                        'style="display:none"></embed>')
-        self.assertEqual(data['thumbnail_url'],
-                        "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png")
-        self.assertEqual(data['user'], 'djangocon')
-        self.assertEqual(data['user_url'], 'http://blip.tv/djangocon')
+        for url in invalid_urls:
+            self.assertRaises(UnhandledVideo, BlipOEmbedLoader, url)
 
 
 class BlipFeedTestCase(BlipTestCase):
@@ -154,75 +121,63 @@ class BlipFeedTestCase(BlipTestCase):
         BlipTestCase.setUp(self)
         self.feed_url = 'http://blip.tv/djangocon'
         self.feed = self.suite.get_feed(self.feed_url)
-        self.feed_data = open(
-            os.path.join(self.data_file_dir, 'feed.rss')
-            ).read()
-        self.feed.handle_first_response(self.suite.get_feed_response(
-                self.feed, self.feed_data))
+        self.response = feedparser.parse(self.get_data_file('blip/feed.rss'))
 
-    def test_get_feed_url(self):
-        self.assertEqual(self.suite.get_feed_url(self.feed_url),
-                         'http://blip.tv/djangocon/rss')
-        self.assertEqual(self.suite.get_feed_url(
-                'http://blip.tv/djangocon/rss'),
-                         'http://blip.tv/djangocon/rss')
-        self.assertEqual(self.suite.get_feed_url(
-                'http://blip.tv/djangocon'),
-                         'http://blip.tv/djangocon/rss')
+    def test_feed_urls(self):
+        valid_show_urls = (
+            'http://blip.tv/djangocon',
+            'http://blip.tv/djangocon/rss',
+            'http://blip.tv/djangocon?skin=rss',
+        )
+        valid_no_show_urls = (
+            'http://blip.tv',
+            'http://blip.tv/rss',
+            'http://blip.tv?skin=rss',
+        )
+        for url in valid_show_urls:
+            data = self.feed.get_url_data(url)
+            self.assertEqual(data, {'show': 'djangocon'})
 
-    def test_get_feed_entries(self):
-        response = self.suite.get_feed_response(self.feed, self.feed_data)
-        entries = self.suite.get_feed_entries(self.feed, response)
-        self.assertTrue(len(entries), 77)
+        for url in valid_no_show_urls:
+            data = self.feed.get_url_data(url)
+            self.assertEqual(data, {'show': None})
 
-    def test_parse_entry(self):
-        response = self.suite.get_feed_response(self.feed, self.feed_data)
-        entries = self.suite.get_feed_entries(self.feed, response)
-        data = self.suite.parse_feed_entry(entries[1])
-        self.assertTrue(isinstance(data, dict))
-        self._check_disqus_data(data)
+    def test_get_page_url(self):
+        expected = "http://blip.tv/djangocon/rss?page=1&pagelen=100"
+        url = self.feed.get_page_url(page_start=1, page_max=100)
+        self.assertEqual(url, expected)
 
-    def test_parse_feed(self):
-        self.assertEqual(len(list(self.feed)), 77)
-        for video in self.feed:
-            self.assertTrue(isinstance(video, Video))
+    def test_get_video_data(self):
+        items = self.feed.get_response_items(self.response)
+        data = self.feed.get_video_data(items[1])
+        self.assertEqual(data, DISQUS_DATA)
 
-    def test_next_feed_page_url(self):
-        # get_next_feed_page_url expects ``feed``, ``feed_response`` arguments.
-        # feed_response is a feedparser response.
-        response = self.suite.get_feed_response(self.feed, self.feed_data)
-        response.href = 'http://blip.tv/nothing/here/?page=5'
-        new_url = self.suite.get_next_feed_page_url(None, response)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=6')
-        response.href = 'http://blip.tv/nothing/here/'
-        new_url = self.suite.get_next_feed_page_url(None, response)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=2')
-        response.href = 'http://blip.tv/nothing/here/?page=notanumber'
-        new_url = self.suite.get_next_feed_page_url(None, response)
-        self.assertEqual(new_url, 'http://blip.tv/nothing/here/?page=2')
+    def test_get_response_items(self):
+        videos = self.feed.get_response_items(self.response)
+        self.assertEqual(len(videos), 77)
 
 
 class BlipSearchTestCase(BlipTestCase):
     def setUp(self):
         BlipTestCase.setUp(self)
-        self.feed_data = open(
-            os.path.join(self.data_file_dir, 'search.rss')
-        ).read()
+        search_file = self.get_data_file('blip/search.rss')
+        self.response = feedparser.parse(search_file.read())
         self.search = self.suite.get_search('search query')
 
-    def test_parse_search_feed(self):
-        response = self.suite.get_search_response(self.search, self.feed_data)
-        results = self.suite.get_search_results(self.search, response)
+    def test_get_video_data(self):
+        results = self.search.get_response_items(self.response)
         self.assertTrue(len(results) > 0)
+        data = self.search.get_video_data(results[1])
+        self.assertEqual(data, DISQUS_DATA)
 
-    def test_parse_result(self):
-        response = self.suite.get_search_response(self.search, self.feed_data)
-        results = self.suite.get_search_results(self.search, response)
-        data = self.suite.parse_search_result(self.search, results[1])
-        self.assertTrue(isinstance(data, dict))
-        self._check_disqus_data(data)
+    def test_unhandled_searches(self):
+        self.assertRaises(UnhandledSearch,
+                          self.suite.get_search,
+                          'search query',
+                          order_by='latest')
+
 
 class BlipSuiteTestCase(BlipTestCase):
     def test_mp4_not_included(self):
-        self.assertFalse(self.suite.handles_video_url(
+        self.assertFalse(self.suite.handles_video(
                 'http://blip.tv/file/get/Miropcf-Miro20Introduction119.mp4'))

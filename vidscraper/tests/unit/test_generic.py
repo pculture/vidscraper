@@ -25,52 +25,41 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import os
-import unittest
+
 import feedparser
 
-from vidscraper.suites.base import VideoDownload
-from vidscraper.suites.feed import GenericFeedSuite
+from vidscraper.suites.generic import GenericFeedSuite
+from vidscraper.tests.base import BaseTestCase
+from vidscraper.videos import VideoDownload
 
-class GenericFeedSuiteTestCase(unittest.TestCase):
+
+class GenericFeedSuiteTestCase(BaseTestCase):
     def setUp(self):
         self.suite = GenericFeedSuite()
+        self.feed = self.suite.get_feed(
+            'file://{0}'.format(self._data_file_path('feed/feed.rss')))
         self.old_SANITIZE = feedparser.SANITIZE_HTML
         feedparser.SANITIZE_HTML = False
 
     def tearDown(self):
         feedparser.SANITIZE_HTML = self.old_SANITIZE
 
-    @property
-    def data_file_dir(self):
-        if not hasattr(self, '_data_file_dir'):
-            test_dir = os.path.abspath(os.path.dirname(
-                                                os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'feed')
-        return self._data_file_dir
-
-    # def test_CantIdentifyUrl_for_video(self):
-    #     self.assertRaises(CantIdentifyUrl, self.suite.get_video,
-    #                       'http://www.google.com/')
-
     def test_basic_feed_data(self):
-        feed = self.suite.get_feed(
-            'file://%s' % os.path.join(self.data_file_dir, 'feed.rss'))
-        feed.load()
-        self.assertEqual(feed.title, 'Internet Archive - Mediatype: movies')
-        self.assertEqual(feed.webpage, 'http://www.archive.org/details/movies')
+        # this test can be removed if base unit tests for the feedparser mixin
+        # get added.
+        self.feed.load()
+        self.assertEqual(self.feed.title, 'Internet Archive - Mediatype: movies')
+        self.assertEqual(self.feed.webpage, 'http://www.archive.org/details/movies')
         self.assertEqual(
-            feed.description,
+            self.feed.description,
             ('The most recent additions to the Internet Archive collections.  '
              'This RSS feed is generated dynamically'))
-        self.assertEqual(feed.last_modified,
+        self.assertEqual(self.feed.last_modified,
                          datetime.datetime(2011, 10, 20, 14, 36, 1))
-        self.assertEqual(feed.entry_count, 2)
+        self.assertEqual(self.feed.video_count, 2)
         
-    def test_feed_entry_data(self):
-        feed = self.suite.get_feed(
-            'file://%s' % os.path.join(self.data_file_dir, 'feed.rss'))
-        video = iter(feed).next()
+    def test_get_video_data(self):
+        video = self.feed.next()
         self.assertEqual(video.title,
                          'SFGTV : October 20, 2011 6:00am-6:30am PDT')
         self.assertEqual(
@@ -101,11 +90,9 @@ Text, MP3, MPEG2, Metadata, SubRip, Thumbnail, Video Index, h.264</p>""")
                          'http://creativecommons.org/licenses/by/2.5/')
 
     def test_feed_entry_unicode(self):
-        feed = self.suite.get_feed(
-            'file://%s' % os.path.join(self.data_file_dir, 'feed.rss'))
-        i = iter(feed)
-        i.next() # skip the first one
-        video = i.next()
+        # skip the first video.
+        self.feed.next()
+        video = self.feed.next()
         self.assertEqual(
             video.title,
             u'مصر الجديدة - الشيخ خالد عبد الله " 19-10-2011 "')
@@ -137,16 +124,14 @@ h.264</p>""")
                          datetime.datetime(2011, 10, 20, 14, 17, 44))
 
     def test_parse_feed_entry_rel_via(self):
-        fp = feedparser.parse(os.path.join(self.data_file_dir,
-                                           'feed_with_link_via.atom'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        fp = feedparser.parse(self._data_file_path('feed/feed_with_link_via.atom'))
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['link'],
                          "http://www.example.org/entries/1")
 
     def test_parse_feed_entry_atom(self):
-        fp = feedparser.parse(os.path.join(self.data_file_dir,
-                                           'feed.atom'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        fp = feedparser.parse(self._data_file_path('feed/feed.atom'))
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(
             data,
             {'title': u'Atom 1.0',
@@ -169,9 +154,8 @@ h.264</p>""")
              'license': 'http://creativecommons.org/licenses/by/2.5/'})
 
     def test_parse_feed_media_player(self):
-        fp = feedparser.parse(os.path.join(self.data_file_dir,
-                                           'feed_with_media_player.atom'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
+        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player.atom'))
+        data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['embed_code'],
                          u'<object width="425" height="271">'
                          '<embed id="ONPlayerEmbed" width="425" height="271" '
@@ -187,18 +171,25 @@ h.264</p>""")
                          'type="application/x-shockwave-flash"></embed>'
                          '</object>')
 
+    def test_parse_feed_media_content(self):
+        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_content.rss'))
+        data = self.feed.get_video_data(fp.entries[0])
+        download = data['downloads'][0]
+        self.assertEqual(
+            download.url,
+            'http://videos.stupidvideos.com/2/00/40/30/51/403051.flv')
+        self.assertEqual(download.mime_type, 'video/x-flv')
+        self.assertEqual(data['embed_code'], None)
 
     def test_parse_feed_media_player_url(self):
-        fp = feedparser.parse(os.path.join(self.data_file_dir,
-                                           'feed_with_media_player_url.rss'))
-        data = self.suite.parse_feed_entry(fp.entries[0])
-        self.assertEqual(data['embed_code'],
-                        u'''<object width="400" height="264">
-    <param name="flashvars" value="">
-    <param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=7981161">
-    <param name="allowFullScreen" value="true">
-    <param name="allowscriptaccess" value="always">
-    <embed src="http://vimeo.com/moogaloop.swf?clip_id=7981161"\
- flashvars="" type="application/x-shockwave-flash" allowfullscreen="true"\
- allowscriptaccess="always" width="400" height="264>
-</object>''')
+        """
+        Because the media:player doesn't have any content, and this entry has
+        an enclosure, we don't use the media:player attribute.
+        """
+        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player_url.rss'))
+        data = self.feed.get_video_data(fp.entries[0])
+        download = data['downloads'][0]
+        self.assertEqual(download.url, 'http://vimeo.com/moogaloop.swf?clip_id=7981161')
+        self.assertEqual(download.mime_type, 'application/x-shockwave-flash')
+        self.assertEqual(download.length, '15993252')
+        self.assertEqual(data['embed_code'], None)

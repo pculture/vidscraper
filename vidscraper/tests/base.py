@@ -1,18 +1,17 @@
-# Miro - an RSS based video player application
 # Copyright 2009 - Participatory Culture Foundation
-# 
+#
 # This file is part of vidscraper.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright
 #    notice, this list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -24,15 +23,31 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from lxml.html import clean
+import os
+import unittest
 
-DESCRIPTION_CLEANER = clean.Cleaner(
-    remove_tags=['img', 'table', 'tr', 'td', 'th'])
+from requests.models import Response
+
+import vidscraper
 
 
-# TODO: Rename this to sanitize? Should this really be done with an xml cleaner?
-def clean_description_html(html):
-    if not html:
-        return html
-    return DESCRIPTION_CLEANER.clean_html(html)
+class BaseTestCase(unittest.TestCase):
+    def _data_file_path(self, data_file):
+        root = os.path.abspath(os.path.dirname(vidscraper.__file__))
+        return os.path.join(root, 'tests', 'data', data_file)
 
+    def get_data_file(self, data_file):
+        return open(self._data_file_path(data_file))
+
+    def get_response(self, content, code=200):
+        response = Response()
+        response._content = content
+        response.status_code = code
+        return response
+
+    def assertDictEqual(self, data, expected_data, msg=None):
+        self.assertEqual(set(data), set(expected_data))
+        for key in data:
+            self.assertEqual(data[key], expected_data[key],
+                             'value for %s not equal:\n%r != %r' % (
+                             key, data[key], expected_data[key]))

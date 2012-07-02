@@ -24,91 +24,117 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from vidscraper import errors
-from vidscraper.suites import Video, registry, VideoSearch, VideoFeed
+__version__ = '0.6-a'
 
 
-VERSION = '0.5.0a'
+import json
+import sys
+from optparse import OptionParser
 
-
-def handles_video_url(url):
-    """
-    Returns True if vidscraper can scrape this url, and False if
-    it can't.
-
-    """
-    return any((suite.handles_video_url(url) for suite in registry.suites))
-
-
-def handles_feed_url(url):
-    """
-    Returns True if vidscraper can treat this url as a feed, and False if
-    it can't.
-
-    """
-    return any((suite.handles_feed_url(url) for suite in registry.suites))
+from vidscraper.suites import registry
+from vidscraper.videos import Video, VideoSearch, VideoFeed
 
 
 def auto_scrape(url, fields=None, api_keys=None):
     """
-    Automatically determines which suite to use and scrapes ``url`` with that
-    suite.
-
-    :returns: :class:`.Video` instance.
-
-    :raises errors.CantIdentifyUrl: if this is not a url that can be
-        scraped.
+    Calls the default registry's :meth:`~.SuiteRegistry.get_video` method with
+    the given parameters, then loads and returns the :class:`.Video`.
 
     """
-    video = Video(url, fields=fields, api_keys=api_keys)
+    video = registry.get_video(url, fields=fields, api_keys=api_keys)
     video.load()
     return video
 
 
-def auto_feed(url, fields=None, crawl=False, max_results=None, api_keys=None,
-              last_modified=None, etag=None):
+auto_feed = registry.get_feed
+auto_search = registry.get_searches
+handles_video = registry.handles_video
+handles_feed = registry.handles_feed
+
+
+# fetchvideo -> auto_scrape(url, fields, api_keys)
+
+
+class VidscraperCommandHandler(object):
+    """Command line handler for vidscraper.
+
+    This exposes functions in this module to the command line giving
+    vidscraper command line utility.
+
+    Subcommands are implemented in ``handle_SUBCOMMAND`` methods.  See
+    ``handle_video`` and ``handle_help`` for examples.
     """
-    Automatically determines which suite to use and scrapes ``feed_url`` with
-    that suite. This will return a :class:`VideoFeed` instance instantiated
-    using the determined suite. When iterated over, the :class:`VideoFeed`
-    will yield :class:`.Video` instances which have been initialized with
-    the given ``fields`` and ``api_keys``. If ``crawl`` is ``True`` (not the
-    default) then :mod:`vidscraper` will return results from multiple pages of
-    the feed, if the suite supports it.
 
-    .. note:: Crawling will only initiate a new HTTP request after it has
-              exhausted the results on the current page.
+    usage = "%prog [command] [options]"
 
-    :returns: A :class:`VideoFeed` instance which yields
-              :class:`.Video` instances for the items in the feed.
+    def get_commands(self):
+        """Returns a list of subcommands implemented."""
+        return [mem.replace("handle_", "")
+                for mem in dir(self)
+                if mem.startswith("handle_")]
 
-    :raises errors.CantIdentifyUrl: if this is a url which none of the suites
-                                    know how to handle.
+    def build_parser(self, usage):
+        """Builds the parser with universal bits."""
+        parser = OptionParser(usage=usage, version=__version__)
+        return parser
 
-    """
-    return VideoFeed(url, fields=fields, crawl=crawl, max_results=max_results,
-                       api_keys=api_keys, last_modified=last_modified,
-                       etag=etag)
+    def handle_video(self):
+        """Handler for auto_scrape."""
+        parser = self.build_parser("%prog video [options] URL")
+        parser.add_option("--fields", dest="fields",
+                          help="comma-separated list of fields to retrieve. "
+                          "e.g. --fields=a,b,c")
+        parser.add_option("--apikeys", dest="api_keys",
+                          help="api keys comma separated. "
+                          "e.g. --apikeys=key:val,key2:val")
+        (options, args) = parser.parse_args()
 
+        if len(args) == 0:
+            parser.error("URL needed.")
 
-def auto_search(query, fields=None, order_by=None, crawl=False,
-                max_results=None, api_keys=None):
-    """
-    Returns a dictionary mapping each registered suite to a
-    :class:`.VideoSearch` instance which has been instantiated for that suite
-    and the given arguments.
-
-    """
-    suites = {}
-    for suite in registry.suites:
-        search = VideoSearch(query, suite, fields, order_by, crawl,
-                               max_results, api_keys)
-        try:
-            search.get_first_url()
-        except NotImplementedError:
-            # suite doesn't implement search
-            pass
+        if options.fields:
+            fields = options.fields.split(",")
         else:
-            suites[suite] = search
-        
-    return suites
+            fields = None
+
+        if options.api_keys:
+            api_keys = dict(mem.split(":", 1)
+                            for mem in options.api_keys.split(","))
+        else:
+            api_keys = None
+
+        for arg in args:
+            print "Scraping %s" % arg
+            video = auto_scrape(arg, fields=fields, api_keys=api_keys)
+            print json.dumps(video.serialize(), indent=2, sort_keys=True)
+
+        return 0
+
+    def handle_help(self, error=None):
+        """Handles help."""
+        parser = self.build_parser("%prog [command]")
+        parser.print_help()
+        if error:
+            print ""
+            print "Error: " + error
+        print ""
+        print "Commands:"
+        for cmd in self.get_commands():
+            print "    %s" % cmd
+        return 0
+
+    def main(self):
+        if len(sys.argv) <= 1 or sys.argv[1] in ("-h", "--help"):
+            return self.handle_help()
+
+        try:
+            cmd = sys.argv.pop(1)
+            cmd = "".join(c for c in cmd if c.isalpha())
+            handler = getattr(self, "handle_%s" % cmd)
+        except AttributeError:
+            return self.handle_help(error='%s is not a valid command.' % cmd)
+
+        return handler()
+
+if __name__ == "__main__":
+    sys.exit(VidscraperCommandHandler().main())

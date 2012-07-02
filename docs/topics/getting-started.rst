@@ -38,9 +38,9 @@ incredibly easy::
     u'CaramellDansen (Full Version + Lyrics)'
 
 That's it!  Couldn't be easier.  auto_scrape will determine the right
-:doc:`scraping suite </api/suites>` to use for the url you pass in and will use that suite to return a :class:`.ScrapedVideo` instance that represents the data
+:doc:`scraping suite </api/suites>` to use for the url you pass in and will use that suite to return a :class:`.Video` instance that represents the data
 associated with the video at that url. If no suites are found which support the
-url, :exc:`.CantIdentifyUrl` will be raised.
+url, :exc:`.UnhandledVideo` will be raised.
 
 If you only need certain fields (say you only need the "file_url" and the
 "title" fields), you can pass those fields in as a second argument::
@@ -50,9 +50,9 @@ If you only need certain fields (say you only need the "file_url" and the
 Video fields
 ------------
 
-If a :class:`.ScrapedVideo` is initialized without any fields, then
+If a :class:`.Video` is initialized without any fields, then
 :mod:`vidscraper` will assume you want all of the fields for the video. When the
-:class:`.ScrapedVideo` is being loaded, :mod:`vidscraper` will maximize the
+:class:`.Video` is being loaded, :mod:`vidscraper` will maximize the
 number of requested fields that it fills; occasionally, this may mean that it
 will make more than one HTTP request. This means that limiting the fields to
 what you are actually using can save quite a bit of work.
@@ -67,7 +67,7 @@ If you want to get every video for a feed, you can use
     >>> from vidscraper import auto_feed
     >>> results = auto_feed("http://blip.tv/djangocon/rss")
 
-This will read the feed at the given url and return a generator which yields :class:`.ScrapedVideo` instances for each entry in the feed. The instances will be preloaded with metadata from the feed. In many cases this will fill out all the fields that you need. If you need more, however, you can tell the video to load more data manually::
+This will read the feed at the given url and return a generator which yields :class:`.Video` instances for each entry in the feed. The instances will be preloaded with metadata from the feed. In many cases this will fill out all the fields that you need. If you need more, however, you can tell the video to load more data manually::
 
     >>> video = results.next()
     >>> video.load()

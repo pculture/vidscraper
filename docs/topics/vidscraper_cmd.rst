@@ -1,9 +1,4 @@
-.. Vidscraper documentation master file, created by
-   sphinx-quickstart on Thu Sep 15 21:08:41 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-.. Copyright 2009 - Participatory Culture Foundation
+.. Copyright 2012 - Participatory Culture Foundation
 
    This file is part of vidscraper.
 
@@ -28,57 +23,22 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-.. module:: vidscraper
+Command Line
+============
 
-Welcome to Vidscraper's documentation!
-======================================
+vidscraper comes with a command line utility allowing you to do crazy
+awesome things on the command line.
 
-Vidscraper is a clean, simple library for a couple of rather messy
-issues:
+Want to get the metadata for a YouTube video?
 
-- Retrieving the source video from a "flash-only" website
-- Finding out contextual data about a pasted url: title/description/etc
+::
 
-Vidscraper provides a unified api for an issue that requires a lot of
-one-off scraping.
+    $ vidscraper-cmd video http://www.youtube.com/watch?v=J_DV9b0x7v4
 
 
-Requirements
-++++++++++++
+Want just the title and embed code?
 
-* Python 2.6+
-* BeautifulSoup 4.0.2
-* feedparser 5.1.1
+::
 
-Optional
---------
-* oauth2 (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
-* nose (for tests)
-
-
-Contents
-++++++++
-
-.. toctree::
-   :maxdepth: 2
-
-   topics/getting-started
-   exceptions
-   api/suites
-   api/videos
-
-Release notes
-+++++++++++++
-
-.. toctree::
-   :maxdepth: 1
-
-   release-notes/0.6
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+    $ vidscraper-cmd video --fields=title,embed_code \
+        http://www.youtube.com/watch?v=J_DV9b0x7v4

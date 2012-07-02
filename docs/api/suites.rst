@@ -42,4 +42,4 @@ Built-in Suites
 +++++++++++++++
 
 .. autoclass:: vidscraper.suites.BaseSuite
-    :members:
+   :members:

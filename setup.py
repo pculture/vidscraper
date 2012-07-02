@@ -1,21 +1,25 @@
 from setuptools import setup, find_packages
 
-version = '0.5.0a'
+version = '0.6-a'
 
 setup(
     name="vidscraper",
     version=version,
-    author='Participatory Culture Foundation',
+    maintainer='Participatory Culture Foundation',
+    maintainer_email='dev@mirocommunity.org',
+    url='https://github.com/pculture/vidscraper',
     license='BSD',
     packages=find_packages(),
+    scripts=['bin/vidscraper-cmd'],
     install_requires=[
-        'lxml',
-        'oauth2',
-        'feedparser',
-        'BeautifulSoup>=3.2.0'
+        'lxml>=2.3.4',
+        'oauth2>=1.5.211',
+        'feedparser>=5.1.2',
+        'beautifulsoup4>=4.0.2',
+        'requests>=0.13.0',
     ],
+    test_suite='vidscraper.tests',
     classifiers=(
-        'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

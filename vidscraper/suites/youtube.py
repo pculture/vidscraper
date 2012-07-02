@@ -44,7 +44,7 @@ from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedLoaderMixin, VideoDownload)
+                               OEmbedLoaderMixin, VideoFile)
 
 
 # Information on the YouTube API can be found at the following links:
@@ -91,7 +91,7 @@ class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
 
 class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                  'downloads'))
+                  'files'))
 
     # the ordering of fmt codes we prefer to download
     preferred_fmt_types = [
@@ -165,12 +165,12 @@ class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
             file_url_expires = struct_time_to_datetime(
                 time.gmtime(int(file_url_qs['expire'][0])))
             return file_url, file_url_expires
-        data['downloads'] = downloads = []
+        data['files'] = files = []
         for fmt, mime_type, width, height in itertools.chain(
             self.preferred_fmt_types, self.other_fmt_types):
             if fmt in fmt_url_map:
                 file_url, file_url_expires = _parse_fmt(fmt)
-                downloads.append(VideoDownload(
+                files.append(VideoFile(
                         url=file_url,
                         url_expires=file_url_expires,
                         mime_type=mime_type,

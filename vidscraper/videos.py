@@ -63,7 +63,7 @@ class Video(object):
     _all_fields = (
         'title', 'description', 'publish_datetime', 'flash_enclosure_url',
         'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url',
-        'tags', 'link', 'guid', 'license', 'downloads',
+        'tags', 'link', 'guid', 'license', 'files',
     )
     # This lets us easily check whether we're looking at a datetime field,
     # since the fields are just values, not self-aware.
@@ -82,34 +82,9 @@ class Video(object):
     description = None
     #: A python datetime indicating when the video was published.
     publish_datetime = None
-    #: The url to the actual video file. Just maps to the URL in the first
-    #: item in ``downloads``.
-    @property
-    def file_url(self):
-        if self.downloads:
-            return self.downloads[0].url
-    #: The MIME type for the actual video file.  Just maps to the MIME type in
-    #: the first item in ``downloads``.
-    @property
-    def file_url_mimetype(self):
-        if self.downloads:
-            return self.downloads[0].mime_type
-    #: a datetime.datetime() representing when we think the file URL is no
-    #: longer valid.  Just maps to the expiration of the first item in
-    #: ``downloads``
-    @property
-    def file_url_expires(self):
-        if self.downloads:
-            return self.downloads[0].url_expires
-    #: The length of the actual video file.  Just maps to the length of the
-    #: first item in ``downloads``.
-    @property
-    def file_url_length(self):
-        if self.downloads:
-            return self.downloads[0].length
-    #: a list of L{VideoDownload} objects representing all the possible
-    #: downloads for this video
-    downloads = None
+    #: A list of :class:`VideoFile` instances representing all the possible
+    #: files for this video.
+    files = None
     #: "Crappy enclosure link that doesn't actually point to a url.. the kind
     #: crappy flash video sites give out when they don't actually want their
     #: enclosures to point to video files."
@@ -315,9 +290,10 @@ class Video(object):
         return video
 
 
-class VideoDownload(object):
+class VideoFile(object):
     """
-    Represents a single downloadable URL for a URL.
+    Represents a video file hosted somewhere.
+
     """
     #: the URL to download
     url = None
@@ -337,13 +313,13 @@ class VideoDownload(object):
             setattr(self, k, v)
 
     def __repr__(self):
-        return u'<vidscraper.videos.VideoDownload: %s>' % unicode(self)
+        return u'<vidscraper.videos.VideoFile: %s>' % unicode(self)
 
     def __unicode__(self):
         return u', '.join(u'%s=%r' % (k, v) for k, v in self.__dict__.items())
 
     def __eq__(self, other):
-        if not isinstance(other, VideoDownload):
+        if not isinstance(other, VideoFile):
             return NotImplemented
         return self.__dict__ == other.__dict__
 

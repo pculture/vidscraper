@@ -42,7 +42,7 @@ from vidscraper.exceptions import (VideoDeleted, UnhandledVideo,
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedLoaderMixin, VideoDownload)
+                               OEmbedLoaderMixin, VideoFile)
 
 
 # Documentation for the Vimeo APIs:
@@ -84,7 +84,7 @@ class VimeoApiLoader(VimeoPathMixin, VideoLoader):
 
 class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
     fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
-                  'embed_code', 'downloads',])
+                  'embed_code', 'files',])
 
     url_format = u"http://www.vimeo.com/moogaloop/load/clip:{video_id}"
 
@@ -121,7 +121,7 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
             'title': xml_data['caption'],
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
-            'downloads': [VideoDownload(
+            'files': [VideoFile(
                     url_expires=(struct_time_to_datetime(time.gmtime(
                             int(xml_data['request_signature_expires']))) +
                             datetime.timedelta(hours=6)),
@@ -133,9 +133,9 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
             '%(request_signature)s/%(request_signature_expires)s'
             '/?q=' % xml_data)
         if xml_data['isHD'] == '1':
-            data['downloads'][0].url = base_file_url + 'hd'
+            data['files'][0].url = base_file_url + 'hd'
         else:
-            data['downloads'][0].url = base_file_url + 'sd'
+            data['files'][0].url = base_file_url + 'sd'
 
         return data
 

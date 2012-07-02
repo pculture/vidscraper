@@ -30,6 +30,7 @@ import feedparser
 from vidscraper.exceptions import UnhandledSearch, UnhandledVideo
 from vidscraper.suites.blip import BlipSuite, BlipApiLoader, BlipOEmbedLoader
 from vidscraper.tests.base import BaseTestCase
+from vidscraper.videos import VideoFile
 
 
 DISQUS_DATA = {
@@ -39,7 +40,12 @@ DISQUS_DATA = {
     'description': "<p>Disqus, one of the largest Django applications in "
                     "the world, will explain how they deal with scaling "
                     "complexities in a small startup.</p>",
-    'file_url': "http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv",
+    'files': [VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
+                        length=u'73533796',
+                        mime_type=u'video/ogg'),
+              VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication883.flv',
+                        length=u'418241604',
+                        mime_type=u'video/x-flv')],
     'embed_code': '<embed src="http://blip.tv/play/AYH9xikC" '
                     'type="application/x-shockwave-flash" width="480" '
                     'height="390" wmode="transparent" '

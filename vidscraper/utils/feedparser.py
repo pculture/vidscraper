@@ -38,6 +38,11 @@ def struct_time_to_datetime(struct_time):
     return datetime.datetime(*struct_time[:6])
 
 
+def _is_accepted_enclosure(enclosure):
+    return (is_accepted_type(enclosure.get('type', '')) or
+            is_accepted_filename(enclosure.get('url', '')))
+
+
 def get_entry_enclosures(entry):
     """
     Returns a list of either media_content or enclosures for the entry.
@@ -55,26 +60,20 @@ def get_entry_enclosures(entry):
     return []
 
 
-def get_first_accepted_enclosure(entry):
+def get_accepted_enclosures(entry):
     """
-    Returns the first accepted enclosure in a feedparser entry, or ``None`` if
-    no such enclosure is found. An enclosure is accepted if it contains a file
-    which passes the :func:`.is_accepted_filename` or :func:`.is_accepted_type`
-    checks.
+    Returns a list of either media_content or enclosure items with accepted
+    mime types for the entry.
 
     """
-    enclosures = get_entry_enclosures(entry)
-    if not enclosures:
-        return None
-    best_enclosure = None
+    return filter(_is_accepted_enclosure, get_entry_enclosures(entry))
+
+
+def get_default_enclosure(enclosures):
     for enclosure in enclosures:
-        if (is_accepted_type(enclosure.get('type', '')) or
-                is_accepted_filename(enclosure.get('url', ''))):
-            if enclosure.get('isdefault'):
-                return enclosure
-            elif best_enclosure is None:
-                best_enclosure = enclosure
-    return best_enclosure
+        if enclosure.get('isdefault'):
+            return enclosure
+    return None
 
 
 def get_item_thumbnail_url(item):
@@ -95,26 +94,29 @@ def get_item_thumbnail_url(item):
 def get_entry_thumbnail_url(entry):
     """
     Returns the URL for a thumbnail from a feedparser entry, or ``None`` if
-    no thumbnail is found. First tries to return a video thumbnail, then any
-    enclosure thumbnail, then the general entry thumbnail. If these all fail and
-    the entry is from youtube, the content of the entry will be searched for an
-    image to use as the thumbnail.
+    no thumbnail is found. First tries to return the thumbnail for the default
+    enclosure, then for any enclosure, then for the entry in general. If these
+    all fail and the entry is from youtube, the content of the entry will be
+    searched for an image to use as the thumbnail.
 
     """
-    # Try the video enclosure's thumbnail
-    video_enclosure = get_first_accepted_enclosure(entry)
-    if video_enclosure is not None:
+    enclosures = get_accepted_enclosures(entry)
+
+    # Try the default enclosure's thumbnail.
+    default_enclosure = get_default_enclosure(enclosures)
+    if default_enclosure is not None:
         try:
-            return get_item_thumbnail_url(video_enclosure)
+            return get_item_thumbnail_url(default_enclosure)
         except KeyError:
             pass
 
     # Try to get any enclosure thumbnail
-    for enclosure in get_entry_enclosures(entry):
-        try:
-            return get_item_thumbnail_url(enclosure)
-        except KeyError:
-            pass
+    for enclosure in enclosures:
+        if enclosure is not default_enclosure:
+            try:
+                return get_item_thumbnail_url(enclosure)
+            except KeyError:
+                pass
 
     # Try to get the general thumbnail for the entry
     try:

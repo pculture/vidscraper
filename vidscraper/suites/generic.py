@@ -1,9 +1,9 @@
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import convert_entities
-from vidscraper.utils.feedparser import (get_first_accepted_enclosure,
+from vidscraper.utils.feedparser import (get_accepted_enclosures,
                                          get_entry_thumbnail_url,
                                          struct_time_to_datetime)
-from vidscraper.videos import FeedparserVideoFeed, VideoDownload
+from vidscraper.videos import FeedparserVideoFeed, VideoFile
 
 
 class GenericFeed(FeedparserVideoFeed):
@@ -22,7 +22,6 @@ class GenericFeed(FeedparserVideoFeed):
         super(GenericFeed, self)._next_page()
 
     def get_video_data(self, item):
-        enclosure = get_first_accepted_enclosure(item)
         if 'published_parsed' in item:
             best_date = struct_time_to_datetime(item['published_parsed'])
         elif 'updated_parsed' in item:
@@ -43,24 +42,23 @@ class GenericFeed(FeedparserVideoFeed):
         else:
             description = item.get('summary', '')
 
+        files = [VideoFile(url=enclosure.get('url'),
+                           mime_type=enclosure.get('type'),
+                           length=(enclosure.get('filesize') or
+                                   enclosure.get('length')))
+                 for enclosure in get_accepted_enclosures(item)]
+
         embed_code = None
-        downloads = []
-        if enclosure:
-            downloads.append(VideoDownload(
-                url=enclosure.get('url'),
-                mime_type=enclosure.get('type'),
-                length=enclosure.get('filesize') or enclosure.get('length')))
         if 'media_player' in item:
             player = item['media_player']
             if player.get('content'):
                 embed_code = convert_entities(player['content'])
             elif 'url' in player:
-                downloads.append(VideoDownload(
+                files.append(VideoFile(
                                      url=player['url'],
-                                     mime_type=player.get('type',
-                                            'application/x-shockwave-flash')))
-        if not downloads:
-            downloads = None
+                                     mime_type=player.get('type')))
+        if not files:
+            files = None
         if 'media_license' in item:
             license = item['media_license']['href']
         else:
@@ -70,7 +68,7 @@ class GenericFeed(FeedparserVideoFeed):
             'title': convert_entities(item['title']),
             'description': description,
             'thumbnail_url': get_entry_thumbnail_url(item),
-            'downloads': downloads,
+            'files': files,
             'publish_datetime': best_date,
             'guid': item.get('id'),
             'embed_code': embed_code,

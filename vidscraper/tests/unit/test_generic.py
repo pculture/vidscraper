@@ -28,7 +28,7 @@ import datetime
 
 import feedparser
 
-from vidscraper.suites.feed import GenericFeedSuite
+from vidscraper.suites.generic import GenericFeedSuite
 from vidscraper.tests.base import BaseTestCase
 
 

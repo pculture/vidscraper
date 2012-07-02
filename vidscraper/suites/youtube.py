@@ -39,7 +39,7 @@ feedparser._FeedParserMixin.namespaces[
     'http://a9.com/-/spec/opensearch/1.1/'] = 'opensearch'
 import requests
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
@@ -70,7 +70,7 @@ class YouTubePathMixin(object):
                 match = self.short_path_re.match(parsed.path)
                 if match:
                     return match.groupdict()
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
 
 class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
@@ -205,7 +205,7 @@ class YouTubeFeed(VideoFeed):
                 if match:
                     return match.groupdict()
 
-        raise UnhandledURL(url)
+        raise UnhandledFeed(url)
 
     def get_page(self, page_start, page_max):
         url = self.get_page_url(page_start, page_max)

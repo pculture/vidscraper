@@ -39,7 +39,8 @@ except (RuntimeError, ImportError):
     grequests = None
 
 from vidscraper import __version__
-from vidscraper.exceptions import UnhandledURL, UnhandledSearch
+from vidscraper.exceptions import (UnhandledVideo, UnhandledFeed,
+                                   UnhandledSearch)
 from vidscraper.utils.feedparser import (get_item_thumbnail_url,
                                          struct_time_to_datetime)
 from vidscraper.utils.search import (search_string_from_terms,
@@ -324,10 +325,11 @@ class VideoLoader(object):
         Parses the url into data which can be used to construct a url this
         loader can use to get data.
 
-        :raises: :exc:`UnhandledURL` if the url isn't handled by this loader.
+        :raises: :exc:`.UnhandledVideo` if the url isn't handled by this
+                 loader.
 
         """
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
     def get_url(self):
         """
@@ -633,7 +635,7 @@ class VideoFeed(BaseVideoIterator):
                  known.
 
                  .. seealso:: http://en.wikipedia.org/wiki/HTTP_ETag
-    :raises: :exc:`UnhandledURL` if the url can't be handled by the class
+    :raises: :exc:`.UnhandledFeed` if the url can't be handled by the class
              being instantiated.
 
     :class:`VideoFeed` also supports the following "fields", which are
@@ -696,10 +698,10 @@ class VideoFeed(BaseVideoIterator):
         """
         Parses the url into data which can be used to construct page urls.
 
-        :raises: :exc:`UnhandledURL` if the url isn't handled by this feed.
+        :raises: :exc:`.UnhandledFeed` if the url isn't handled by this feed.
 
         """
-        raise UnhandledURL(url)
+        raise UnhandledFeed(url)
 
     def get_page_url_data(self, page_start, page_max):
         data = super(VideoFeed, self).get_page_url_data(page_start, page_max)

@@ -29,7 +29,7 @@ import urlparse
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_first_accepted_enclosure)
@@ -57,7 +57,7 @@ class BlipPathMixin(object):
                 if match:
                     return match.groupdict()
 
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
     def get_url(self):
         try:
@@ -115,7 +115,7 @@ class BlipFeed(FeedparserVideoFeed):
                 if match:
                     return match.groupdict()
 
-        raise UnhandledURL(url)
+        raise UnhandledFeed(url)
 
     def get_page_url_data(self, *args, **kwargs):
         data = super(BlipFeed, self).get_page_url_data(*args, **kwargs)

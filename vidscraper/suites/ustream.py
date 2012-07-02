@@ -28,7 +28,7 @@ import json
 import re
 import urlparse
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.videos import VideoLoader, OEmbedLoaderMixin
 
@@ -43,7 +43,7 @@ class UstreamPathMixin(object):
             match = self.path_re.match(parsed_url.path)
             if match:
                 return match.groupdict()
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
 
 class UstreamApiLoader(UstreamPathMixin, VideoLoader):
@@ -55,7 +55,7 @@ class UstreamApiLoader(UstreamPathMixin, VideoLoader):
 
     def get_url_data(self, url):
         if 'ustream_key' not in self.api_keys:
-            raise UnhandledURL(url)
+            raise UnhandledVideo(url)
         data = super(UstreamApiLoader, self).get_url_data(url)
         data.update(self.api_keys)
         return data

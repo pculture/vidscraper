@@ -37,7 +37,8 @@ except ImportError:
     oauth2 = None
 import requests
 
-from vidscraper.exceptions import VideoDeleted, UnhandledURL, UnhandledSearch
+from vidscraper.exceptions import (VideoDeleted, UnhandledVideo,
+                                   UnhandledFeed, UnhandledSearch)
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
@@ -57,7 +58,7 @@ class VimeoOEmbedLoader(VimeoPathMixin, OEmbedLoaderMixin, VideoLoader):
 
     def get_url_data(self, url):
         if not self.url_re.match(url):
-            raise UnhandledURL(url)
+            raise UnhandledVideo(url)
 
         return super(VimeoOEmbedLoader, self).get_url_data(url)
 
@@ -74,7 +75,7 @@ class VimeoApiLoader(VimeoPathMixin, VideoLoader):
         if match:
             return match.groupdict()
 
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
     def get_video_data(self, response):
         parsed = json.loads(response.text)[0]
@@ -93,7 +94,7 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
         if match:
             return match.groupdict()
 
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
     def get_video_data(self, response):
         doc = minidom.parseString(response.text)
@@ -328,7 +329,7 @@ class VimeoFeed(AdvancedVimeoApiMixin, VideoFeed):
 
                 if match:
                     return match.groupdict()
-        raise UnhandledURL(url)
+        raise UnhandledFeed(url)
 
     def get_simple_api_path(self, data):
         if data['user_id']:

@@ -30,7 +30,7 @@ import urlparse
 
 from bs4 import BeautifulSoup, SoupStrainer
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.html import make_embed_code
 from vidscraper.videos import VideoLoader
@@ -58,7 +58,7 @@ class ForaScrapeLoader(VideoLoader):
 
     def get_url_data(self, url):
         if not self.video_re.match(url):
-            raise UnhandledURL(url)
+            raise UnhandledVideo(url)
         return {'url': url}
 
     def get_video_data(self, response):

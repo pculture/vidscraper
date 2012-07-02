@@ -27,7 +27,7 @@ import datetime
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledSearch, UnhandledURL
+from vidscraper.exceptions import UnhandledSearch, UnhandledVideo
 from vidscraper.suites.blip import BlipSuite, BlipApiLoader, BlipOEmbedLoader
 from vidscraper.tests.base import BaseTestCase
 
@@ -81,7 +81,7 @@ class BlipApiTestCase(BlipTestCase):
             self.assertEquals(loader.get_url(), expected)
 
         for url in invalid_urls:
-            self.assertRaises(UnhandledURL, BlipApiLoader, url)
+            self.assertRaises(UnhandledVideo, BlipApiLoader, url)
 
     def test_get_video_data(self):
         loader = BlipApiLoader('http://blip.tv/file/4135225')
@@ -113,7 +113,7 @@ class BlipOEmbedTestCase(BlipTestCase):
             self.assertEquals(loader.get_url(), expected)
 
         for url in invalid_urls:
-            self.assertRaises(UnhandledURL, BlipOEmbedLoader, url)
+            self.assertRaises(UnhandledVideo, BlipOEmbedLoader, url)
 
 
 class BlipFeedTestCase(BlipTestCase):
@@ -179,5 +179,5 @@ class BlipSearchTestCase(BlipTestCase):
 
 class BlipSuiteTestCase(BlipTestCase):
     def test_mp4_not_included(self):
-        self.assertFalse(self.suite.handles_video_url(
+        self.assertFalse(self.suite.handles_video(
                 'http://blip.tv/file/get/Miropcf-Miro20Introduction119.mp4'))

@@ -28,7 +28,7 @@ import json
 
 import requests
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites.youtube import (YouTubeSuite, YouTubeApiLoader,
                                        YouTubeScrapeLoader,
                                        YouTubeOEmbedLoader,
@@ -108,7 +108,7 @@ class YouTubePathTestCase(YouTubeTestCase):
                 self.assertEqual(mixin.get_url_data(url), expected)
 
         for url in invalid_urls:
-            self.assertRaises(UnhandledURL, mixin.get_url_data, url)
+            self.assertRaises(UnhandledVideo, mixin.get_url_data, url)
 
 
 class YouTubeOembedTestCase(YouTubeTestCase):
@@ -267,7 +267,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
                 self.assertEqual(data['username'], 'associatedpress')
 
         for url in invalid_urls:
-            self.assertRaises(UnhandledURL, self.feed.get_url_data, url)
+            self.assertRaises(UnhandledFeed, self.feed.get_url_data, url)
 
     def test_data_from_response(self):
         expected = {

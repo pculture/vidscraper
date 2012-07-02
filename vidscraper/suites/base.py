@@ -26,7 +26,8 @@
 import operator
 import re
 
-from vidscraper.exceptions import UnhandledURL, UnhandledSearch
+from vidscraper.exceptions import (UnhandledVideo, UnhandledFeed,
+                                   UnhandledSearch)
 from vidscraper.videos import Video
 
 
@@ -65,9 +66,8 @@ class SuiteRegistry(object):
 
     def register_fallback(self, suite):
         """
-        Registers a fallback suite, which used only if no other suite
-        succeeds. If no fallback is registered, then :exc:`.UnhandledURL` will
-        be raised for unknown videos/feeds.
+        Registers a fallback suite, which is tried only if no other suite
+        successfully handles a given video, feed, or search.
 
         """
         self._fallback = suite()
@@ -91,18 +91,18 @@ class SuiteRegistry(object):
         :type require_loaders: boolean
         :returns: :class:`.Video` instance.
 
-        :raises UnhandledURL: If ``require_suite`` is ``True`` and no
-                              registered suite knows how to handle the url.
+        :raises UnhandledVideo: If ``require_loaders`` is ``True`` and no
+                                registered suite knows how to handle the url.
 
         """
         for suite in self.suites:
             try:
                 return suite.get_video(url, fields=fields, api_keys=api_keys)
-            except UnhandledURL:
+            except UnhandledVideo:
                 pass
 
         if require_loaders:
-            raise UnhandledURL(url)
+            raise UnhandledVideo(url)
 
         return Video(url, fields=fields)
 
@@ -115,7 +115,7 @@ class SuiteRegistry(object):
         :returns: A :class:`VideoFeed` instance which yields
                   :class:`.Video` instances for the items in the feed.
 
-        :raises UnhandledURL: if no registered suites know how to handle this url.
+        :raises UnhandledFeed: if no registered suites know how to handle this url.
 
         """
         for suite in self.suites:
@@ -127,9 +127,9 @@ class SuiteRegistry(object):
                                       max_results=max_results,
                                       video_fields=video_fields,
                                       api_keys=api_keys)
-            except UnhandledURL:
+            except UnhandledFeed:
                 pass
-        raise UnhandledURL(url)
+        raise UnhandledFeed(url)
 
 
     def get_searches(self, query, order_by='relevant', start_index=1,
@@ -153,6 +153,40 @@ class SuiteRegistry(object):
                 pass
 
         return searches
+
+    def handles_video(self, *args, **kwargs):
+        """
+        Returns ``True`` if this registry can make a video with the given
+        parameters, and ``False`` otherwise.
+
+        .. note:: This does all the work of creating a video, then discards
+                  it. If you are going to use a video instance if one is
+                  created, it would be more efficient to use :meth:`get_video`
+                  directly.
+
+        """
+        try:
+            self.get_video(*args, **kwargs)
+        except UnhandledVideo:
+            return False
+        return True
+
+    def handles_feed(self, *args, **kwargs):
+        """
+        Returns ``True`` if this registry can make a feed with the given
+        parameters, and ``False`` otherwise.
+
+        .. note:: This does all the work of creating a feed, then discards
+                  it. If you are going to use a feed instance if one is
+                  created, it would be more efficient to use :meth:`get_feed`
+                  directly.
+
+        """
+        try:
+            self.get_feed(*args, **kwargs)
+        except UnhandledFeed:
+            return False
+        return True
 
 
 #: An instance of :class:`.SuiteRegistry` which is used by :mod:`vidscraper` to
@@ -223,38 +257,12 @@ class BaseSuite(object):
         """
         return reduce(operator.or_, (l.fields for l in self.loader_classes))
 
-    def handles_video_url(self, url):
-        """
-        Returns ``True`` if this suite can handle the ``url`` as a video and
-        ``False`` otherwise. By default, this method will check whether the url
-        matches :attr:`.video_regex` or raise a :exc:`NotImplementedError` if
-        that is not possible.
-
-        """
-        try:
-            self.get_video(url)
-        except UnhandledURL:
-            return False
-        return True
-
-    def handles_feed_url(self, url):
-        """
-        Returns ``True`` if this suite can handle the ``url`` as a feed and
-        ``False`` otherwise.
-
-        """
-        try:
-            self.get_feed(url)
-        except UnhandledURL:
-            return False
-        return True
-
     def get_video(self, url, fields=None, api_keys=None):
         """
         Returns a video using this suite's loaders.
 
-        :raises UnhandledURL: if none of this suite's loaders can handle the
-                              given url and api keys.
+        :raises UnhandledVideo: If none of this suite's loaders can handle the
+                                given url and api keys.
 
         """
         loaders = []
@@ -262,18 +270,23 @@ class BaseSuite(object):
         for cls in self.loader_classes:
             try:
                 loader = cls(url, api_keys=api_keys)
-            except UnhandledURL:
+            except UnhandledVideo:
                 continue
 
             loaders.append(loader)
         if not loaders:
-            raise UnhandledURL(url)
+            raise UnhandledVideo(url)
         return Video(url, loaders=loaders, fields=fields)
 
     def get_feed(self, url, *args, **kwargs):
-        """Returns an instance of :attr:`feed_class`."""
+        """
+        Returns an instance of :attr:`feed_class`.
+
+        :raises UnhandledFeed: If :attr:`feed_class` is None.
+
+        """
         if self.feed_class is None:
-            raise UnhandledURL(url)
+            raise UnhandledFeed(url)
         return self.feed_class(url, *args, **kwargs)
 
     def get_search(self, *args, **kwargs):
@@ -282,3 +295,54 @@ class BaseSuite(object):
             raise UnhandledSearch(u"{0} does not support searches.".format(
                                   self.__class__.__name__))
         return self.search_class(*args, **kwargs)
+
+    def handles_video(self, *args, **kwargs):
+        """
+        Returns ``True`` if this suite can make a video with the given
+        parameters, and ``False`` otherwise.
+
+        .. note:: This does all the work of creating a video, then discards
+                  it. If you are going to use a video instance if one is
+                  created, it would be more efficient to use :meth:`get_video`
+                  directly.
+
+        """
+        try:
+            self.get_video(*args, **kwargs)
+        except UnhandledVideo:
+            return False
+        return True
+
+    def handles_feed(self, *args, **kwargs):
+        """
+        Returns ``True`` if this suite can make a feed with the given
+        parameters, and ``False`` otherwise.
+
+        .. note:: This does all the work of creating a feed, then discards
+                  it. If you are going to use a feed instance if one is
+                  created, it would be more efficient to use :meth:`get_feed`
+                  directly.
+
+        """
+        try:
+            self.get_feed(*args, **kwargs)
+        except UnhandledFeed:
+            return False
+        return True
+
+    def handles_search(self, *args, **kwargs):
+        """
+        Returns ``True`` if this suite can make a search with the given
+        parameters, and ``False`` otherwise.
+
+        .. note:: This does all the work of creating a search, then discards
+                  it. If you are going to use a search instance if one is
+                  created, it would be more efficient to use
+                  :meth:`get_search` directly.
+
+        """
+        try:
+            self.get_search(*args, **kwargs)
+        except UnhandledSearch:
+            return False
+        return True

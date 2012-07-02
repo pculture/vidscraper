@@ -40,7 +40,7 @@ incredibly easy::
 That's it!  Couldn't be easier.  auto_scrape will determine the right
 :doc:`scraping suite </api/suites>` to use for the url you pass in and will use that suite to return a :class:`.Video` instance that represents the data
 associated with the video at that url. If no suites are found which support the
-url, :exc:`.UnhandledURL` will be raised.
+url, :exc:`.UnhandledVideo` will be raised.
 
 If you only need certain fields (say you only need the "file_url" and the
 "title" fields), you can pass those fields in as a second argument::

@@ -34,24 +34,6 @@ from vidscraper.suites import registry
 from vidscraper.videos import Video, VideoSearch, VideoFeed
 
 
-def handles_video_url(url):
-    """
-    Returns True if vidscraper can scrape this url, and False if
-    it can't.
-
-    """
-    return any((suite.handles_video_url(url) for suite in registry.suites))
-
-
-def handles_feed_url(url):
-    """
-    Returns True if vidscraper can treat this url as a feed, and False if
-    it can't.
-
-    """
-    return any((suite.handles_feed_url(url) for suite in registry.suites))
-
-
 def auto_scrape(url, fields=None, api_keys=None):
     """
     Calls the default registry's :meth:`~.SuiteRegistry.get_video` method with
@@ -65,6 +47,8 @@ def auto_scrape(url, fields=None, api_keys=None):
 
 auto_feed = registry.get_feed
 auto_search = registry.get_searches
+handles_video = registry.handles_video
+handles_feed = registry.handles_feed
 
 
 # fetchvideo -> auto_scrape(url, fields, api_keys)

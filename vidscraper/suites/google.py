@@ -28,7 +28,7 @@ import urlparse
 
 from bs4 import BeautifulSoup
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.videos import VideoLoader
 
@@ -46,7 +46,7 @@ class GoogleScrapeLoader(VideoLoader):
             parsed.path == '/videoplay' and
             'docid' in parsed.query):
             return {'url': url}
-        raise UnhandledURL(url)
+        raise UnhandledVideo(url)
 
     def get_video_data(self, response):
         soup = BeautifulSoup(response.text).findAll(id=self.id_regex)

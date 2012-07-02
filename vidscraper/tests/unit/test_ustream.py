@@ -25,7 +25,7 @@
 
 import datetime
 
-from vidscraper.exceptions import UnhandledURL
+from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites.ustream import (UstreamSuite, UstreamApiLoader,
                                        UstreamOEmbedLoader)
 from vidscraper.tests.base import BaseTestCase
@@ -44,7 +44,7 @@ class UstreamApiTestCase(UstreamTestCase):
                                        api_keys={'ustream_key': 'TEST_KEY'})
 
     def test_keys_required(self):
-        self.assertRaises(UnhandledURL, UstreamApiLoader, self.url)
+        self.assertRaises(UnhandledVideo, UstreamApiLoader, self.url)
 
     def test_get_url(self):
         api_url = self.loader.get_url()

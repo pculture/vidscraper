@@ -24,14 +24,14 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import unittest
 
 from requests.models import Response
+import unittest2
 
 import vidscraper
 
 
-class BaseTestCase(unittest.TestCase):
+class BaseTestCase(unittest2.TestCase):
     def _data_file_path(self, data_file):
         root = os.path.abspath(os.path.dirname(vidscraper.__file__))
         return os.path.join(root, 'tests', 'data', data_file)

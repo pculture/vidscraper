@@ -17,6 +17,7 @@ setup(
         'feedparser>=5.1.2',
         'beautifulsoup4>=4.0.2',
         'requests>=0.13.0',
+        'unittest2>=0.5.1',
     ],
     test_suite='vidscraper.tests',
     classifiers=(

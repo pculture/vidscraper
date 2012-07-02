@@ -63,7 +63,7 @@ class Video(object):
     _all_fields = (
         'title', 'description', 'publish_datetime', 'flash_enclosure_url',
         'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url',
-        'tags', 'link', 'guid', 'index', 'license', 'downloads',
+        'tags', 'link', 'guid', 'license', 'downloads',
     )
     # This lets us easily check whether we're looking at a datetime field,
     # since the fields are just values, not self-aware.

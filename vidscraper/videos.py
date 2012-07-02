@@ -28,7 +28,6 @@ import itertools
 import json
 import math
 import operator
-import pickle
 import urllib
 import urllib2
 
@@ -137,18 +136,6 @@ class Video(object):
         # from a feed or a search.
         self._loaded = False
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # yes, this can lose data, but it's better than not being pickled at
-        # all
-        errors = state['_errors']
-        for key, value in errors.items():
-            try:
-                pickle.dumps(value)
-            except Exception:
-                errors[key] = repr(value)
-        return state
-
     @property
     def missing_fields(self):
         """
@@ -255,16 +242,13 @@ class Video(object):
         for field in self.fields:
             yield (field, getattr(self, field))
 
-    def to_json(self, **kwargs):
+    def serialize(self):
         """
-        Returns the video JSON-ified. For security reasons, the api keys are
-        not serialized.
-
-        Takes keyword arguments and passes them to json.dumps().
-
-        Example:
-
-        >>> v.to_json(indent=2, sort_keys=True)
+        Serializes the video as a python dictionary containing the original
+        url and fields used to initialize the video, as well as the value of
+        each field on the video. Since loaders are intended to be provided by
+        suites and include sensitive information (api keys), they are not
+        serialized.
 
         """
         data = dict(self.items())
@@ -277,22 +261,21 @@ class Video(object):
             'url': self.url,
             'fields': self.fields
         })
-        return json.dumps(data, **kwargs)
+        return data
 
     @classmethod
-    def from_json(cls, json_data, api_keys=None, **kwargs):
+    def deserialize(cls, data, api_keys=None):
         """
-        De-JSON-ifies a video.
+        Given a data dictionary such as would be provided by :meth:`serialize`
+        and, optionally, api keys, constructs a :class:`Video` instance for
+        the url and fields in the data, with field values prepopulated from
+        the dictionary.
 
-        :param json_data: A JSON-formatted string.
+        :param data: A dictionary as would be provided by :meth:`serialize`.
         :param api_keys: ``None``, or a dictionary of API keys to instantiate
                          the deserialized video with.
 
-        Any additional keyword arguments will be passed to :func:`json.loads`.
-
         """
-        data = json.loads(json_data, **kwargs)
-
         from vidscraper.suites import registry
         video = registry.get_video(data['url'],
                                    fields=data['fields'],

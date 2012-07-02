@@ -23,6 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
+import pickle
+
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_API_DATA
 from vidscraper.videos import Video, OEmbedLoaderMixin
@@ -47,23 +50,53 @@ class VideoTestCase(BaseTestCase):
         for i, item in enumerate(video.items()):
             self.assertEqual(item[0], fields[i])
 
-    def test_json(self):
+    def test_serialize(self):
         video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
         # we load the video data this way to avoid depending on the network
         video_data = CARAMELL_DANSEN_API_DATA.copy()
         video_data['tags'] = list(video_data['tags'])
         video._apply(video_data)
 
-        data_json = video.to_json()
-        # verify that the data we expect is in the JSON output
-        self.assertTrue(video.url in data_json)
-        self.assertTrue(video.title in data_json)
-        self.assertTrue(video.publish_datetime.isoformat() in data_json)
+        data = video.serialize()
+        # verify that the data we expect is in the serialized version.
+        self.assertEqual(data['url'], video.url)
+        self.assertEqual(data['title'], video.title)
+        self.assertEqual(data['publish_datetime'],
+                         video.publish_datetime.isoformat())
 
-        # Verify that we can also load that data as a video.
-        new_video = Video.from_json(data_json)
+        # Verify that the data can be deserialized as a video.
+        new_video = Video.deserialize(data)
         self.assertEqual(video.url, new_video.url)
         self.assertEqual(dict(video.items()), dict(new_video.items()))
+
+    def test_serialize__json(self):
+        """
+        Tests that serialized videos can be transformed to and from json.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        # we load the video data this way to avoid depending on the network
+        video_data = CARAMELL_DANSEN_API_DATA.copy()
+        video_data['tags'] = list(video_data['tags'])
+        video._apply(video_data)
+        data = video.serialize()
+        new_data = json.loads(json.dumps(data))
+        self.assertEqual(new_data, data)
+
+    def test_serialize__json(self):
+        """
+        Tests that serialized videos can be pickled and unpickled.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        # we load the video data this way to avoid depending on the network
+        video_data = CARAMELL_DANSEN_API_DATA.copy()
+        video_data['tags'] = list(video_data['tags'])
+        video._apply(video_data)
+        data = video.serialize()
+        new_data = pickle.loads(pickle.dumps(data, pickle.HIGHEST_PROTOCOL))
+        self.assertEqual(new_data, data)
+
 
 
 class OEmbedLoaderMixinTestCase(BaseTestCase):

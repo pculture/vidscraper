@@ -27,6 +27,7 @@
 __version__ = '0.6-a'
 
 
+import json
 import sys
 from optparse import OptionParser
 
@@ -105,7 +106,7 @@ class VidscraperCommandHandler(object):
         for arg in args:
             print "Scraping %s" % arg
             video = auto_scrape(arg, fields=fields, api_keys=api_keys)
-            print video.to_json(indent=2, sort_keys=True)
+            print json.dumps(video.serialize(), indent=2, sort_keys=True)
 
         return 0
 

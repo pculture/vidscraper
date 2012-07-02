@@ -39,8 +39,20 @@ def struct_time_to_datetime(struct_time):
 
 
 def get_entry_enclosures(entry):
-    """Returns a list of enclosures or media_content for the entry."""
-    return entry.get('media_content') or entry.get('enclosures') or []
+    """
+    Returns a list of either media_content or enclosures for the entry.
+
+    The enclosures (or media_content) are only returned if they are non-empty
+    and contain a non-empty first item.
+
+    """
+    media_content = entry.get('media_content')
+    if media_content and media_content[0]:
+        return media_content
+    enclosures = entry.get('enclosures')
+    if enclosures and enclosures[0]:
+        return enclosures
+    return []
 
 
 def get_first_accepted_enclosure(entry):

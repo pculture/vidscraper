@@ -169,17 +169,23 @@ h.264</p>""")
                          'type="application/x-shockwave-flash"></embed>'
                          '</object>')
 
+    def test_parse_feed_media_content(self):
+        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_content.rss'))
+        data = self.feed.get_video_data(fp.entries[0])
+        self.assertEqual(
+            data['file_url'],
+            'http://videos.stupidvideos.com/2/00/40/30/51/403051.flv')
+        self.assertEqual(data['file_url_mimetype'], 'video/x-flv')
+        self.assertEqual(data['embed_code'], None)
 
     def test_parse_feed_media_player_url(self):
+        """
+        Because the media:player doesn't have any content, and this entry has
+        an enclosure, we don't use the media:player attribute.
+        """
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player_url.rss'))
         data = self.feed.get_video_data(fp.entries[0])
-        self.assertEqual(data['embed_code'],
-                        u'''<object width="400" height="264">
-    <param name="flashvars" value="">
-    <param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=7981161">
-    <param name="allowFullScreen" value="true">
-    <param name="allowscriptaccess" value="always">
-    <embed src="http://vimeo.com/moogaloop.swf?clip_id=7981161"\
- flashvars="" type="application/x-shockwave-flash" allowfullscreen="true"\
- allowscriptaccess="always" width="400" height="264>
-</object>''')
+        self.assertEqual(data['file_url'], 'http://vimeo.com/moogaloop.swf?clip_id=7981161')
+        self.assertEqual(data['file_url_mimetype'], 'application/x-shockwave-flash')
+        self.assertEqual(data['file_url_length'], '15993252')
+        self.assertEqual(data['embed_code'], None)

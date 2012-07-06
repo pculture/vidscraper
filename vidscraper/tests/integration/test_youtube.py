@@ -24,12 +24,12 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import unittest
 
 from vidscraper.suites.youtube import YouTubeSuite
+from vidscraper.tests.base import BaseTestCase
 
 
-class YouTubeIntegrationTestCase(unittest.TestCase):
+class YouTubeIntegrationTestCase(BaseTestCase):
 
     def setUp(self):
         self.suite = YouTubeSuite()

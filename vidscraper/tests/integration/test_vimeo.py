@@ -25,12 +25,12 @@
 
 import warnings
 import datetime
-import unittest
 
 from vidscraper.suites.vimeo import VimeoSuite
+from vidscraper.tests.base import BaseTestCase
 
 
-class VimeoIntegrationTestCase(unittest.TestCase):
+class VimeoIntegrationTestCase(BaseTestCase):
 
     def setUp(self):
         self.suite = VimeoSuite()

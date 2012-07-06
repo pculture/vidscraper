@@ -47,6 +47,23 @@ from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
 
 
+def _isoformat_to_datetime(dt_str):
+    """
+    Tries to convert an isoformatted string to a datetime. Raises TypeError
+    if the input is not a string or ValueError if it is not isoformatted.
+
+    """
+    format = "%Y-%m-%dT%H:%M:%S"
+    try:
+        return datetime.strptime(dt_str, format)
+    except ValueError:
+        pass
+
+    # Maybe it has microseconds?
+    format = "%Y-%m-%dT%H:%M:%S.%f"
+    return datetime.strptime(dt_str, format)
+
+
 class Video(object):
     """
     This is the class which should be used to represent videos which are
@@ -65,9 +82,6 @@ class Video(object):
         'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url',
         'tags', 'link', 'guid', 'license', 'files',
     )
-    # This lets us easily check whether we're looking at a datetime field,
-    # since the fields are just values, not self-aware.
-    _datetime_fields = ('publish_datetime', 'file_url_expires')
 
     #: The canonical link to the video. This may not be the same as the url
     #: used to initialize the video.
@@ -245,10 +259,13 @@ class Video(object):
 
         """
         data = dict(self.items())
-        for field in self._datetime_fields:
-            dt = data.get(field, None)
-            if isinstance(dt, datetime):
-                data[field] = dt.isoformat()
+
+        dt = data['publish_datetime']
+        if isinstance(dt, datetime):
+            data['publish_datetime'] = dt.isoformat()
+
+        if data['files'] is not None:
+            data['files'] = [f.serialize() for f in data['files']]
 
         data.update({
             'url': self.url,
@@ -275,16 +292,13 @@ class Video(object):
                                    api_keys=api_keys,
                                    require_loaders=False)
 
-        for field in cls._datetime_fields:
-            dt = data.get(field, None)
-            if isinstance(dt, basestring):
-                format = "%Y-%m-%dT%H:%M:%S"
-                try:
-                    data[field] = datetime.strptime(dt, format)
-                except ValueError:
-                    # Maybe it has microseconds?
-                    format = "%Y-%m-%dT%H:%M:%S.%f"
-                    data[field] = datetime.strptime(dt, format)
+        dt = data.get('publish_datetime', None)
+        if dt is not None:
+            data['publish_datetime'] = _isoformat_to_datetime(dt)
+
+        if data['files'] is not None:
+            data['files'] = [VideoFile.deserialize(f_data)
+                             for f_data in data['files']]
 
         video._apply(data)
         return video
@@ -331,6 +345,31 @@ class VideoFile(object):
         if not isinstance(other, VideoFile):
             return NotImplemented
         return self.__dict__ == other.__dict__
+
+    def serialize(self):
+        """
+        Serializes the :class:`VideoFile` as a python dictionary.
+
+        """
+        data = dict(self.__dict__.iteritems())
+
+        dt = data['expires']
+        if isinstance(dt, datetime):
+            data['expires'] = dt.isoformat()
+
+        return data
+
+    @classmethod
+    def deserialize(cls, data):
+        """
+        Given a data dictionary such as would be provided by
+        :meth:`serialize`, constructs a :class:`VideoFile` instance.
+
+        """
+        dt = data.get('expires', None)
+        if dt is not None:
+            data['expires'] = _isoformat_to_datetime(dt)
+        return cls(**data)
 
 
 class VideoLoader(object):

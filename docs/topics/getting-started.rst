@@ -42,7 +42,7 @@ That's it!  Couldn't be easier.  auto_scrape will determine the right
 associated with the video at that url. If no suites are found which support the
 url, :exc:`.UnhandledVideo` will be raised.
 
-If you only need certain fields (say you only need the "file_url" and the
+If you only need certain fields (say you only need the "files" and
 "title" fields), you can pass those fields in as a second argument::
 
     >>> video = auto_scrape(url, fields=['files', 'title'])

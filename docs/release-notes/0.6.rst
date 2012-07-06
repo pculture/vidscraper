@@ -41,3 +41,6 @@
   :func:`vidscraper.handles_feed`, respectively. They now accept the same
   parameters as :func:`vidscraper.auto_scrape` and
   :func:`vidscraper.auto_feed`.
+* Multiple :class:`VideoFile`\ s are now made available for :class:`.Video`
+  instances, rather than having a single set of fields on the :class:`Video`
+  class.

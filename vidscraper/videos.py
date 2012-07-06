@@ -306,20 +306,22 @@ class Video(object):
 
 class VideoFile(object):
     """
-    Represents a video file hosted somewhere.
+    Represents a video file hosted somewhere. There are a number of optional
+    metadata attributes, which represent what is claimed about the video by
+    the data provider. This may or may not correspond to the actual video file.
 
     """
-    #: the URL to download
+    #: The URL of this video file.
     url = None
-    #: when the URL expires, if at all
+    #: When the URL for this file expires, if at all.
     expires = None
-    #: the size of the file, in bytes
+    #: The size of the file, in bytes.
     length = None
-    #: the width of the URL, in pixels
+    #: The width of the video, in pixels.
     width = None
-    #: the height of the URL, in pixels
+    #: The height of the video, in pixels.
     height = None
-    #: the MIME type of the URL
+    #: The MIME type of the video.
     mime_type = None
 
     def __init__(self, url, expires=None, length=None, width=None,

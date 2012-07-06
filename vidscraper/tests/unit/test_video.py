@@ -83,7 +83,7 @@ class VideoTestCase(BaseTestCase):
         new_data = json.loads(json.dumps(data))
         self.assertEqual(new_data, data)
 
-    def test_serialize__json(self):
+    def test_serialize__pickle(self):
         """
         Tests that serialized videos can be pickled and unpickled.
 
@@ -96,7 +96,6 @@ class VideoTestCase(BaseTestCase):
         data = video.serialize()
         new_data = pickle.loads(pickle.dumps(data, pickle.HIGHEST_PROTOCOL))
         self.assertEqual(new_data, data)
-
 
 
 class OEmbedLoaderMixinTestCase(BaseTestCase):

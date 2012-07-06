@@ -114,6 +114,14 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
                 xml_data[key] = str_data # actually Unicode
             else:
                 xml_data[key] = str_data.decode('utf8')
+        file_url = (
+            'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
+            '%(request_signature)s/%(request_signature_expires)s'
+            '/?q=' % xml_data)
+        if xml_data['isHD'] == '1':
+            file_url = file_url + 'hd'
+        else:
+            file_url = file_url + 'sd'
         data = {
             'link': xml_data['url'],
             'user': xml_data['uploader_display_name'],
@@ -122,20 +130,13 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
             'files': [VideoFile(
+                    url=file_url,
                     expires=(struct_time_to_datetime(time.gmtime(
                             int(xml_data['request_signature_expires']))) +
                             datetime.timedelta(hours=6)),
                     mime_type=u'video/x-flv',
                     )]
             }
-        base_file_url = (
-            'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
-            '%(request_signature)s/%(request_signature_expires)s'
-            '/?q=' % xml_data)
-        if xml_data['isHD'] == '1':
-            data['files'][0].url = base_file_url + 'hd'
-        else:
-            data['files'][0].url = base_file_url + 'sd'
 
         return data
 

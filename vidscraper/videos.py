@@ -308,15 +308,24 @@ class VideoFile(object):
     #: the MIME type of the URL
     mime_type = None
 
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, url, expires=None, length=None, width=None,
+                 height=None, mime_type=None):
+        self.url = url
+        self.expires = expires
+        self.length = length
+        self.width = width
+        self.height = height
+        self.mime_type = mime_type
 
     def __repr__(self):
-        return u'<vidscraper.videos.VideoFile: %s>' % unicode(self)
+        return u'<VideoFile: %s>' % unicode(self)
 
     def __unicode__(self):
-        return u', '.join(u'%s=%r' % (k, v) for k, v in self.__dict__.items())
+        if len(self.url) > 17:
+            url = self.url[:17] + '...'
+        else:
+            url = self.url
+        return unicode(url)
 
     def __eq__(self, other):
         if not isinstance(other, VideoFile):

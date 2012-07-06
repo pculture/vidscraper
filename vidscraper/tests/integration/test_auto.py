@@ -37,7 +37,7 @@ class AutoIntegrationTestCase(unittest.TestCase):
         self.assertTrue(video.files[0].url)
         self.assertEqual(video.files[0].mime_type, u'video/mp4')
         self.assertTrue(
-            video.files[0].url_expires - datetime.datetime.now() >
+            video.files[0].expires - datetime.datetime.now() >
             datetime.timedelta(hours=1))
 
     def test_auto_search(self):

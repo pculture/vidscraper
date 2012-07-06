@@ -298,7 +298,7 @@ class VideoFile(object):
     #: the URL to download
     url = None
     #: when the URL expires, if at all
-    url_expires = None
+    expires = None
     #: the size of the file, in bytes
     length = None
     #: the width of the URL, in pixels

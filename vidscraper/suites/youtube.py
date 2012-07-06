@@ -172,7 +172,7 @@ class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
                 file_url, file_url_expires = _parse_fmt(fmt)
                 files.append(VideoFile(
                         url=file_url,
-                        url_expires=file_url_expires,
+                        expires=file_url_expires,
                         mime_type=mime_type,
                         width=width,
                         height=height))

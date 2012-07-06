@@ -174,9 +174,9 @@ Caramelldansen""",
         video_file = video.files[0]
         self.assertEqual(video_file.mime_type, 'video/mp4')
         self.assertTrue('videoplayback' in video_file.url)
-        self.assertTrue((video_file.url_expires -
+        self.assertTrue((video_file.expires -
                          datetime.datetime.utcnow()) > datetime.timedelta(
-                hours=4), video_file.url_expires - datetime.datetime.utcnow())
+                hours=4), video_file.expires - datetime.datetime.utcnow())
 
     def test_feed(self):
         feed_url = 'http://www.youtube.com/user/AssociatedPress'

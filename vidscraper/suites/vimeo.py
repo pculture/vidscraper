@@ -122,7 +122,7 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
             'files': [VideoFile(
-                    url_expires=(struct_time_to_datetime(time.gmtime(
+                    expires=(struct_time_to_datetime(time.gmtime(
                             int(xml_data['request_signature_expires']))) +
                             datetime.timedelta(hours=6)),
                     mime_type=u'video/x-flv',

@@ -26,6 +26,8 @@
 import datetime
 import json
 
+import mock
+
 from vidscraper.exceptions import VideoDeleted
 from vidscraper.suites.vimeo import (VimeoSuite, VimeoApiLoader,
                                      VimeoScrapeLoader)
@@ -364,27 +366,32 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
 
     def test_get_response_items(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')
-        response = {
-          'parsed': json.load(feed_file),
-        }
+        response = self.get_response(feed_file.read())
         items = self.feed.get_response_items(response)
         self.assertEqual(len(items), 46)
 
-        response['parsed']['videos']['on_this_page'] = 0
+    def test_get_response_items__empty(self):
+        """
+        If the page has 0 videos on it, no response items should be returned.
+
+        """
+        response = mock.MagicMock(json={'videos': {'on_this_page': 0}})
         items = self.feed.get_response_items(response)
         self.assertEqual(len(items), 0)
 
-        del response['parsed']['videos']
+    def test_get_response_items__no_videos(self):
+        """
+        If the page doesn't contain any videos at all, no response items
+        should be returned.
+
+        """
+        response = mock.MagicMock(json={})
         items = self.feed.get_response_items(response)
         self.assertEqual(len(items), 0)
 
     def test_get_video_data(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')
-        text = feed_file.read()
-        response = {
-          'text': text,
-          'parsed': json.loads(text),
-        }
+        response = self.get_response(feed_file.read())
         items = self.feed.get_response_items(response)
 
         data = self.feed.get_video_data(items[0])
@@ -408,13 +415,17 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
 
     def test_data_from_advanced(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')
-        response = {
-          'parsed': json.load(feed_file),
-        }
+        response = self.get_response(feed_file.read())
         data = self.feed._data_from_advanced_response(response)
         self.assertEqual(data, {'video_count': 46})
 
-        del response['parsed']['videos']
+    def test_data_from_advanced__no_videos(self):
+        """
+        If the response doesn't contain any videos, no items should be
+        returned.
+
+        """
+        response = mock.MagicMock(json={})
         data = self.feed._data_from_advanced_response(response)
         self.assertEqual(data, {'video_count': 0})
 
@@ -436,11 +447,7 @@ class VimeoSearchTestCase(VimeoTestCase):
 
     def test_get_video_data(self):
         search_file = self.get_data_file('vimeo/search.json')
-        response_text = search_file.read()
-        response = {
-            'test': response_text,
-            'parsed': json.loads(response_text),
-        }
+        response = self.get_response(search_file.read())
         results = self.search.get_response_items(response)
         data = self.search.get_video_data(results[0])
         expected_data = {
@@ -463,11 +470,7 @@ allowFullScreen></iframe>""",
 
     def test_get_search_with_deleted_video(self):
         search_file = self.get_data_file('vimeo/search_with_deleted.json')
-        response_text = search_file.read()
-        response = {
-            'test': response_text,
-            'parsed': json.loads(response_text),
-        }
+        response = self.get_response(search_file.read())
         results = self.search.get_response_items(response)
         data = self.search.get_video_data(results[0])
 

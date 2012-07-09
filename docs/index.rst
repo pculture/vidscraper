@@ -48,12 +48,14 @@ Requirements
 
 * Python 2.6+
 * BeautifulSoup 4.0.2
-* feedparser 5.1.1
+* feedparser 5.1.2+
+* lxml 2.3.4+
+* python-requests 0.13.0+
 
 Optional
 --------
-* oauth2 (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
-* nose (for tests)
+* requests-oauth 0.4.1+ (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
+* unittest2 (for tests)
 
 
 Contents

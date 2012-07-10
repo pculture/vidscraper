@@ -56,6 +56,7 @@ Optional
 --------
 * requests-oauth 0.4.1+ (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
 * unittest2 (for tests)
+* mock (for tests)
 
 
 Contents

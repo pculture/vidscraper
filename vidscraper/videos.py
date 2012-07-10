@@ -306,9 +306,10 @@ class Video(object):
 
 class VideoFile(object):
     """
-    Represents a video file hosted somewhere. There are a number of optional
-    metadata attributes, which represent what is claimed about the video by
-    the data provider. This may or may not correspond to the actual video file.
+    Represents a video file hosted somewhere. The only required attribute is
+    the file's :attr:`url`. There are also several optional metadata
+    attributes, which represent what is claimed about the video by the data
+    provider, not necessarily what is actually true about the video.
 
     """
     #: The URL of this video file.

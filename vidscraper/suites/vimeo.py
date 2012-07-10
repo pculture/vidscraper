@@ -41,7 +41,7 @@ from vidscraper.exceptions import (VideoDeleted, UnhandledVideo,
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedLoaderMixin)
+                               OEmbedLoaderMixin, VideoFile)
 
 
 # Documentation for the Vimeo APIs:
@@ -82,8 +82,7 @@ class VimeoApiLoader(VimeoPathMixin, VideoLoader):
 
 class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
     fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
-                  'embed_code', 'file_url', 'file_url_mimetype',
-                  'file_url_expires'])
+                  'embed_code', 'files',])
 
     url_format = u"http://www.vimeo.com/moogaloop/load/clip:{video_id}"
 
@@ -113,6 +112,14 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
                 xml_data[key] = str_data # actually Unicode
             else:
                 xml_data[key] = str_data.decode('utf8')
+        file_url = (
+            'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
+            '%(request_signature)s/%(request_signature_expires)s'
+            '/?q=' % xml_data)
+        if xml_data['isHD'] == '1':
+            file_url = file_url + 'hd'
+        else:
+            file_url = file_url + 'sd'
         data = {
             'link': xml_data['url'],
             'user': xml_data['uploader_display_name'],
@@ -120,19 +127,14 @@ class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
             'title': xml_data['caption'],
             'thumbnail_url': xml_data['thumbnail'],
             'embed_code': xml_data['embed_code'],
-            'file_url_expires': (struct_time_to_datetime(time.gmtime(
-                    int(xml_data['request_signature_expires']))) +
-                                 datetime.timedelta(hours=6)),
-            'file_url_mimetype': u'video/x-flv',
+            'files': [VideoFile(
+                    url=file_url,
+                    expires=(struct_time_to_datetime(time.gmtime(
+                            int(xml_data['request_signature_expires']))) +
+                            datetime.timedelta(hours=6)),
+                    mime_type=u'video/x-flv',
+                    )]
             }
-        base_file_url = (
-            'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
-            '%(request_signature)s/%(request_signature_expires)s'
-            '/?q=' % xml_data)
-        if xml_data['isHD'] == '1':
-            data['file_url'] = base_file_url + 'hd'
-        else:
-            data['file_url'] = base_file_url + 'sd'
 
         return data
 

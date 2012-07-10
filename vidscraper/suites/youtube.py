@@ -24,6 +24,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
+import itertools
 import json
 import re
 import time
@@ -43,7 +44,7 @@ from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedLoaderMixin)
+                               OEmbedLoaderMixin, VideoFile)
 
 
 # Information on the YouTube API can be found at the following links:
@@ -90,18 +91,31 @@ class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
 
 class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                  'file_url', 'file_url_mimetype', 'file_url_expires'))
+                  'files'))
 
     # the ordering of fmt codes we prefer to download
     preferred_fmt_types = [
-        (38, u'video/mp4'), # 4096x3072
-        (37, u'video/mp4'), # 1920x1080
-        (22, u'video/mp4'), # 1280x720
-        (18, u'video/mp4'), # 640x360
-        (35, u'video/x-flv'), # 854x480, MPEG-4 encoded
-        (34, u'video/x-flv'), # 640x360, MPEG-4 encoded
-        (6, u'video/x-flv'), # 480x270
-        (5, u'video/x-flv'), # 400x240
+        (38, u'video/mp4', 4096, 3072),
+        (37, u'video/mp4', 1920, 1080),
+        (22, u'video/mp4', 1280, 720),
+        (18, u'video/mp4', 640, 360),
+        (35, u'video/x-flv', 854, 480),
+        (34, u'video/x-flv', 640, 360),
+        (6, u'video/x-flv', 480, 270),
+        (5, u'video/x-flv', 400, 240),
+        ]
+    other_fmt_types = [
+        (45, u'video/webm', 1280, 720),
+        (44, u'video/webm', 854, 480),
+        (43, u'video/webm', 640, 360),
+        (84, u'video/mp4-3d', 1280, 720),
+        (85, u'video/mp4-3d', 1920, 520),
+        (82, u'video/mp4-3d', 640, 360),
+        (83, u'video/mp4-3d', 854, 240),
+        (102, u'video/webm-3d', 1280, 720),
+        (46, u'video/webm-3d', 1920, 540),
+        (101, u'video/webm-3d', 854, 480),
+        (100, u'video/webm-3d', 640, 360),
         ]
 
     url_format = u"http://www.youtube.com/get_video_info?video_id={video_id}&el=embedded&ps=default&eurl="
@@ -144,14 +158,24 @@ class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
                        for x in fmt_url_map]
         # now build the actual fmt_url_map ...
         fmt_url_map = dict(zip(fmt_list, fmt_url_map))
-        for fmt, mimetype in self.preferred_fmt_types:
+        def _parse_fmt(fmt):
+            file_url = fmt_url_map[fmt]
+            parsed_url = urlparse.urlparse(file_url)
+            file_url_qs = urlparse.parse_qs(parsed_url.query)
+            file_url_expires = struct_time_to_datetime(
+                time.gmtime(int(file_url_qs['expire'][0])))
+            return file_url, file_url_expires
+        data['files'] = files = []
+        for fmt, mime_type, width, height in itertools.chain(
+            self.preferred_fmt_types, self.other_fmt_types):
             if fmt in fmt_url_map:
-                data['file_url'] = file_url = fmt_url_map[fmt]
-                data['file_url_mimetype'] = mimetype
-                parsed_url = urlparse.urlparse(file_url)
-                file_url_qs = urlparse.parse_qs(parsed_url.query)
-                data['file_url_expires'] = struct_time_to_datetime(
-                    time.gmtime(int(file_url_qs['expire'][0])))
+                file_url, file_url_expires = _parse_fmt(fmt)
+                files.append(VideoFile(
+                        url=file_url,
+                        expires=file_url_expires,
+                        mime_type=mime_type,
+                        width=width,
+                        height=height))
         return data
 
 

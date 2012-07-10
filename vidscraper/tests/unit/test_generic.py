@@ -30,6 +30,7 @@ import feedparser
 
 from vidscraper.suites.generic import GenericFeedSuite
 from vidscraper.tests.base import BaseTestCase
+from vidscraper.videos import VideoFile
 
 
 class GenericFeedSuiteTestCase(BaseTestCase):
@@ -79,10 +80,10 @@ Text, MP3, MPEG2, Metadata, SubRip, Thumbnail, Video Index, h.264</p>""")
             ("http://www.archive.org/download/"
              "SFGTV_20111020_130000/format=Thumbnail"))
         self.assertEqual(
-            video.file_url,
+            video.files[0].url,
             ("http://www.archive.org/download/"
              "SFGTV_20111020_130000/format=h.264"))
-        self.assertEqual(video.file_url_mimetype, "video/h264")
+        self.assertEqual(video.files[0].mime_type, "video/h264")
         self.assertEqual(video.publish_datetime,
                          datetime.datetime(2011, 10, 20, 14, 14, 14))
         self.assertEqual(video.license,
@@ -115,10 +116,10 @@ h.264</p>""")
             ("http://www.archive.org/download/"
              "forsan2011-2196/format=Thumbnail"))
         self.assertEqual(
-            video.file_url,
+            video.files[0].url,
             ("http://www.archive.org/download/"
              "forsan2011-2196/format=h.264"))
-        self.assertEqual(video.file_url_mimetype, "video/h264")
+        self.assertEqual(video.files[0].mime_type, "video/h264")
         self.assertEqual(video.publish_datetime,
                          datetime.datetime(2011, 10, 20, 14, 17, 44))
 
@@ -144,9 +145,10 @@ h.264</p>""")
              'link': u'http://www.example.org/entries/1',
              'guid': u'http://www.example.org/entries/1',
              'embed_code': None,
-             'file_url': u'http://www.example.org/myvideo.ogg',
-             'file_url_length': u'1234',
-             'file_url_mimetype': u'application/ogg',
+             'files': [VideoFile(
+                        url=u'http://www.example.org/myvideo.ogg',
+                        length=u'1234',
+                        mime_type=u'application/ogg')],
              'thumbnail_url': None,
              'publish_datetime': datetime.datetime(2005, 7, 15, 12, 0),
              'license': 'http://creativecommons.org/licenses/by/2.5/'})
@@ -172,10 +174,11 @@ h.264</p>""")
     def test_parse_feed_media_content(self):
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_content.rss'))
         data = self.feed.get_video_data(fp.entries[0])
+        video_file = data['files'][0]
         self.assertEqual(
-            data['file_url'],
+            video_file.url,
             'http://videos.stupidvideos.com/2/00/40/30/51/403051.flv')
-        self.assertEqual(data['file_url_mimetype'], 'video/x-flv')
+        self.assertEqual(video_file.mime_type, 'video/x-flv')
         self.assertEqual(data['embed_code'], None)
 
     def test_parse_feed_media_player_url(self):
@@ -185,7 +188,8 @@ h.264</p>""")
         """
         fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player_url.rss'))
         data = self.feed.get_video_data(fp.entries[0])
-        self.assertEqual(data['file_url'], 'http://vimeo.com/moogaloop.swf?clip_id=7981161')
-        self.assertEqual(data['file_url_mimetype'], 'application/x-shockwave-flash')
-        self.assertEqual(data['file_url_length'], '15993252')
+        video_file = data['files'][0]
+        self.assertEqual(video_file.url, 'http://vimeo.com/moogaloop.swf?clip_id=7981161')
+        self.assertEqual(video_file.mime_type, 'application/x-shockwave-flash')
+        self.assertEqual(video_file.length, '15993252')
         self.assertEqual(data['embed_code'], None)

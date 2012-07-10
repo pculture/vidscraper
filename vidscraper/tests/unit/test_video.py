@@ -23,12 +23,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import datetime
 import json
 import pickle
 
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.tests.unit.test_youtube import CARAMELL_DANSEN_API_DATA
-from vidscraper.videos import Video, OEmbedLoaderMixin
+from vidscraper.videos import Video, OEmbedLoaderMixin, VideoFile
 
 
 class VideoTestCase(BaseTestCase):
@@ -96,6 +97,38 @@ class VideoTestCase(BaseTestCase):
         data = video.serialize()
         new_data = pickle.loads(pickle.dumps(data, pickle.HIGHEST_PROTOCOL))
         self.assertEqual(new_data, data)
+
+    def test_serialize__files(self):
+        """
+        Tests that a video with associated files can still be serialized and
+        deserialized.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        now = datetime.datetime.now()
+        video.files = [VideoFile(url='http://google.com',
+                                 expires=now,
+                                 length=100,
+                                 width=50,
+                                 height=50,
+                                 mime_type="video/x-flv"),
+                       VideoFile(url='http://xkcd.com',
+                                 expires=now,
+                                 length=75,
+                                 width=80,
+                                 height=80,
+                                 mime_type="application/x-shockwave-flash"),]
+
+        data = video.serialize()
+        # verify that the data we expect is in the serialized version.
+        self.assertEqual(data['files'][0]['url'], "http://google.com")
+        self.assertEqual(data['files'][1]['mime_type'],
+                         "application/x-shockwave-flash")
+        self.assertEqual(data['files'][0]['expires'], now.isoformat())
+
+        # Verify that the data can be deserialized as a video.
+        new_video = Video.deserialize(data)
+        self.assertEqual(dict(video.items()), dict(new_video.items()))
 
 
 class OEmbedLoaderMixinTestCase(BaseTestCase):

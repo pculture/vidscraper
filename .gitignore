@@ -2,3 +2,4 @@
 *~
 /.coverage
 /vidscraper.egg-info
+.tox

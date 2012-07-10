@@ -40,10 +40,12 @@ DISQUS_DATA = {
     'description': "<p>Disqus, one of the largest Django applications in "
                     "the world, will explain how they deal with scaling "
                     "complexities in a small startup.</p>",
-    'files': [VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication558.ogv',
+    'files': [VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-'
+                            u'ScalingTheWorldsLargestDjangoApplication558.ogv',
                         length=u'73533796',
                         mime_type=u'video/ogg'),
-              VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication883.flv',
+              VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-'
+                            u'ScalingTheWorldsLargestDjangoApplication883.flv',
                         length=u'418241604',
                         mime_type=u'video/x-flv')],
     'embed_code': '<embed src="http://blip.tv/play/AYH9xikC" '
@@ -52,7 +54,8 @@ DISQUS_DATA = {
                     'allowscriptaccess="always" allowfullscreen="true" >'
                     '</embed>',
     'publish_datetime': datetime.datetime(2010, 9, 17, 22, 31, 14),
-    'thumbnail_url': "http://a.images.blip.tv/Robertlofthouse-ScalingTheWorldsLargestDjangoApplication538.png",
+    'thumbnail_url': "http://a.images.blip.tv/Robertlofthouse-"
+                     "ScalingTheWorldsLargestDjangoApplication538.png",
     'tags': [u'shmpe', u'djangocon', u'2010'],
     'user': 'djangocon',
     'user_url': 'http://djangocon.blip.tv/',

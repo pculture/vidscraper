@@ -158,13 +158,19 @@ Caramelldansen""",
             'flash_enclosure_url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4&feature=youtube_gdata_player',
             'user_url': u'http://www.youtube.com/user/DrunkenVuko',
             'url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
-            'fields': ['title', 'description', 'publish_datetime', 'flash_enclosure_url', 'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid', 'license', 'files',],
+            'fields': ['title', 'description', 'publish_datetime',
+                       'flash_enclosure_url', 'is_embeddable', 'embed_code',
+                       'thumbnail_url', 'user', 'user_url', 'tags', 'link',
+                       'guid', 'license', 'files'],
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
             'link': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
             'user': u'DrunkenVuko',
             'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
-            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop', u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga', u'schweden', u'anime', u'musik', u'music', u'funny', u'caramelldansen', u'U-U-U-Aua', u'Dance']
+            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop',
+                     u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
+                     u'schweden', u'anime', u'musik', u'music', u'funny',
+                     u'caramelldansen', u'U-U-U-Aua', u'Dance']
             }
         for key, value in expected.items():
             self.assertEqual(value, getattr(video, key))

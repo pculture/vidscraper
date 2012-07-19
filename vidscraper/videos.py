@@ -27,6 +27,7 @@ from datetime import datetime
 import itertools
 import json
 import math
+import mimetypes
 import operator
 import urllib
 import urllib2
@@ -45,6 +46,9 @@ from vidscraper.utils.feedparser import (get_item_thumbnail_url,
                                          struct_time_to_datetime)
 from vidscraper.utils.search import (search_string_from_terms,
                                      terms_from_search_string)
+
+
+PREFERRED_MIMETYPES = ('video/webm', 'video/ogg', 'video/mp4')
 
 
 def _isoformat_to_datetime(dt_str):
@@ -303,6 +307,33 @@ class Video(object):
         video._apply(data)
         return video
 
+    def get_file(self, preferred_mimetypes=PREFERRED_MIMETYPES):
+        """
+        Returns the preferred file from the files for this video. Vidscraper
+        prefers open formats and well-compressed formats. If no file mimetypes
+        are known, the first file will be returned.
+
+        """
+        if not self.files:
+            return None
+
+        chosen = self.files[0]
+        try:
+            chosen_index = PREFERRED_MIMETYPES.index(chosen.mime_type)
+        except ValueError:
+            chosen_index = None
+
+        for f in self.files[1:]:
+            try:
+                f_index = PREFERRED_MIMETYPES.index(f.mime_type)
+            except ValueError:
+                continue
+            if chosen_index is None or f_index < chosen_index:
+                chosen_index = f_index
+                chosen = f
+
+        return chosen
+
 
 class VideoFile(object):
     """
@@ -332,7 +363,8 @@ class VideoFile(object):
         self.length = length
         self.width = width
         self.height = height
-        self.mime_type = mime_type
+        self.mime_type = (mimetypes.guess_type(url)
+                          if mime_type is None else mime_type)
 
     def __repr__(self):
         return u'<VideoFile: %s>' % unicode(self)

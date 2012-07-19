@@ -130,6 +130,49 @@ class VideoTestCase(BaseTestCase):
         new_video = Video.deserialize(data)
         self.assertEqual(dict(video.items()), dict(new_video.items()))
 
+    def test_get_file__open(self):
+        """
+        Tests that open video formats are preferred over proprietary.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        file1 = VideoFile(url='http://google.com',
+                          mime_type="video/ogg")
+        file2 = VideoFile(url='http://xkcd.com',
+                          mime_type="application/x-shockwave-flash")
+        file3 = VideoFile(url='http://example.com',
+                          mime_type="video/mp4")
+        video.files = [file1, file2, file3]
+        self.assertEqual(video.get_file(), file1)
+        video.files = [file3, file2, file1]
+        self.assertEqual(video.get_file(), file1)
+
+    def test_get_file__no_mimetypes(self):
+        """
+        If none of the videos have mime types, the first file should be
+        returned.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        file1 = VideoFile(url='http://google.com')
+        file2 = VideoFile(url='http://xkcd.com')
+        file3 = VideoFile(url='http://example.com')
+        video.files = [file1, file2, file3]
+        self.assertEqual(video.get_file(), file1)
+        video.files = [file3, file2, file1]
+        self.assertEqual(video.get_file(), file3)
+
+    def test_get_file__none(self):
+        """
+        If there are no files, get_file() should return None.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4")
+        video.files = None
+        self.assertTrue(video.get_file() is None)
+        video.files = []
+        self.assertTrue(video.get_file() is None)
+
 
 class OEmbedLoaderMixinTestCase(BaseTestCase):
     def test_get_video_data(self):

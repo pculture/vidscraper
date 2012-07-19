@@ -158,23 +158,31 @@ Caramelldansen""",
             'flash_enclosure_url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4&feature=youtube_gdata_player',
             'user_url': u'http://www.youtube.com/user/DrunkenVuko',
             'url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
-            'fields': ['title', 'description', 'publish_datetime', 'file_url', 'file_url_mimetype', 'file_url_length', 'file_url_expires', 'flash_enclosure_url', 'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid', 'license'],
-            'file_url_mimetype': u'video/x-flv',
+            'fields': ['title', 'description', 'publish_datetime',
+                       'flash_enclosure_url', 'is_embeddable', 'embed_code',
+                       'thumbnail_url', 'user', 'user_url', 'tags', 'link',
+                       'guid', 'license', 'files'],
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
             'link': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
             'user': u'DrunkenVuko',
             'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
-            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop', u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga', u'schweden', u'anime', u'musik', u'music', u'funny', u'caramelldansen', u'U-U-U-Aua', u'Dance']
+            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop',
+                     u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
+                     u'schweden', u'anime', u'musik', u'music', u'funny',
+                     u'caramelldansen', u'U-U-U-Aua', u'Dance']
             }
         for key, value in expected.items():
             self.assertEqual(value, getattr(video, key))
 
         # check file_url_*
-        self.assertTrue('videoplayback' in video.file_url)
-        self.assertTrue((video.file_url_expires -
+        self.assertGreater(len(video.files), 0)
+        video_file = video.files[0]
+        self.assertEqual(video_file.mime_type, 'video/mp4')
+        self.assertTrue('videoplayback' in video_file.url)
+        self.assertTrue((video_file.expires -
                          datetime.datetime.utcnow()) > datetime.timedelta(
-                hours=4), video.file_url_expires - datetime.datetime.utcnow())
+                hours=4), video_file.expires - datetime.datetime.utcnow())
 
     def test_feed(self):
         feed_url = 'http://www.youtube.com/user/AssociatedPress'

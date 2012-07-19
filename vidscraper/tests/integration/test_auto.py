@@ -34,14 +34,14 @@ class AutoIntegrationTestCase(BaseTestCase):
         video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
         self.assertEqual(video.title,
                          u'CaramellDansen (Full Version + Lyrics)')
-        self.assertNotEqual(video.file_url, None)
-        self.assertEqual(video.file_url_mimetype, u'video/x-flv')
+        self.assertGreater(len(video.files), 0)
+        self.assertTrue(video.files[0].url)
+        self.assertEqual(video.files[0].mime_type, u'video/mp4')
         self.assertTrue(
-            video.file_url_expires - datetime.datetime.now() >
+            video.files[0].expires - datetime.datetime.now() >
             datetime.timedelta(hours=1))
 
     def test_auto_search(self):
-        max_results = 20
         searches = auto_search('parrot -dead', max_results=20)
         results = []
         for suite, search in searches.iteritems():

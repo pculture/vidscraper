@@ -32,10 +32,10 @@ import feedparser
 from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
-                                         get_first_accepted_enclosure)
+                                         get_accepted_enclosures)
 from vidscraper.utils.http import clean_description_html
 from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
-                               VideoLoader, OEmbedLoaderMixin)
+                               VideoLoader, OEmbedLoaderMixin, VideoFile)
 
 
 class BlipPathMixin(object):
@@ -67,7 +67,7 @@ class BlipPathMixin(object):
 
 
 class BlipApiLoader(BlipPathMixin, VideoLoader):
-    fields = set(['guid', 'link', 'title', 'description', 'file_url',
+    fields = set(['guid', 'link', 'title', 'description', 'files',
                   'embed_code', 'thumbnail_url', 'tags', 'publish_datetime',
                   'user', 'user_url', 'license'])
 
@@ -149,7 +149,11 @@ class BlipSuite(BaseSuite):
         and blip API requests (since those can also be done with feeds.)
 
         """
-        enclosure = get_first_accepted_enclosure(entry)
+        files = [VideoFile(url=enclosure.get('url'),
+                           mime_type=enclosure.get('type'),
+                           length=(enclosure.get('filesize') or
+                                   enclosure.get('length')))
+                 for enclosure in get_accepted_enclosures(entry)]
 
         data = {
             'guid': entry['id'],
@@ -157,7 +161,7 @@ class BlipSuite(BaseSuite):
             'title': entry['title'],
             'description': clean_description_html(
                 entry['blip_puredescription']),
-            'file_url': enclosure['url'],
+            'files': files,
             'embed_code': entry['media_player']['content'],
             'publish_datetime': datetime.strptime(entry['blip_datestamp'],
                                                   "%Y-%m-%dT%H:%M:%SZ"),

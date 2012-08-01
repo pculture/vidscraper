@@ -873,7 +873,7 @@ class VideoSearch(BaseVideoIterator):
         data = super(VideoSearch, self).get_page_url_data(page_start,
                                                           page_max)
         data.update({
-            'query': urllib.quote_plus(self.query),
+            'query': urllib.quote_plus(unicode(self.query).encode('utf-8')),
             'order_by': self.order_by_map[self.order_by]
         })
         return data

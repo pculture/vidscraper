@@ -443,7 +443,7 @@ class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
         self.search = self.suite.get_search(
-            'search query!',
+            u'search query! \u65e5\u672c\u8a9e',
             api_keys={'vimeo_key': 'BLANK',
                       'vimeo_secret': 'BLANK'})
 
@@ -484,6 +484,6 @@ allowFullScreen></iframe>""",
     def test_get_page_url(self):
         expected = ("http://vimeo.com/api/rest/v2?format=json&full_response=1"
                     "&per_page=50&method=vimeo.videos.search&sort=relevant"
-                    "&page=2&query=search+query%21")
+                    "&page=2&query=search+query%21+%E6%97%A5%E6%9C%AC%E8%AA%9E")
         url = self.search.get_page_url(page_start=57, page_max=50)
         self.assertEqual(url, expected)

@@ -171,7 +171,8 @@ class BlipSearchTestCase(BlipTestCase):
         BlipTestCase.setUp(self)
         search_file = self.get_data_file('blip/search.rss')
         self.response = feedparser.parse(search_file.read())
-        self.search = self.suite.get_search('search query')
+        self.search = self.suite.get_search(u'search query '
+                                            u'\u65e5\u672c\u8a9e')
 
     def test_get_video_data(self):
         results = self.search.get_response_items(self.response)

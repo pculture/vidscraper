@@ -317,7 +317,7 @@ class YouTubeSearchTestCase(YouTubeTestCase):
         search_file = self.get_data_file('youtube/search.json')
         response = self.get_response(search_file.read())
         response._parsed = json.loads(response.text)
-        self.search = self.suite.get_search('query')
+        self.search = self.suite.get_search(u'query \u65e5\u672c\u8a9e')
         self.results = self.search.get_response_items(response)
 
     def test_parse_search_result(self):

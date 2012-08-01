@@ -19,7 +19,7 @@ setup(
     ],
     extras_require={
         'oauth': ['requests-oauth>=0.4.1'],
-        'tests': ['unittest2>=0.5.1', 'mock>=0.8.0'],
+        'tests': ['unittest2>=0.5.1', 'mock>=0.8.0', 'tox>=1.4.2'],
     },
     test_suite='vidscraper.tests',
     classifiers=(

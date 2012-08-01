@@ -80,65 +80,6 @@ class VimeoApiLoader(VimeoPathMixin, VideoLoader):
         return VimeoSuite.simple_api_video_to_data(response.json[0])
 
 
-class VimeoScrapeLoader(VimeoPathMixin, VideoLoader):
-    fields = set(['link', 'title', 'user', 'user_url', 'thumbnail_url',
-                  'embed_code', 'files',])
-
-    url_format = u"http://www.vimeo.com/moogaloop/load/clip:{video_id}"
-
-    def get_url_data(self, url):
-        match = self.url_re.match(url)
-        if match:
-            return match.groupdict()
-
-        raise UnhandledVideo(url)
-
-    def get_video_data(self, response):
-        doc = minidom.parseString(response.text)
-        error_id = doc.getElementsByTagName('error_id').item(0)
-        if (error_id is not None and
-            error_id.firstChild.data == 'embed_blocked'):
-            return {
-                'is_embeddable': False
-                }
-        xml_data = {}
-        for key in ('url', 'caption', 'thumbnail', 'uploader_url',
-                    'uploader_display_name', 'isHD', 'embed_code',
-                    'request_signature', 'request_signature_expires',
-                    'nodeId'):
-            item = doc.getElementsByTagName(key).item(0)
-            str_data = item.firstChild.data
-            if isinstance(str_data, unicode):
-                xml_data[key] = str_data # actually Unicode
-            else:
-                xml_data[key] = str_data.decode('utf8')
-        file_url = (
-            'http://www.vimeo.com/moogaloop/play/clip:%(nodeId)s/'
-            '%(request_signature)s/%(request_signature_expires)s'
-            '/?q=' % xml_data)
-        if xml_data['isHD'] == '1':
-            file_url = file_url + 'hd'
-        else:
-            file_url = file_url + 'sd'
-        data = {
-            'link': xml_data['url'],
-            'user': xml_data['uploader_display_name'],
-            'user_url': xml_data['uploader_url'],
-            'title': xml_data['caption'],
-            'thumbnail_url': xml_data['thumbnail'],
-            'embed_code': xml_data['embed_code'],
-            'files': [VideoFile(
-                    url=file_url,
-                    expires=(struct_time_to_datetime(time.gmtime(
-                            int(xml_data['request_signature_expires']))) +
-                            datetime.timedelta(hours=6)),
-                    mime_type=u'video/x-flv',
-                    )]
-            }
-
-        return data
-
-
 class AdvancedVimeoApiMixin(object):
     """
     Mixin class to be used with VideoIterators to provide standard access to
@@ -522,7 +463,7 @@ class VimeoSuite(BaseSuite):
     API key is required for this level of access.
 
     """
-    loader_classes = (VimeoOEmbedLoader, VimeoApiLoader, VimeoScrapeLoader)
+    loader_classes = (VimeoOEmbedLoader, VimeoApiLoader)
     feed_class = VimeoFeed
     search_class = VimeoSearch
 

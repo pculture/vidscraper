@@ -29,8 +29,7 @@ import json
 import mock
 
 from vidscraper.exceptions import VideoDeleted
-from vidscraper.suites.vimeo import (VimeoSuite, VimeoApiLoader,
-                                     VimeoScrapeLoader)
+from vidscraper.suites.vimeo import VimeoSuite, VimeoApiLoader
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.videos import VideoFile
 
@@ -47,7 +46,7 @@ class VimeoSuiteTestCase(VimeoTestCase):
             set(['embed_code', 'description', 'flash_enclosure_url',
                  'user_url', 'publish_datetime', 'title',
                  'thumbnail_url', 'link',
-                 'user', 'guid', 'tags', 'files']))
+                 'user', 'guid', 'tags',]))
 
     
 class VimeoApiTestCase(VimeoTestCase):
@@ -81,41 +80,6 @@ class VimeoApiTestCase(VimeoTestCase):
         data = self.loader.get_video_data(response)
         self.assertEqual(set(data), self.loader.fields)
         self.assertDictEqual(data, expected_data)
-
-
-class VimeoScrapeTestCase(VimeoTestCase):
-    def setUp(self):
-        super(VimeoScrapeTestCase, self).setUp()
-        self.loader = VimeoScrapeLoader("http://vimeo.com/2")
-
-    def test_get_url(self):
-        scrape_url = self.loader.get_url()
-        self.assertEqual(scrape_url, u'http://www.vimeo.com/moogaloop/load/clip:2')
-
-    def test_get_video_data(self):
-        expected_data = {
-            'title': u'Good morning, universe',
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
-            'link': u'http://vimeo.com/2',
-            'user': u'Jake Lodwick',
-            'user_url': u'http://vimeo.com/jakob',
-            'embed_code': '<object width="400" height="300"><param name="allowfullscreen" value="true" /><param name="allowscriptaccess" value="always" /><param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" /><embed src="http://vimeo.com/moogaloop.swf?clip_id=2&amp;server=vimeo.com&amp;show_title=1&amp;show_byline=1&amp;show_portrait=1&amp;color=00adef&amp;fullscreen=1&amp;autoplay=0&amp;loop=0" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="300"></embed></object><p><a href="http://vimeo.com/2">Good morning, universe</a> from <a href="http://vimeo.com/jakob">Jake Lodwick</a> on <a href="http://vimeo.com">Vimeo</a>.</p>',
-            'files': [VideoFile(
-                    url='http://www.vimeo.com/moogaloop/play/clip:2/e82cb5d075e82a8cd790a1710e8b1d2f/1322593900/?q=sd',
-                    expires=datetime.datetime(2011, 11, 30, 1, 11, 40),
-                    mime_type=u'video/x-flv')],
-        }
-        scrape_file = self.get_data_file('vimeo/scrape.xml')
-        response = self.get_response(scrape_file.read())
-        data = self.loader.get_video_data(response)
-        self.assertEqual(set(data), self.loader.fields)
-        self.assertDictEqual(data, expected_data)
-
-    def test_get_video_data__noembed(self):
-        scrape_file = self.get_data_file('vimeo/scrape_noembed.xml')
-        response = self.get_response(scrape_file.read())
-        data = self.loader.get_video_data(response)
-        self.assertEqual(data, {'is_embeddable': False})
 
 
 class VimeoSimpleFeedTestCase(VimeoTestCase):

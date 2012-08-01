@@ -29,8 +29,10 @@ from bs4.dammit import EntitySubstitution
 
 
 HTML_ENTITY_TO_CHARACTER = EntitySubstitution.HTML_ENTITY_TO_CHARACTER
-HTML_ENTITY_TO_CHARACTER_RE = re.compile("|".join(("&%s;" % e
-                                         for e in HTML_ENTITY_TO_CHARACTER)))
+HTML_ENTITY_TO_CHARACTER_RE = re.compile("|".join(("&{entity};"
+                                                   "".format(entity=entity)
+                                                   for entity in
+                                                   HTML_ENTITY_TO_CHARACTER)))
 
 
 def _substitute_character(matchobj):
@@ -48,15 +50,11 @@ def convert_entities(text):
 
 def make_embed_code(video_url, flash_qs, width=400, height=264):
     """Generates embed code from a flash enclosure."""
-    return u"""<object width="%(width)s" height="%(height)s">
-    <param name="flashvars" value="%(flashvars)s">
-    <param name="movie" value="%(url)s">
+    return u"""<object width="{width}" height="{height}">
+    <param name="flashvars" value="{flashvars}">
+    <param name="movie" value="{url}">
     <param name="allowFullScreen" value="true">
     <param name="allowscriptaccess" value="always">
-    <embed src="%(url)s" flashvars="%(flashvars)s" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="%(width)s" height="%(height)s>
-</object>""" % {
-        'width': width,
-        'height': height,
-        'flashvars': flash_qs,
-        'url': video_url
-    }
+    <embed src="{url}" flashvars="{flashvars}" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="{width}" height="{height}">
+</object>""".format(width=width, height=height,
+                    flashvars=flash_qs, url=video_url)

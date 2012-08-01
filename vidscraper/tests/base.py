@@ -49,5 +49,7 @@ class BaseTestCase(unittest2.TestCase):
         self.assertEqual(set(data), set(expected_data))
         for key in data:
             self.assertEqual(data[key], expected_data[key],
-                             'value for %s not equal:\n%r != %r' % (
-                             key, data[key], expected_data[key]))
+                             u'value for {key} not equal:\n'
+                             u'{value} != {expected}'.format(
+                                key=key, value=data[key],
+                                expected=expected_data[key]))

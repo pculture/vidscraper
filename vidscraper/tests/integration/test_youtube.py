@@ -195,9 +195,8 @@ Caramelldansen""",
             'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
             'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
             }
-        for key, value in expected.items():
-            self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
-                    key, value, getattr(feed, key)))
+        data = dict((key, getattr(feed, key)) for key in expected)
+        self.assertEqual(data, expected)
 
         # YouTube changes the channel URL sometimes, so just make sure it's
         # there

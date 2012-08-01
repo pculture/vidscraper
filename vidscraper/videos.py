@@ -226,8 +226,8 @@ class Video(object):
 
         headers = {
             'User-Agent':
-                'Mozilla/5.0 (X11; Linux) Safari/536.10 vidscraper/%s' % (
-                __version__,)
+                'Mozilla/5.0 (X11; Linux) Safari/536.10 vidscraper/{version}'
+                ''.format(version=__version__)
             }
 
         if grequests is None:
@@ -367,7 +367,7 @@ class VideoFile(object):
                           if mime_type is None else mime_type)
 
     def __repr__(self):
-        return u'<VideoFile: %s>' % unicode(self)
+        return u'<VideoFile: {url}>'.format(url=unicode(self))
 
     def __unicode__(self):
         if len(self.url) > 17:

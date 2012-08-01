@@ -54,7 +54,7 @@ class ForaScrapeTestCase(ForaTestCase):
     <param name="movie" value="http://fora.tv/embedded_player">
     <param name="allowFullScreen" value="true">
     <param name="allowscriptaccess" value="always">
-    <embed src="http://fora.tv/embedded_player" flashvars="cliptype=full&clipid=%5Bu%2713996%27%5D&ie=%5Bu%27f%27%5D&webhost=%5Bu%27fora.tv%27%5D" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="264>
+    <embed src="http://fora.tv/embedded_player" flashvars="cliptype=full&clipid=%5Bu%2713996%27%5D&ie=%5Bu%27f%27%5D&webhost=%5Bu%27fora.tv%27%5D" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="264">
 </object>""",
             'description': u"Historian Christopher Heaney relates how 100 "
                             "years ago Hiram Bingham stepped into the "

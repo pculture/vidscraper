@@ -103,9 +103,9 @@ class VidscraperCommandHandler(object):
         else:
             api_keys = None
 
-        for arg in args:
-            print "Scraping %s" % arg
-            video = auto_scrape(arg, fields=fields, api_keys=api_keys)
+        for url in args:
+            print "Scraping {url}...".format(url=url)
+            video = auto_scrape(url, fields=fields, api_keys=api_keys)
             print json.dumps(video.serialize(), indent=2, sort_keys=True)
 
         return 0
@@ -116,11 +116,11 @@ class VidscraperCommandHandler(object):
         parser.print_help()
         if error:
             print ""
-            print "Error: " + error
+            print "Error: {error}".format(error=error)
         print ""
         print "Commands:"
         for cmd in self.get_commands():
-            print "    %s" % cmd
+            print "    {cmd}".format(cmd=cmd)
         return 0
 
     def main(self):
@@ -130,9 +130,10 @@ class VidscraperCommandHandler(object):
         try:
             cmd = sys.argv.pop(1)
             cmd = "".join(c for c in cmd if c.isalpha())
-            handler = getattr(self, "handle_%s" % cmd)
+            handler = getattr(self, "handle_{cmd}".format(cmd=cmd))
         except AttributeError:
-            return self.handle_help(error='%s is not a valid command.' % cmd)
+            return self.handle_help(error='{cmd} is not a valid '
+                                          'command.'.format(cmd=cmd))
 
         return handler()
 

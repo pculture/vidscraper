@@ -135,8 +135,8 @@ class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
         data = {
             'title': params['title'][0].decode('utf8'),
             'user': params['author'][0].decode('utf8'),
-            'user_url': u'http://www.youtube.com/user/%s' % (
-                params['author'][0].decode('utf8')),
+            'user_url': u'http://www.youtube.com/user/{0}'
+                        u''.format(params['author'][0].decode('utf8')),
             'thumbnail_url': params['thumbnail_url'][0],
             }
         if 'keywords' in params:

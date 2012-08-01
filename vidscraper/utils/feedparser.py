@@ -83,7 +83,7 @@ def get_item_thumbnail_url(item):
         return item['media_thumbnail'][0]['url']
     blip_thumbnail_src = item.get('blip_thumbnail_src', None)
     if blip_thumbnail_src:
-        return u'http://a.images.blip.tv/%s' % blip_thumbnail_src
+        return u'http://a.images.blip.tv/{0}'.format(blip_thumbnail_src)
     if 'itunes_image' in item:
         return item['itunes_image']['href']
     if 'image' in item:

@@ -79,7 +79,8 @@ class ForaScrapeLoader(VideoLoader):
                     flash_vars = urllib.urlencode(flash_vars)
                     data['embed_code'] = make_embed_code(flash_url, flash_vars)
                 elif 'canonical' in tag['rel']:
-                    data['link'] = u"http://fora.tv%s" % unicode(tag['href'])
+                    data['link'] = u"http://fora.tv{0}".format(
+                                                         unicode(tag['href']))
             elif tag.name == 'span' and tag['id'] == 'program_title_text':
                 data['title'] = unicode(tag.string)
             elif tag.name == 'dd' and 'description' in tag['class']:

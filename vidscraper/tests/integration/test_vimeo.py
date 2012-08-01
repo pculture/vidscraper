@@ -98,8 +98,7 @@ difference:\t%r\nexpires:\t%r\nnow:\t\t%r' % (
                 u'http://a.vimeocdn.com/images_v6/portraits/\
 portrait_300_blue.png',
             }
-        for key, value in expected.items():
-            self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
-                    key, value, getattr(feed, key)))
+        data = dict((key, getattr(feed, key)) for key in expected)
+        self.assertEqual(data, expected)
 
         self.assertTrue(feed.video_count > 30, feed.video_count)

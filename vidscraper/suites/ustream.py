@@ -70,7 +70,8 @@ class UstreamApiLoader(UstreamPathMixin, VideoLoader):
             'title': parsed['title'],
             'description': parsed['description'],
             'flash_enclosure_url': url,
-            'embed_code': "<iframe src='%s' width='320' height='260' />" % url,
+            'embed_code': u"<iframe src='{url}' width='320' height='260' />"
+                          u"".format(url=url),
             'thumbnail_url': parsed['imageUrl']['medium'],
             'publish_date': publish_date,
             'tags': [unicode(tag) for tag in parsed['tags']],

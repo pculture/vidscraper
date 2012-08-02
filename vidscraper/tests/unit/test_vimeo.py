@@ -27,9 +27,12 @@ import datetime
 import json
 
 import mock
+import unittest2
 
 from vidscraper.exceptions import VideoDeleted
-from vidscraper.suites.vimeo import VimeoSuite, VimeoApiLoader
+from vidscraper.suites.vimeo import (oauth_hook, VimeoSuite,
+                                     VimeoSimpleLoader, VimeoSimpleFeed,
+                                     VimeoAdvancedFeed)
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -48,10 +51,10 @@ class VimeoSuiteTestCase(VimeoTestCase):
                  'user', 'guid', 'tags',]))
 
     
-class VimeoApiTestCase(VimeoTestCase):
+class VimeoSimpleLoaderTestCase(VimeoTestCase):
     def setUp(self):
-        super(VimeoApiTestCase, self).setUp()
-        self.loader = VimeoApiLoader("http://vimeo.com/2")
+        super(VimeoSimpleLoaderTestCase, self).setUp()
+        self.loader = VimeoSimpleLoader("http://vimeo.com/2")
 
     def test_get_url(self):
         api_url = self.loader.get_url()
@@ -85,6 +88,9 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)
         self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
+
+    def test_is_simple(self):
+        self.assertTrue(isinstance(self.feed, VimeoSimpleFeed))
 
     def test_feed_urls(self):
         valid_feed_inputs = (
@@ -312,6 +318,7 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
         self.assertEqual(url, expected)
 
 
+@unittest2.skipIf(oauth_hook is None, "Advanced api requires requests-oauth")
 class VimeoAdvancedFeedTestCase(VimeoTestCase):
     """
     Tests the feed if API keys are supplied.
@@ -321,6 +328,9 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
         self.feed = self.suite.get_feed('http://vimeo.com/plasticcut/videos',
                                         api_keys={'vimeo_key': 'BLANK',
                                                   'vimeo_secret': 'BLANK'})
+
+    def test_is_advanced(self):
+        self.assertTrue(isinstance(self.feed, VimeoAdvancedFeed))
 
     def test_get_response_items(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')
@@ -368,20 +378,20 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
         }
         self.assertEqual(data, expected)
 
-    def test_data_from_advanced(self):
+    def test_data_from_response(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')
         response = self.get_response(feed_file.read())
-        data = self.feed._data_from_advanced_response(response)
+        data = self.feed.data_from_response(response)
         self.assertEqual(data, {'video_count': 46})
 
-    def test_data_from_advanced__no_videos(self):
+    def test_data_from_response__no_videos(self):
         """
         If the response doesn't contain any videos, no items should be
         returned.
 
         """
         response = mock.MagicMock(json={})
-        data = self.feed._data_from_advanced_response(response)
+        data = self.feed.data_from_response(response)
         self.assertEqual(data, {'video_count': 0})
 
     def test_get_page_url(self):

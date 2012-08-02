@@ -25,14 +25,11 @@
 
 import datetime
 import re
-import urllib
-import urlparse
 
 from bs4 import BeautifulSoup, SoupStrainer
 
 from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites import BaseSuite, registry
-from vidscraper.utils.html import make_embed_code
 from vidscraper.videos import VideoLoader
 
 
@@ -50,8 +47,7 @@ def _strain_filter(name, attrs):
 
 class ForaScrapeLoader(VideoLoader):
     fields = set(['link', 'title', 'description', 'flash_enclosure_url',
-                  'embed_code', 'thumbnail_url', 'publish_date', 'user',
-                  'user_url'])
+                  'thumbnail_url', 'publish_date', 'user', 'user_url'])
     video_re = re.compile(r'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+')
 
     url_format = '{url}'
@@ -71,13 +67,7 @@ class ForaScrapeLoader(VideoLoader):
                 if 'image_src' in tag['rel']:
                     data['thumbnail_url'] = unicode(tag['href'])
                 elif 'video_src' in tag['rel']:
-                    src = unicode(tag['href'])
-                    data['flash_enclosure_url'] = src
-                    flash_url, flash_vars = src.split('?', 1)
-                    flash_vars = urlparse.parse_qs(flash_vars)
-                    flash_vars['cliptype'] = 'full'
-                    flash_vars = urllib.urlencode(flash_vars)
-                    data['embed_code'] = make_embed_code(flash_url, flash_vars)
+                    data['flash_enclosure_url'] = unicode(tag['href'])
                 elif 'canonical' in tag['rel']:
                     data['link'] = u"http://fora.tv{0}".format(
                                                          unicode(tag['href']))

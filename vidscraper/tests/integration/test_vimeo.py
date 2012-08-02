@@ -44,10 +44,6 @@ class VimeoIntegrationTestCase(BaseTestCase):
                 'Tishana from SPARK Reproductive Justice talking about the \
 right to choose after the National Day of Action Rally to Stop Stupak-Pitts, \
 12.2.2009',
-            'embed_code':
-                (u'<iframe src="http://player.vimeo.com/video/7981161" '
-                 'width="320" height="240" frameborder="0" '
-                 'webkitAllowFullScreen allowFullScreen></iframe>'),
             'flash_enclosure_url':
                 u'http://vimeo.com/moogaloop.swf?clip_id=7981161',
             'guid': 'tag:vimeo,2009-12-04:clip7981161',

@@ -49,13 +49,7 @@ class ForaScrapeTestCase(ForaTestCase):
         data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(set(data), self.loader.fields)
-        expected_data = {'embed_code': u"""<object width="400" height="264">
-    <param name="flashvars" value="cliptype=full&clipid=%5Bu%2713996%27%5D&ie=%5Bu%27f%27%5D&webhost=%5Bu%27fora.tv%27%5D">
-    <param name="movie" value="http://fora.tv/embedded_player">
-    <param name="allowFullScreen" value="true">
-    <param name="allowscriptaccess" value="always">
-    <embed src="http://fora.tv/embedded_player" flashvars="cliptype=full&clipid=%5Bu%2713996%27%5D&ie=%5Bu%27f%27%5D&webhost=%5Bu%27fora.tv%27%5D" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="400" height="264">
-</object>""",
+        expected_data = {
             'description': u"Historian Christopher Heaney relates how 100 "
                             "years ago Hiram Bingham stepped into the "
                             "astounding ruins of Machu Picchu, the lost city "

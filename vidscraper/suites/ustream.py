@@ -48,8 +48,8 @@ class UstreamPathMixin(object):
 
 class UstreamApiLoader(UstreamPathMixin, VideoLoader):
     fields = set(['link', 'title', 'description', 'flash_enclosure_url',
-                  'embed_code', 'thumbnail_url', 'publish_date', 'tags',
-                  'user', 'user_url'])
+                  'thumbnail_url', 'publish_date', 'tags', 'user',
+                  'user_url'])
 
     url_format = u'http://api.ustream.tv/json/video/{id}/getInfo/?key={ustream_key}'
 
@@ -70,8 +70,6 @@ class UstreamApiLoader(UstreamPathMixin, VideoLoader):
             'title': parsed['title'],
             'description': parsed['description'],
             'flash_enclosure_url': url,
-            'embed_code': u"<iframe src='{url}' width='320' height='260' />"
-                          u"".format(url=url),
             'thumbnail_url': parsed['imageUrl']['medium'],
             'publish_date': publish_date,
             'tags': [unicode(tag) for tag in parsed['tags']],

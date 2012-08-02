@@ -31,7 +31,6 @@ import mock
 from vidscraper.exceptions import VideoDeleted
 from vidscraper.suites.vimeo import VimeoSuite, VimeoApiLoader
 from vidscraper.tests.base import BaseTestCase
-from vidscraper.videos import VideoFile
 
 
 class VimeoTestCase(BaseTestCase):
@@ -71,9 +70,6 @@ class VimeoApiTestCase(VimeoTestCase):
             'user': u'Jake Lodwick',
             'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
             'guid': u'tag:vimeo,2005-02-16:clip2',
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/2" '
-                           'width="320" height="240" frameborder="0" '
-                           'webkitAllowFullScreen allowFullScreen></iframe>',
         }
         api_file = self.get_data_file('vimeo/api.json')
         response = self.get_response(api_file.read())
@@ -276,9 +272,6 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
         data = self.feed.get_video_data(items[0])
         expected = {
             'title': u'Grandfather recollects end of WWII',
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/'
-                          u'24714980" width="320" height="240" frameborder="0" '
-                          u'webkitAllowFullScreen allowFullScreen></iframe>',
             'publish_datetime': datetime.datetime(2011, 6, 6, 6, 45, 32),
             'link': u'http://vimeo.com/24714980',
             'description': '',
@@ -310,7 +303,6 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
             'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
             'tags': [u'archives', u'santa', u'easter bunny'],
             'guid': u'tag:vimeo,2011-05-16:clip23833511',
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/23833511" width="320" height="240" frameborder="0" webkitAllowFullScreen allowFullScreen></iframe>',
         }
         self.assertEqual(data, expected)
 
@@ -367,9 +359,6 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
             'link': u'http://vimeo.com/39590925',
             'user': u'Plastic.Cut',
             'guid': u'tag:vimeo,2012-04-01:clip39590925',
-            'embed_code': u'<iframe src="http://player.vimeo.com/video/395909'
-                          u'25" width="320" height="240" frameborder="0" webk'
-                          u'itAllowFullScreen allowFullScreen></iframe>',
             'flash_enclosure_url': u'http://vimeo.com/moogaloop.swf?clip_id=39590925',
             'title': u'Tula "Dragon" - March 30th, 2012 @ Franz Mehlhose, Erfurt (GER)',
             'tags': [u'Tula', u'Dragon', u'Franz Mehlhose', u'Erfurt',
@@ -427,9 +416,6 @@ class VimeoSearchTestCase(VimeoTestCase):
             'tags': ['Dancing Pigeons', 'Ritalin', 'Tomas Mankovsky', 'Blink',
                      'Music Video', 'flamethrower', 'fire extinguisher'],
             'flash_enclosure_url': 'http://vimeo.com/moogaloop.swf?clip_id=13639493',
-            'embed_code': """<iframe src="http://player.vimeo.com/video/\
-13639493" width="320" height="240" frameborder="0" webkitAllowFullScreen \
-allowFullScreen></iframe>""",
             'guid': u'tag:vimeo,2010-07-26:clip13639493',
         }
         self.assertDictEqual(data, expected_data)

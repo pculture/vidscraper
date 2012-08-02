@@ -46,15 +46,3 @@ def convert_entities(text):
     """
     return unicode(HTML_ENTITY_TO_CHARACTER_RE.sub(_substitute_character,
                                                    text))
-
-
-def make_embed_code(video_url, flash_qs, width=400, height=264):
-    """Generates embed code from a flash enclosure."""
-    return u"""<object width="{width}" height="{height}">
-    <param name="flashvars" value="{flashvars}">
-    <param name="movie" value="{url}">
-    <param name="allowFullScreen" value="true">
-    <param name="allowscriptaccess" value="always">
-    <embed src="{url}" flashvars="{flashvars}" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="{width}" height="{height}">
-</object>""".format(width=width, height=height,
-                    flashvars=flash_qs, url=video_url)

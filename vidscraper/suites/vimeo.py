@@ -23,12 +23,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
 import datetime
 import re
 import urlparse
 import warnings
-from xml.dom import minidom
 
 try:
     import oauth_hook
@@ -39,9 +37,8 @@ import requests
 from vidscraper.exceptions import (VideoDeleted, UnhandledVideo,
                                    UnhandledFeed, UnhandledSearch)
 from vidscraper.suites import BaseSuite, registry
-from vidscraper.utils.feedparser import struct_time_to_datetime
 from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
-                               OEmbedLoaderMixin, VideoFile)
+                               OEmbedLoaderMixin)
 
 
 # Documentation for the Vimeo APIs:
@@ -65,7 +62,7 @@ class VimeoOEmbedLoader(VimeoPathMixin, OEmbedLoaderMixin, VideoLoader):
 class VimeoApiLoader(VimeoPathMixin, VideoLoader):
     fields = set(['link', 'title', 'description', 'tags', 'guid',
                   'publish_datetime', 'thumbnail_url', 'user', 'user_url',
-                  'flash_enclosure_url', 'embed_code'])
+                  'flash_enclosure_url'])
 
     url_format = u"http://vimeo.com/api/v2/video/{video_id}.json"
 
@@ -147,7 +144,6 @@ class AdvancedVimeoApiMixin(object):
             'tags': [t['_content']
                             for t in item.get('tags', {}).get('tag', [])],
             'flash_enclosure_url': VimeoSuite.video_flash_enclosure(item['id']),
-            'embed_code': VimeoSuite.video_embed_code(item['id']),
             'guid': VimeoSuite.video_guid(item['upload_date'], item['id']),
         }
         return data
@@ -468,12 +464,6 @@ class VimeoSuite(BaseSuite):
     search_class = VimeoSearch
 
     @staticmethod
-    def video_embed_code(video_id):
-        return u"""<iframe src="http://player.vimeo.com/video/{0}" \
-width="320" height="240" frameborder="0" webkitAllowFullScreen \
-allowFullScreen></iframe>""".format(video_id)
-
-    @staticmethod
     def video_flash_enclosure(video_id):
         return u'http://vimeo.com/moogaloop.swf?clip_id={0}'.format(video_id)
 
@@ -500,7 +490,6 @@ allowFullScreen></iframe>""".format(video_id)
                 api_video['upload_date'], '%Y-%m-%d %H:%M:%S'),
             'tags': [tag for tag in api_video['tags'].split(', ') if tag],
             'flash_enclosure_url': cls.video_flash_enclosure(api_video['id']),
-            'embed_code': cls.video_embed_code(api_video['id']),
             'guid': cls.video_guid(api_video['upload_date'], api_video['id'])
         }
         return data

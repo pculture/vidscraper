@@ -53,8 +53,6 @@ class UstreamApiTestCase(UstreamTestCase):
 
     def test_get_video_data(self):
         expected_data = {
-            'embed_code': u"<iframe src='http://www.ustream.tv/flash/video/"
-                           "16417223' width='320' height='260' />",
             'link': u'http://www.ustream.tv/recorded/16417223',
             'description': u'President Obama Speaks Live From His Birthday Event',
             'flash_enclosure_url': u'http://www.ustream.tv/flash/video/16417223',

@@ -61,27 +61,6 @@ right to choose after the National Day of Action Rally to Stop Stupak-Pitts, \
         for key, value in expected.items():
             self.assertEqual(value, getattr(video, key))
 
-    def test_video_file_url(self):
-        # XXX fix this with real API support
-        message = 'Vimeo file_url support is currently broken'
-        if hasattr(self, 'skipTest'):
-            self.skipTest(message)
-        else:
-            warnings.warn(message)
-            return
-        video_url = u'http://vimeo.com/7981161'
-        video = self.suite.get_video(video_url)
-        video.load()
-        self.assertEqual(video.files[0].mime_type, u'video/x-flv')
-        self.assertTrue('moogaloop' in video.files[0].url)
-        self.assertTrue((video.files[0].expires -
-                         datetime.datetime.utcnow()) > datetime.timedelta(
-                hours=5),
-                        'Not more than 5hrs in the future\n\
-difference:\t%r\nexpires:\t%r\nnow:\t\t%r' % (
-                video.files[0].expires - datetime.datetime.utcnow(),
-                video.files[0].expires, datetime.datetime.utcnow()))
-
     def test_feed(self):
         feed_url = 'http://vimeo.com/user1751935/videos/'
         feed = self.suite.get_feed(feed_url)

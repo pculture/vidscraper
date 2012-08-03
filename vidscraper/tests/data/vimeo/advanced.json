@@ -1,0 +1,152 @@
+{
+    "stat": "ok", 
+    "generated_in": "0.0887", 
+    "video": [
+        {
+            "allow_adds": "0", 
+            "upload_date": "2005-02-16 23:09:19", 
+            "number_of_plays": "335258", 
+            "height": "240", 
+            "duration": "29", 
+            "owner": {
+                "is_plus": "1", 
+                "username": "jakob", 
+                "videosurl": "http://vimeo.com/jakob/videos", 
+                "display_name": "Jake Lodwick", 
+                "realname": "Jake Lodwick", 
+                "portraits": {
+                    "portrait": [
+                        {
+                            "width": "30", 
+                            "_content": "http://b.vimeocdn.com/ps/137/734/1377340_30.jpg", 
+                            "height": "30"
+                        }, 
+                        {
+                            "width": "75", 
+                            "_content": "http://b.vimeocdn.com/ps/137/734/1377340_75.jpg", 
+                            "height": "75"
+                        }, 
+                        {
+                            "width": "100", 
+                            "_content": "http://b.vimeocdn.com/ps/137/734/1377340_100.jpg", 
+                            "height": "100"
+                        }, 
+                        {
+                            "width": "300", 
+                            "_content": "http://b.vimeocdn.com/ps/137/734/1377340_300.jpg", 
+                            "height": "300"
+                        }
+                    ]
+                }, 
+                "profileurl": "http://vimeo.com/jakob", 
+                "is_staff": "0", 
+                "id": "101", 
+                "is_pro": "0"
+            }, 
+            "id": "2", 
+            "modified_date": "2012-08-03 15:22:37", 
+            "privacy": "anybody", 
+            "is_transcoding": "0", 
+            "width": "320", 
+            "embed_privacy": "anywhere", 
+            "description": "I shot this myself!", 
+            "tags": {
+                "tag": [
+                    {
+                        "url": "http://vimeo.com/tag:morning", 
+                        "_content": "morning", 
+                        "id": "2", 
+                        "normalized": "morning", 
+                        "author": "101"
+                    }, 
+                    {
+                        "url": "http://vimeo.com/tag:bed", 
+                        "_content": "bed", 
+                        "id": "11", 
+                        "normalized": "bed", 
+                        "author": "101"
+                    }, 
+                    {
+                        "url": "http://vimeo.com/tag:slow", 
+                        "_content": "slow", 
+                        "id": "12", 
+                        "normalized": "slow", 
+                        "author": "101"
+                    }, 
+                    {
+                        "url": "http://vimeo.com/tag:mybedroom", 
+                        "_content": "my bedroom", 
+                        "id": "2345", 
+                        "normalized": "mybedroom", 
+                        "author": "101"
+                    }, 
+                    {
+                        "url": "http://vimeo.com/tag:creepy", 
+                        "_content": "creepy", 
+                        "id": "4713", 
+                        "normalized": "creepy", 
+                        "author": "680"
+                    }, 
+                    {
+                        "url": "http://vimeo.com/tag:smile", 
+                        "_content": "smile", 
+                        "id": "72674", 
+                        "normalized": "smile", 
+                        "author": "101"
+                    }, 
+                    {
+                        "url": "http://vimeo.com/tag:fart", 
+                        "_content": "fart", 
+                        "id": "490640", 
+                        "normalized": "fart", 
+                        "author": "88341"
+                    }
+                ]
+            }, 
+            "is_hd": "0", 
+            "thumbnails": {
+                "thumbnail": [
+                    {
+                        "width": "100", 
+                        "_content": "http://b.vimeocdn.com/ts/228/979/22897998_100.jpg", 
+                        "height": "75"
+                    }, 
+                    {
+                        "width": "200", 
+                        "_content": "http://b.vimeocdn.com/ts/228/979/22897998_200.jpg", 
+                        "height": "150"
+                    }, 
+                    {
+                        "width": "640", 
+                        "_content": "http://b.vimeocdn.com/ts/228/979/22897998_640.jpg", 
+                        "height": "480"
+                    }
+                ]
+            }, 
+            "license": "0", 
+            "number_of_comments": "50", 
+            "title": "Good morning, universe", 
+            "cast": {
+                "member": {
+                    "username": "jakob", 
+                    "role": "", 
+                    "display_name": "Jake Lodwick", 
+                    "id": "101"
+                }
+            }, 
+            "number_of_likes": "77", 
+            "urls": {
+                "url": [
+                    {
+                        "type": "video", 
+                        "_content": "http://vimeo.com/2"
+                    }, 
+                    {
+                        "type": "mobile", 
+                        "_content": "http://vimeo.com/m/2"
+                    }
+                ]
+            }
+        }
+    ]
+}

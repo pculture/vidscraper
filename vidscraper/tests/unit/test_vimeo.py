@@ -31,7 +31,7 @@ import unittest2
 from vidscraper.exceptions import VideoDeleted
 from vidscraper.suites.vimeo import (oauth_hook, Suite,
                                      SimpleLoader, SimpleFeed,
-                                     AdvancedFeed)
+                                     AdvancedLoader, AdvancedFeed)
 from vidscraper.tests.base import BaseTestCase
 
 
@@ -73,7 +73,41 @@ class SimpleLoaderTestCase(VimeoTestCase):
             'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
             'guid': u'tag:vimeo,2005-02-16:clip2',
         }
-        api_file = self.get_data_file('vimeo/api.json')
+        api_file = self.get_data_file('vimeo/simple.json')
+        response = self.get_response(api_file.read())
+        data = self.loader.get_video_data(response)
+        self.assertEqual(set(data), self.loader.fields)
+        self.assertDictEqual(data, expected_data)
+
+    
+class VimeoAdvancedLoaderTestCase(VimeoTestCase):
+    def setUp(self):
+        super(VimeoAdvancedLoaderTestCase, self).setUp()
+        self.loader = AdvancedLoader("http://vimeo.com/2",
+                                     api_keys={'vimeo_key': 'BLANK',
+                                               'vimeo_secret': 'BLANK'})
+
+    def test_get_url(self):
+        api_url = self.loader.get_url()
+        self.assertEqual(api_url, 'http://vimeo.com/api/rest/v2?format=json&'
+                                  'full_response=1&method=vimeo.videos.'
+                                  'getInfo&video_id=2')
+
+    def test_get_video_data(self):
+        expected_data = {
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
+            'link': u'http://vimeo.com/2',
+            'description': u'I shot this myself!',
+            'title': u'Good morning, universe',
+            'publish_datetime': datetime.datetime(2005, 2, 16, 23, 9, 19),
+            'user_url': u'http://vimeo.com/jakob',
+            'tags': [u'morning', u'bed', u'slow', u'my bedroom', u'creepy',
+                     u'smile', u'fart'],
+            'user': u'Jake Lodwick',
+            'flash_enclosure_url': "http://vimeo.com/moogaloop.swf?clip_id=2",
+            'guid': u'tag:vimeo,2005-02-16:clip2',
+        }
+        api_file = self.get_data_file('vimeo/advanced.json')
         response = self.get_response(api_file.read())
         data = self.loader.get_video_data(response)
         self.assertEqual(set(data), self.loader.fields)

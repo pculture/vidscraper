@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import json
 
 import requests
 
@@ -246,7 +245,6 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         self.feed = self.suite.get_feed(self.feed_url)
         feed_file = self.get_data_file('youtube/feed.json')
         self.response = self.get_response(feed_file.read())
-        self.response._parsed = json.loads(self.response.text)
 
     def test_feed_urls(self):
         valid_urls = (
@@ -316,7 +314,6 @@ class YouTubeSearchTestCase(YouTubeTestCase):
         YouTubeTestCase.setUp(self)
         search_file = self.get_data_file('youtube/search.json')
         response = self.get_response(search_file.read())
-        response._parsed = json.loads(response.text)
         self.search = self.suite.get_search(u'query \u65e5\u672c\u8a9e')
         self.results = self.search.get_response_items(response)
 

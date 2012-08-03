@@ -231,20 +231,14 @@ class Feed(VideoFeed):
 
         raise UnhandledFeed(url)
 
-    def get_page(self, page_start, page_max):
-        url = self.get_page_url(page_start, page_max)
-        response = requests.get(url)
-        response._parsed = json.loads(response.text)
-        return response
-
     def get_response_items(self, response):
-        return response._parsed['feed'].get('entry', [])
+        return response.json['feed'].get('entry', [])
 
     def get_video_data(self, item):
         return Suite.parse_api_video(item)
 
     def data_from_response(self, response):
-        feed = response._parsed['feed']
+        feed = response.json['feed']
         for l in feed['link']:
             if l['rel'] == 'alternate':
                 link = l['href']
@@ -274,20 +268,14 @@ class Search(VideoSearch):
         'popular': 'viewCount',
     }
 
-    def get_page(self, page_start, page_max):
-        url = self.get_page_url(page_start, page_max)
-        response = requests.get(url)
-        response._parsed = json.loads(response.text)
-        return response
-
     def get_response_items(self, response):
-        return response._parsed['feed'].get('entry', [])
+        return response.json['feed'].get('entry', [])
 
     def get_video_data(self, item):
         return Suite.parse_api_video(item)
 
     def data_from_response(self, response):
-        feed = response._parsed['feed']
+        feed = response.json['feed']
         return {
             'video_count': feed['openSearch$totalResults']['$t'],
         }

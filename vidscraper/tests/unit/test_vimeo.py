@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import json
 
 import mock
 import unittest2
@@ -272,7 +271,6 @@ class SimpleFeedTestCase(VimeoTestCase):
     def test_get_video_data(self):
         feed_file = self.get_data_file('vimeo/feed.json')
         response = self.get_response(feed_file.read())
-        response._parsed = json.loads(response.text)
         items = self.feed.get_response_items(response)
 
         data = self.feed.get_video_data(items[0])
@@ -434,7 +432,9 @@ class VimeoSearchTestCase(VimeoTestCase):
         search_file = self.get_data_file('vimeo/search_with_deleted.json')
         response = self.get_response(search_file.read())
         results = self.search.get_response_items(response)
-        data = self.search.get_video_data(results[0])
+
+        # Try this to be sure it doesn't error.
+        self.search.get_video_data(results[0])
 
         self.assertEqual(len(results), 50)
         self.assertRaises(VideoDeleted,

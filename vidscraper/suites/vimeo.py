@@ -66,12 +66,13 @@ class AdvancedApiMixin(object):
                 'vimeo_secret' in self.api_keys and
                 oauth_hook is not None)
 
-    def request(self, url):
+    def get_request_kwargs(self):
         hook = oauth_hook.OAuthHook(consumer_key=self.api_keys['vimeo_key'],
                                 consumer_secret=self.api_keys['vimeo_secret'],
                                 header_auth=True)
-        response = requests.get(url, hooks={'pre_request': hook}, timeout=5)
-        return response
+        kwargs = super(AdvancedApiMixin, self).get_request_kwargs()
+        kwargs['hooks'] = {'pre_request': hook}
+        return kwargs
 
     def get_video_data(self, item):
         # TODO: items have an embed_privacy key. What is this? Should
@@ -114,6 +115,23 @@ class SimpleLoader(PathMixin, VideoLoader):
 
     def get_video_data(self, response):
         return Suite.simple_api_video_to_data(response.json[0])
+
+
+class AdvancedLoader(AdvancedApiMixin, PathMixin, VideoLoader):
+    fields = set(['title', 'link', 'description', 'thumbnail_url', 'user',
+                  'user_url', 'publish_datetime', 'tags', 'guid',
+                  'flash_enclosure_url'])
+    url_format = (u"http://vimeo.com/api/rest/v2?format=json&full_response=1&"
+                  u"method=vimeo.videos.getInfo&video_id={video_id}")
+
+    def get_url_data(self, url):
+        if not self.is_available():
+            raise UnhandledVideo(url)
+        return super(AdvancedLoader, self).get_url_data(url)
+
+    def get_video_data(self, response):
+        return AdvancedApiMixin.get_video_data(self,
+                                               response.json['video'][0])
 
 
 class SimpleFeed(VideoFeed):
@@ -201,11 +219,6 @@ class SimpleFeed(VideoFeed):
             'request_type': request_type
         })
         return data
-
-    def get_page(self, page_start, page_max):
-        url = self.get_page_url(page_start, page_max)
-        response = requests.get(url, timeout=5)
-        return response
 
     def get_response_items(self, response):
         if response.status_code == 403:
@@ -456,7 +469,7 @@ class Suite(BaseSuite):
     API key is required for this level of access.
 
     """
-    loader_classes = (OEmbedLoader, SimpleLoader)
+    loader_classes = (OEmbedLoader, AdvancedLoader, SimpleLoader)
     search_class = Search
 
     def get_feed(self, url, *args, **kwargs):

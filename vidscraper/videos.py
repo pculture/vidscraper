@@ -49,6 +49,11 @@ from vidscraper.utils.search import (search_string_from_terms,
 
 
 PREFERRED_MIMETYPES = ('video/webm', 'video/ogg', 'video/mp4')
+REQUEST_TIMEOUT = 3
+REQUEST_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux) Safari/536.10 '
+                  'vidscraper/{version}'.format(version=__version__)
+}
 
 
 def _isoformat_to_datetime(dt_str):
@@ -224,20 +229,15 @@ class Video(object):
         """
         best_loaders = self.get_best_loaders()
 
-        headers = {
-            'User-Agent':
-                'Mozilla/5.0 (X11; Linux) Safari/536.10 vidscraper/{version}'
-                ''.format(version=__version__)
-            }
-
         if grequests is None:
-            responses = [requests.get(l.get_url(), timeout=3,
-                                      headers=headers)
-                         for l in best_loaders]
+            responses = [requests.get(loader.get_url(),
+                                      **loader.get_request_kwargs())
+                         for loader in best_loaders]
         else:
-            responses = grequests.map([grequests.get(l.get_url(), timeout=3,
-                                                     headers=headers)
-                                       for l in best_loaders])
+            responses = grequests.map(
+                                 [grequests.get(loader.get_url(),
+                                                **loader.get_request_kwargs())
+                                  for loader in best_loaders])
 
         data = {}
         for loader, response in itertools.izip(best_loaders, responses):
@@ -424,6 +424,14 @@ class VideoLoader(object):
     #: url for this loader to fetch data from.
     url_format = None
 
+    #: The number of seconds before this loader times out. See python-requests
+    #: documentation for more information.
+    timeout = REQUEST_TIMEOUT
+
+    #: Extra headers to set on the requests for this loader. See
+    #: python-requests documentation for more information.
+    headers = REQUEST_HEADERS
+
     def __init__(self, url, api_keys=None):
         self.url = url
         self.api_keys = api_keys if api_keys is not None else {}
@@ -449,6 +457,25 @@ class VideoLoader(object):
         if self.url_format is None:
             raise NotImplementedError
         return self.url_format.format(**self.url_data)
+
+    def get_headers(self):
+        """
+        Returns a dictionary of headers which will be added to the request.
+        By default, this is a copy of :attr:`headers`.
+
+        """
+        return self.headers.copy()
+
+    def get_request_kwargs(self):
+        """
+        Returns the kwargs used for making an HTTP request for this loader
+        (with python-requests).
+
+        """
+        return {
+            'timeout': self.timeout,
+            'headers': self.get_headers(),
+        }
 
     def get_video_data(self, response):
         """
@@ -522,6 +549,14 @@ class BaseVideoIterator(object):
     #: in the python docs:
     #: http://docs.python.org/library/stdtypes.html#str.format
     page_url_format = None
+
+    #: The number of seconds before this loader times out. See python-requests
+    #: documentation for more information.
+    timeout = REQUEST_TIMEOUT
+
+    #: Extra headers to set on the requests for this loader. See
+    #: python-requests documentation for more information.
+    headers = REQUEST_HEADERS
 
     def __init__(self, start_index=1, max_results=None, video_fields=None,
                  api_keys=None):
@@ -661,6 +696,24 @@ class BaseVideoIterator(object):
             data['page'] = int(math.ceil(float(page_start) / self.per_page))
         return data
 
+    def get_headers(self):
+        """
+        Returns a dictionary of headers which will be added to the request.
+        By default, this is a copy of :attr:`headers`.
+
+        """
+        return self.headers.copy()
+
+    def get_request_kwargs(self):
+        """
+        Returns the kwargs used for making an HTTP request for this feed.
+
+        """
+        return {
+            'timeout': self.timeout,
+            'headers': self.get_headers()
+        }
+
     def get_page(self, page_start, page_max):
         """
         Given a start and maximum size for a page, fetches and returns a
@@ -668,7 +721,9 @@ class BaseVideoIterator(object):
         parsed json response, or even just an html page.
 
         """
-        raise NotImplementedError
+        page_url = self.get_page_url(page_start, page_max)
+        response = requests.get(page_url, **self.get_request_kwargs())
+        return response
 
     def data_from_response(self, response):
         """
@@ -687,11 +742,16 @@ class FeedparserVideoIteratorMixin(object):
     :meth:`get_video_data` must still be implemented by subclasses.
 
     """
+    def get_request_kwargs(self):
+        return {
+            'etag': getattr(self, 'etag', None),
+            'modified': getattr(self, 'last_modified', None),
+            'request_headers': self.get_headers()
+        }
+
     def get_page(self, page_start, page_max):
-        url = self.get_page_url(page_start, page_max)
-        response = feedparser.parse(url,
-                                etag=getattr(self, 'etag', None),
-                                modified=getattr(self, 'last_modified', None))
+        page_url = self.get_page_url(page_start, page_max)
+        response = feedparser.parse(page_url, **self.get_request_kwargs())
         # Don't let feedparser silence connection problems.
         if isinstance(response.get('bozo_exception', None), urllib2.URLError):
             raise response.bozo_exception

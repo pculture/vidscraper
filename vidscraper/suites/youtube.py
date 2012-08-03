@@ -52,7 +52,7 @@ from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
 # * https://developers.google.com/youtube/2.0/reference
 
 
-class YouTubePathMixin(object):
+class PathMixin(object):
     short_path_re = re.compile(r"^/(?P<video_id>[\w-]+)/?$")
 
     def get_url_data(self, url):
@@ -74,7 +74,7 @@ class YouTubePathMixin(object):
         raise UnhandledVideo(url)
 
 
-class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
+class ApiLoader(PathMixin, VideoLoader):
     fields = set(('link', 'title', 'description', 'guid', 'thumbnail_url',
                   'publish_datetime', 'tags', 'flash_enclosure_url', 'user',
                   'user_url', 'license'))
@@ -86,10 +86,10 @@ class YouTubeApiLoader(YouTubePathMixin, VideoLoader):
             return {'is_embeddable': False}
         parsed = json.loads(response.text)
         entry = parsed['entry']
-        return YouTubeSuite.parse_api_video(entry)
+        return Suite.parse_api_video(entry)
 
 
-class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
+class ScrapeLoader(PathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
                   'files'))
 
@@ -179,7 +179,7 @@ class YouTubeScrapeLoader(YouTubePathMixin, VideoLoader):
         return data
 
 
-class YouTubeOEmbedLoader(OEmbedLoaderMixin, YouTubePathMixin, VideoLoader):
+class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
     endpoint = u"http://www.youtube.com/oembed"
     url_format = u"http://www.youtube.com/watch?v={video_id}"
 
@@ -189,10 +189,10 @@ class YouTubeOEmbedLoader(OEmbedLoaderMixin, YouTubePathMixin, VideoLoader):
             return {'is_embeddable': False}
         if response.status_code == 404:
             return {}
-        return super(YouTubeOEmbedLoader, self).get_video_data(response)
+        return super(OEmbedLoader, self).get_video_data(response)
 
 
-class YouTubeFeed(VideoFeed):
+class Feed(VideoFeed):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
                        'uploads?alt=json&v=2&start-index={page_start}&max-results={page_max}')
@@ -241,7 +241,7 @@ class YouTubeFeed(VideoFeed):
         return response._parsed['feed'].get('entry', [])
 
     def get_video_data(self, item):
-        return YouTubeSuite.parse_api_video(item)
+        return Suite.parse_api_video(item)
 
     def data_from_response(self, response):
         feed = response._parsed['feed']
@@ -261,7 +261,7 @@ class YouTubeFeed(VideoFeed):
         }
 
 
-class YouTubeSearch(VideoSearch):
+class Search(VideoSearch):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/videos?v=2&alt=json&'
                        'q={query}&orderby={order_by}&start-index={page_start}&'
@@ -284,7 +284,7 @@ class YouTubeSearch(VideoSearch):
         return response._parsed['feed'].get('entry', [])
 
     def get_video_data(self, item):
-        return YouTubeSuite.parse_api_video(item)
+        return Suite.parse_api_video(item)
 
     def data_from_response(self, response):
         feed = response._parsed['feed']
@@ -293,12 +293,12 @@ class YouTubeSearch(VideoSearch):
         }
 
 
-class YouTubeSuite(BaseSuite):
-    loader_classes = (YouTubeOEmbedLoader, YouTubeApiLoader,
-                      YouTubeScrapeLoader)
+class Suite(BaseSuite):
+    loader_classes = (OEmbedLoader, ApiLoader,
+                      ScrapeLoader)
 
-    feed_class = YouTubeFeed
-    search_class = YouTubeSearch
+    feed_class = Feed
+    search_class = Search
 
     @staticmethod
     def parse_api_video(video):
@@ -349,4 +349,4 @@ class YouTubeSuite(BaseSuite):
         return data
 
 
-registry.register(YouTubeSuite)
+registry.register(Suite)

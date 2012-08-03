@@ -26,14 +26,14 @@
 import warnings
 import datetime
 
-from vidscraper.suites.vimeo import VimeoSuite
+from vidscraper.suites.vimeo import Suite
 from vidscraper.tests.base import BaseTestCase
 
 
 class VimeoIntegrationTestCase(BaseTestCase):
 
     def setUp(self):
-        self.suite = VimeoSuite()
+        self.suite = Suite()
 
     def test_video(self):
         video_url = u'http://vimeo.com/7981161'

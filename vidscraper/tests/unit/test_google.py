@@ -23,20 +23,20 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from vidscraper.suites.google import GoogleSuite, GoogleScrapeLoader
+from vidscraper.suites.google import Suite, ScrapeLoader
 from vidscraper.tests.base import BaseTestCase
 
 
 class GoogleTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = GoogleSuite()
+        self.suite = Suite()
 
 
 class GoogleScrapeTestCase(GoogleTestCase):
     def setUp(self):
         GoogleTestCase.setUp(self)
         self.url = "http://video.google.com/videoplay?docid=3372610739323185039"
-        self.loader = GoogleScrapeLoader(self.url)
+        self.loader = ScrapeLoader(self.url)
 
     def test_get_url(self):
         self.assertEqual(self.loader.get_url(), self.url)

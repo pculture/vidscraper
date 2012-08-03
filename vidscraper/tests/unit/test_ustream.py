@@ -26,25 +26,25 @@
 import datetime
 
 from vidscraper.exceptions import UnhandledVideo
-from vidscraper.suites.ustream import (UstreamSuite, UstreamApiLoader,
-                                       UstreamOEmbedLoader)
+from vidscraper.suites.ustream import (Suite, ApiLoader,
+                                       OEmbedLoader)
 from vidscraper.tests.base import BaseTestCase
 
 
 class UstreamTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = UstreamSuite()
+        self.suite = Suite()
 
 
 class UstreamApiTestCase(UstreamTestCase):
     def setUp(self):
         UstreamTestCase.setUp(self)
         self.url = "http://www.ustream.tv/recorded/16417223"
-        self.loader = UstreamApiLoader(self.url,
+        self.loader = ApiLoader(self.url,
                                        api_keys={'ustream_key': 'TEST_KEY'})
 
     def test_keys_required(self):
-        self.assertRaises(UnhandledVideo, UstreamApiLoader, self.url)
+        self.assertRaises(UnhandledVideo, ApiLoader, self.url)
 
     def test_get_url(self):
         api_url = self.loader.get_url()
@@ -73,6 +73,6 @@ class UstreamApiTestCase(UstreamTestCase):
 class UstreamOEmbedTestCase(UstreamTestCase):
     def test_valid_urls(self):
         url = "http://www.ustream.tv/recorded/16417223"
-        result = UstreamOEmbedLoader(url).get_url()
+        result = OEmbedLoader(url).get_url()
         expected = "http://www.ustream.tv/oembed/?url=http%3A%2F%2Fwww.ustream.tv%2Frecorded%2F16417223"
         self.assertEqual(result, expected)

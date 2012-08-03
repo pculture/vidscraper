@@ -28,7 +28,7 @@ import datetime
 import feedparser
 
 from vidscraper.exceptions import UnhandledSearch, UnhandledVideo
-from vidscraper.suites.blip import BlipSuite, BlipApiLoader, BlipOEmbedLoader
+from vidscraper.suites.blip import Suite, ApiLoader, OEmbedLoader
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.videos import VideoFile
 
@@ -64,7 +64,7 @@ DISQUS_DATA = {
 
 class BlipTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = BlipSuite()
+        self.suite = Suite()
 
 
 class BlipApiTestCase(BlipTestCase):
@@ -86,14 +86,14 @@ class BlipApiTestCase(BlipTestCase):
             'http://blip.tv/dashboard/episode/5944048',
         )
         for url, expected in valid_urls:
-            loader = BlipApiLoader(url)
+            loader = ApiLoader(url)
             self.assertEquals(loader.get_url(), expected)
 
         for url in invalid_urls:
-            self.assertRaises(UnhandledVideo, BlipApiLoader, url)
+            self.assertRaises(UnhandledVideo, ApiLoader, url)
 
     def test_get_video_data(self):
-        loader = BlipApiLoader('http://blip.tv/file/4135225')
+        loader = ApiLoader('http://blip.tv/file/4135225')
         api_file = self.get_data_file('blip/api.rss')
         response = self.get_response(api_file.read())
         data = loader.get_video_data(response)
@@ -118,11 +118,11 @@ class BlipOEmbedTestCase(BlipTestCase):
             'http://blip.tv/dashboard/episode/5944048',
         )
         for url, expected in valid_urls:
-            loader = BlipOEmbedLoader(url)
+            loader = OEmbedLoader(url)
             self.assertEquals(loader.get_url(), expected)
 
         for url in invalid_urls:
-            self.assertRaises(UnhandledVideo, BlipOEmbedLoader, url)
+            self.assertRaises(UnhandledVideo, OEmbedLoader, url)
 
 
 class BlipFeedTestCase(BlipTestCase):
@@ -187,7 +187,7 @@ class BlipSearchTestCase(BlipTestCase):
                           order_by='latest')
 
 
-class BlipSuiteTestCase(BlipTestCase):
+class SuiteTestCase(BlipTestCase):
     def test_mp4_not_included(self):
         self.assertFalse(self.suite.handles_video(
                 'http://blip.tv/file/get/Miropcf-Miro20Introduction119.mp4'))

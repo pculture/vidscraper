@@ -38,7 +38,7 @@ from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
                                VideoLoader, OEmbedLoaderMixin, VideoFile)
 
 
-class BlipPathMixin(object):
+class PathMixin(object):
     new_path_re = re.compile(r'^/(?P<user>[\w-]+)/(?P<slug>[\w-]+)-(?P<post_id>\d+)/?$')
     old_path_re = re.compile(r'^/file/(?P<item_id>\d+)/?$', re.I)
 
@@ -66,24 +66,24 @@ class BlipPathMixin(object):
             return self.old_url_format.format(**self.url_data)
 
 
-class BlipApiLoader(BlipPathMixin, VideoLoader):
+class ApiLoader(PathMixin, VideoLoader):
     fields = set(['guid', 'link', 'title', 'description', 'files',
                   'embed_code', 'thumbnail_url', 'tags', 'publish_datetime',
                   'user', 'user_url', 'license'])
 
     def get_video_data(self, response):
         parsed = feedparser.parse(response.text.encode('utf-8'))
-        return BlipSuite.parse_feed_entry(parsed.entries[0])
+        return Suite.parse_feed_entry(parsed.entries[0])
 
 
-class BlipOEmbedLoader(OEmbedLoaderMixin, BlipPathMixin, VideoLoader):
+class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
     endpoint = u"http://blip.tv/oembed/"
     # Technically, Blip would accept http://blip.tv/a/a-{post_id}, but we
     # shouldn't try to leverage that if we don't need to.
     new_url_format = u"http://blip.tv/{user}/{slug}-{post_id}"
 
 
-class BlipFeed(FeedparserVideoFeed):
+class Feed(FeedparserVideoFeed):
     """
     Supports the following known blip feeds:
 
@@ -118,28 +118,28 @@ class BlipFeed(FeedparserVideoFeed):
         raise UnhandledFeed(url)
 
     def get_page_url_data(self, *args, **kwargs):
-        data = super(BlipFeed, self).get_page_url_data(*args, **kwargs)
+        data = super(Feed, self).get_page_url_data(*args, **kwargs)
         show = self.url_data['show']
         data['show_path'] = '{0}/'.format(show) if show is not None else ''
         return data
 
     def get_video_data(self, item):
-        return BlipSuite.parse_feed_entry(item)
+        return Suite.parse_feed_entry(item)
 
 
-class BlipSearch(FeedparserVideoSearch):
+class Search(FeedparserVideoSearch):
     page_url_format = "http://blip.tv/rss?page={page}&search={query}"
     # pagelen doesn't work with searches. Huh.
     per_page = 10
 
     def get_video_data(self, item):
-        return BlipSuite.parse_feed_entry(item)
+        return Suite.parse_feed_entry(item)
 
 
-class BlipSuite(BaseSuite):
-    loader_classes = (BlipOEmbedLoader, BlipApiLoader)
-    feed_class = BlipFeed
-    search_class = BlipSearch
+class Suite(BaseSuite):
+    loader_classes = (OEmbedLoader, ApiLoader)
+    feed_class = Feed
+    search_class = Search
 
     @staticmethod
     def parse_feed_entry(entry):
@@ -176,4 +176,4 @@ class BlipSuite(BaseSuite):
         return data
 
 
-registry.register(BlipSuite)
+registry.register(Suite)

@@ -45,7 +45,7 @@ def _strain_filter(name, attrs):
                 for key, value in attrs.iteritems()))
 
 
-class ForaScrapeLoader(VideoLoader):
+class ScrapeLoader(VideoLoader):
     fields = set(['link', 'title', 'description', 'flash_enclosure_url',
                   'thumbnail_url', 'publish_date', 'user', 'user_url'])
     video_re = re.compile(r'https?://(www\.)?fora\.tv/\d{4}/\d{2}/\d{2}/\w+')
@@ -86,13 +86,13 @@ class ForaScrapeLoader(VideoLoader):
         return data
 
 
-class ForaSuite(BaseSuite):
+class Suite(BaseSuite):
     """
     Suite for fora.tv. As of 25-03-2012 fora does not offer any public API,
     only video pages and rss feeds.
 
     """
-    loader_classes = (ForaScrapeLoader,)
+    loader_classes = (ScrapeLoader,)
 
 
-registry.register(ForaSuite)
+registry.register(Suite)

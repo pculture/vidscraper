@@ -30,18 +30,18 @@ import mock
 import unittest2
 
 from vidscraper.exceptions import VideoDeleted
-from vidscraper.suites.vimeo import (oauth_hook, VimeoSuite,
-                                     VimeoSimpleLoader, VimeoSimpleFeed,
-                                     VimeoAdvancedFeed)
+from vidscraper.suites.vimeo import (oauth_hook, Suite,
+                                     SimpleLoader, SimpleFeed,
+                                     AdvancedFeed)
 from vidscraper.tests.base import BaseTestCase
 
 
 class VimeoTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = VimeoSuite()
+        self.suite = Suite()
 
 
-class VimeoSuiteTestCase(VimeoTestCase):
+class SuiteTestCase(VimeoTestCase):
     def test_available_fields(self):
         self.assertEqual(
             self.suite.available_fields,
@@ -51,10 +51,10 @@ class VimeoSuiteTestCase(VimeoTestCase):
                  'user', 'guid', 'tags',]))
 
     
-class VimeoSimpleLoaderTestCase(VimeoTestCase):
+class SimpleLoaderTestCase(VimeoTestCase):
     def setUp(self):
-        super(VimeoSimpleLoaderTestCase, self).setUp()
-        self.loader = VimeoSimpleLoader("http://vimeo.com/2")
+        super(SimpleLoaderTestCase, self).setUp()
+        self.loader = SimpleLoader("http://vimeo.com/2")
 
     def test_get_url(self):
         api_url = self.loader.get_url()
@@ -81,7 +81,7 @@ class VimeoSimpleLoaderTestCase(VimeoTestCase):
         self.assertDictEqual(data, expected_data)
 
 
-class VimeoSimpleFeedTestCase(VimeoTestCase):
+class SimpleFeedTestCase(VimeoTestCase):
     """
     Tests the feed if no API keys are supplied.
     """
@@ -90,7 +90,7 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
         self.feed = self.suite.get_feed('http://vimeo.com/jakob/videos/rss')
 
     def test_is_simple(self):
-        self.assertTrue(isinstance(self.feed, VimeoSimpleFeed))
+        self.assertTrue(isinstance(self.feed, SimpleFeed))
 
     def test_feed_urls(self):
         valid_feed_inputs = (
@@ -319,7 +319,7 @@ class VimeoSimpleFeedTestCase(VimeoTestCase):
 
 
 @unittest2.skipIf(oauth_hook is None, "Advanced api requires requests-oauth")
-class VimeoAdvancedFeedTestCase(VimeoTestCase):
+class AdvancedFeedTestCase(VimeoTestCase):
     """
     Tests the feed if API keys are supplied.
     """
@@ -330,7 +330,7 @@ class VimeoAdvancedFeedTestCase(VimeoTestCase):
                                                   'vimeo_secret': 'BLANK'})
 
     def test_is_advanced(self):
-        self.assertTrue(isinstance(self.feed, VimeoAdvancedFeed))
+        self.assertTrue(isinstance(self.feed, AdvancedFeed))
 
     def test_get_response_items(self):
         feed_file = self.get_data_file('vimeo/feed_advanced.json')

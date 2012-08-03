@@ -33,7 +33,7 @@ from vidscraper.suites import BaseSuite, registry
 from vidscraper.videos import VideoLoader, OEmbedLoaderMixin
 
 
-class UstreamPathMixin(object):
+class PathMixin(object):
     path_re = re.compile(r'/recorded/(?P<id>\d+)/?$')
 
     def get_url_data(self, url):
@@ -46,7 +46,7 @@ class UstreamPathMixin(object):
         raise UnhandledVideo(url)
 
 
-class UstreamApiLoader(UstreamPathMixin, VideoLoader):
+class ApiLoader(PathMixin, VideoLoader):
     fields = set(['link', 'title', 'description', 'flash_enclosure_url',
                   'thumbnail_url', 'publish_date', 'tags', 'user',
                   'user_url'])
@@ -56,7 +56,7 @@ class UstreamApiLoader(UstreamPathMixin, VideoLoader):
     def get_url_data(self, url):
         if 'ustream_key' not in self.api_keys:
             raise UnhandledVideo(url)
-        data = super(UstreamApiLoader, self).get_url_data(url)
+        data = super(ApiLoader, self).get_url_data(url)
         data.update(self.api_keys)
         return data
 
@@ -79,15 +79,15 @@ class UstreamApiLoader(UstreamPathMixin, VideoLoader):
         return data
 
 
-class UstreamOEmbedLoader(OEmbedLoaderMixin, UstreamPathMixin, VideoLoader):
+class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
     endpoint = "http://www.ustream.tv/oembed/"
     url_format = "http://www.ustream.tv/recorded/{id}"
 
 
-class UstreamSuite(BaseSuite):
+class Suite(BaseSuite):
     """Suite for fetching data on ustream videos."""
     # TODO: Ustream has feeds and search functionality - add support for that!
-    loader_classes = (UstreamOEmbedLoader, UstreamApiLoader)
+    loader_classes = (OEmbedLoader, ApiLoader)
 
 
-registry.register(UstreamSuite)
+registry.register(Suite)

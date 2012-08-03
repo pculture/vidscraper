@@ -33,7 +33,7 @@ from vidscraper.suites import BaseSuite, registry
 from vidscraper.videos import VideoLoader
 
 
-class GoogleScrapeLoader(VideoLoader):
+class ScrapeLoader(VideoLoader):
     fields = set(['title', 'description', 'embed_code'])
     id_regex = re.compile(r'video-title|video-description|embed-video-code')
 
@@ -63,9 +63,9 @@ class GoogleScrapeLoader(VideoLoader):
         return data
 
 
-class GoogleSuite(BaseSuite):
+class Suite(BaseSuite):
     """Suite for scraping video pages from videos.google.com"""
-    loader_classes = (GoogleScrapeLoader,)
+    loader_classes = (ScrapeLoader,)
 
 
-registry.register(GoogleSuite)
+registry.register(Suite)

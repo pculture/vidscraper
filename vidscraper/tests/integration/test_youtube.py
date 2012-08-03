@@ -25,14 +25,14 @@
 
 import datetime
 
-from vidscraper.suites.youtube import YouTubeSuite
+from vidscraper.suites.youtube import Suite
 from vidscraper.tests.base import BaseTestCase
 
 
 class YouTubeIntegrationTestCase(BaseTestCase):
 
     def setUp(self):
-        self.suite = YouTubeSuite()
+        self.suite = Suite()
 
     def test_video(self):
         video_url = u'http://www.youtube.com/watch?v=J_DV9b0x7v4'

@@ -25,20 +25,20 @@
 
 import datetime
 
-from vidscraper.suites.fora import ForaSuite, ForaScrapeLoader
+from vidscraper.suites.fora import Suite, ScrapeLoader
 from vidscraper.tests.base import BaseTestCase
 
 
 class ForaTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = ForaSuite()
+        self.suite = Suite()
 
 
 class ForaScrapeTestCase(ForaTestCase):
     def setUp(self):
         ForaTestCase.setUp(self)
         self.url = "http://fora.tv/2011/08/08/Cradle_of_Gold_Hiram_Bingham_and_Machu_Picchu"
-        self.loader = ForaScrapeLoader(self.url)
+        self.loader = ScrapeLoader(self.url)
 
     def test_valid_urls(self):
         self.assertEqual(self.loader.get_url(), self.url)

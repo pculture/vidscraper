@@ -6,7 +6,7 @@ from vidscraper.utils.feedparser import (get_accepted_enclosures,
 from vidscraper.videos import FeedparserVideoFeed, VideoFile
 
 
-class GenericFeed(FeedparserVideoFeed):
+class Feed(FeedparserVideoFeed):
     """
     Generically handles some of the crazy things we've seen out there. Doesn't
     currently handle multi-page feeds.
@@ -19,7 +19,7 @@ class GenericFeed(FeedparserVideoFeed):
     def _next_page(self):
         if self.start_index != 1 or self.item_count > 0:
             raise StopIteration
-        super(GenericFeed, self)._next_page()
+        super(Feed, self)._next_page()
 
     def get_video_data(self, item):
         if 'published_parsed' in item:
@@ -78,8 +78,8 @@ class GenericFeed(FeedparserVideoFeed):
         }
 
 
-class GenericFeedSuite(BaseSuite):
-    feed_class = GenericFeed
+class Suite(BaseSuite):
+    feed_class = Feed
 
 
-registry.register_fallback(GenericFeedSuite)
+registry.register_fallback(Suite)

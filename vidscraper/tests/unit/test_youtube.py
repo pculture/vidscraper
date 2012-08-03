@@ -29,10 +29,10 @@ import json
 import requests
 
 from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
-from vidscraper.suites.youtube import (YouTubeSuite, YouTubeApiLoader,
-                                       YouTubeScrapeLoader,
-                                       YouTubeOEmbedLoader,
-                                       YouTubePathMixin)
+from vidscraper.suites.youtube import (Suite, ApiLoader,
+                                       ScrapeLoader,
+                                       OEmbedLoader,
+                                       PathMixin)
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.videos import VideoFile
 
@@ -76,11 +76,11 @@ CARAMELL_DANSEN_SEARCH_DESCRIPTION = u"English: do-do-do-oo, yeah-yeah-yeah-yeah
 class YouTubeTestCase(BaseTestCase):
     def setUp(self):
         BaseTestCase.setUp(self)
-        self.suite = YouTubeSuite()
+        self.suite = Suite()
         self.url = "http://www.youtube.com/watch?v=J_DV9b0x7v4"
 
 
-class YouTubeSuiteTestCase(YouTubeTestCase):
+class SuiteTestCase(YouTubeTestCase):
     def test_available_fields(self):
         self.assertEqual(
             self.suite.available_fields,
@@ -90,7 +90,7 @@ class YouTubeSuiteTestCase(YouTubeTestCase):
 
 class YouTubePathTestCase(YouTubeTestCase):
     def test_valid_urls(self):
-        mixin = YouTubePathMixin()
+        mixin = PathMixin()
         valid_urls = (
             ({'video_id': 'J_DV9b0x7v4'},
              ('http://youtu.be/J_DV9b0x7v4',
@@ -113,7 +113,7 @@ class YouTubePathTestCase(YouTubeTestCase):
 class YouTubeOembedTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.loader = YouTubeOEmbedLoader(self.url)
+        self.loader = OEmbedLoader(self.url)
 
     def test_forbidden(self):
         expected_data = {'is_embeddable': False}
@@ -136,14 +136,14 @@ class YouTubeOembedTestCase(YouTubeTestCase):
 class YouTubeApiTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.loader = YouTubeApiLoader(self.url)
+        self.loader = ApiLoader(self.url)
 
     def test_get_url(self):
         api_url = self.loader.get_url()
         self.assertEqual(
             api_url,
             "http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4?v=2&alt=json")
-        loader = YouTubeApiLoader("http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
+        loader = ApiLoader("http://www.youtube.com/watch?v=ZSh_c7-fZqQ")
         api_url = loader.get_url()
         self.assertEqual(
             api_url,
@@ -188,7 +188,7 @@ Humpbacks especially have extremely complex communication systems.")
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.loader = YouTubeScrapeLoader(self.url)
+        self.loader = ScrapeLoader(self.url)
 
     def test_get_url(self):
         scrape_url = self.loader.get_url()

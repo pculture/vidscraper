@@ -28,14 +28,14 @@ import datetime
 
 import feedparser
 
-from vidscraper.suites.generic import GenericFeedSuite
+from vidscraper.suites.generic import Suite
 from vidscraper.tests.base import BaseTestCase
 from vidscraper.videos import VideoFile
 
 
-class GenericFeedSuiteTestCase(BaseTestCase):
+class SuiteTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = GenericFeedSuite()
+        self.suite = Suite()
         self.feed = self.suite.get_feed(
             'file://{0}'.format(self._data_file_path('feed/feed.rss')))
         self.old_SANITIZE = feedparser.SANITIZE_HTML

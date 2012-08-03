@@ -45,7 +45,7 @@ from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
 # * http://vimeo.com/api
 
 
-class VimeoPathMixin(object):
+class PathMixin(object):
     url_re = re.compile(r'https?://(?:[^/]+\.)?vimeo.com/(?P<video_id>\d+)')
 
     def get_url_data(self, url):
@@ -56,7 +56,7 @@ class VimeoPathMixin(object):
         raise UnhandledVideo(url)
 
 
-class VimeoAdvancedApiMixin(object):
+class AdvancedApiMixin(object):
     """
     Provides some common functionality for the vimeo advanced API.
 
@@ -94,18 +94,18 @@ class VimeoAdvancedApiMixin(object):
                     item['upload_date'], '%Y-%m-%d %H:%M:%S'),
             'tags': [t['_content']
                             for t in item.get('tags', {}).get('tag', [])],
-            'flash_enclosure_url': VimeoSuite.video_flash_enclosure(item['id']),
-            'guid': VimeoSuite.video_guid(item['upload_date'], item['id']),
+            'flash_enclosure_url': Suite.video_flash_enclosure(item['id']),
+            'guid': Suite.video_guid(item['upload_date'], item['id']),
         }
         return data
 
 
-class VimeoOEmbedLoader(VimeoPathMixin, OEmbedLoaderMixin, VideoLoader):
+class OEmbedLoader(PathMixin, OEmbedLoaderMixin, VideoLoader):
     endpoint = u"http://vimeo.com/api/oembed.json"
     url_format = u"http://vimeo.com/{video_id}"
 
 
-class VimeoSimpleLoader(VimeoPathMixin, VideoLoader):
+class SimpleLoader(PathMixin, VideoLoader):
     fields = set(['link', 'title', 'description', 'tags', 'guid',
                   'publish_datetime', 'thumbnail_url', 'user', 'user_url',
                   'flash_enclosure_url'])
@@ -113,10 +113,10 @@ class VimeoSimpleLoader(VimeoPathMixin, VideoLoader):
     url_format = u"http://vimeo.com/api/v2/video/{video_id}.json"
 
     def get_video_data(self, response):
-        return VimeoSuite.simple_api_video_to_data(response.json[0])
+        return Suite.simple_api_video_to_data(response.json[0])
 
 
-class VimeoSimpleFeed(VideoFeed):
+class SimpleFeed(VideoFeed):
     """
     Vimeo supports the following feeds for videos through its "Simple API":
 
@@ -157,7 +157,7 @@ class VimeoSimpleFeed(VideoFeed):
     per_page = 20
 
     def __init__(self, *args, **kwargs):
-        super(VimeoSimpleFeed, self).__init__(*args, **kwargs)
+        super(SimpleFeed, self).__init__(*args, **kwargs)
         warnings.warn("The simple API can only retrieve up to 60 results "
                       "from a feed.")
 
@@ -189,7 +189,7 @@ class VimeoSimpleFeed(VideoFeed):
         raise ValueError(u"No path buildable with given data.")
 
     def get_page_url_data(self, *args, **kwargs):
-        data = super(VimeoSimpleFeed, self).get_page_url_data(*args, **kwargs)
+        data = super(SimpleFeed, self).get_page_url_data(*args, **kwargs)
         if (data['user_id'] and
             data['request_type'] in ('videos', 'likes', 'appears_in',
                                      'all_videos', 'subscriptions')):
@@ -213,7 +213,7 @@ class VimeoSimpleFeed(VideoFeed):
         return response.json
 
     def get_video_data(self, item):
-        return VimeoSuite.simple_api_video_to_data(item)
+        return Suite.simple_api_video_to_data(item)
 
     def load(self):
         """
@@ -307,7 +307,7 @@ class VimeoSimpleFeed(VideoFeed):
         return data
 
 
-class VimeoAdvancedIteratorMixin(VimeoAdvancedApiMixin):
+class AdvancedIteratorMixin(AdvancedApiMixin):
     """
     Mixin class to be used with VideoIterators to provide standard access to
     Vimeo's advanced API.
@@ -341,7 +341,7 @@ class VimeoAdvancedIteratorMixin(VimeoAdvancedApiMixin):
         return response.json['videos']['video']
 
 
-class VimeoSearch(VimeoAdvancedIteratorMixin, VideoSearch):
+class Search(AdvancedIteratorMixin, VideoSearch):
     # Vimeo's search api supports relevant, newest, oldest, most_played,
     # most_commented, and most_liked.
     order_by_map = {
@@ -352,7 +352,7 @@ class VimeoSearch(VimeoAdvancedIteratorMixin, VideoSearch):
     }
 
     def __init__(self, query, order_by='relevant', **kwargs):
-        super(VimeoSearch, self).__init__(query, order_by, **kwargs)
+        super(Search, self).__init__(query, order_by, **kwargs)
         if not self.is_available():
             if oauth_hook is None:
                 raise UnhandledSearch(u"{0} requires requests-oauth.".format(
@@ -362,7 +362,7 @@ class VimeoSearch(VimeoAdvancedIteratorMixin, VideoSearch):
                                       self.__class__.__name__))
 
     def get_page_url_data(self, page_start, page_max):
-        data = super(VimeoSearch, self).get_page_url_data(page_start,
+        data = super(Search, self).get_page_url_data(page_start,
                                                           page_max)
         data.update({
             'method': 'videos.search',
@@ -372,7 +372,7 @@ class VimeoSearch(VimeoAdvancedIteratorMixin, VideoSearch):
         return data
 
 
-class VimeoAdvancedFeed(VimeoAdvancedIteratorMixin, VimeoSimpleFeed):
+class AdvancedFeed(AdvancedIteratorMixin, SimpleFeed):
     """
     Vimeo's advanced API which provides the following feeds through its
     "methods":
@@ -388,7 +388,7 @@ class VimeoAdvancedFeed(VimeoAdvancedIteratorMixin, VimeoSimpleFeed):
 
     """
     def __init__(self, *args, **kwargs):
-        super(VimeoAdvancedFeed, self).__init__(*args, **kwargs)
+        super(AdvancedFeed, self).__init__(*args, **kwargs)
         if not self.is_available():
             if oauth_hook is None:
                 raise UnhandledFeed(u"{0} requires requests-oauth.".format(
@@ -398,7 +398,7 @@ class VimeoAdvancedFeed(VimeoAdvancedIteratorMixin, VimeoSimpleFeed):
                                     self.__class__.__name__))
 
     def get_page_url_data(self, *args, **kwargs):
-        data = super(VimeoAdvancedFeed, self).get_page_url_data(*args, **kwargs)
+        data = super(AdvancedFeed, self).get_page_url_data(*args, **kwargs)
         if data['user_id']:
             method_params = "user_id={0}".format(data['user_id'])
             request_type = data['request_type']
@@ -438,32 +438,32 @@ class VimeoAdvancedFeed(VimeoAdvancedIteratorMixin, VimeoSimpleFeed):
             url = self.info_url_format.format(
                                     api_path=self.get_api_path(self.url_data))
             response = requests.get(url)
-            data = VimeoSimpleFeed.data_from_response(self, response)
+            data = SimpleFeed.data_from_response(self, response)
 
             if self._response is None:
                 self._next_page()
 
             data.update(
-                VimeoAdvancedIteratorMixin.data_from_response(self,
+                AdvancedIteratorMixin.data_from_response(self,
                                                               self._response))
             self._apply(data)
             self._loaded = True
 
 
-class VimeoSuite(BaseSuite):
+class Suite(BaseSuite):
     """
     Suite for vimeo.com. Currently supports their oembed api and simple api. No
     API key is required for this level of access.
 
     """
-    loader_classes = (VimeoOEmbedLoader, VimeoSimpleLoader)
-    search_class = VimeoSearch
+    loader_classes = (OEmbedLoader, SimpleLoader)
+    search_class = Search
 
     def get_feed(self, url, *args, **kwargs):
         try:
-            return VimeoAdvancedFeed(url, *args, **kwargs)
+            return AdvancedFeed(url, *args, **kwargs)
         except UnhandledFeed:
-            return VimeoSimpleFeed(url, *args, **kwargs)
+            return SimpleFeed(url, *args, **kwargs)
 
     @staticmethod
     def video_flash_enclosure(video_id):
@@ -497,4 +497,4 @@ class VimeoSuite(BaseSuite):
         return data
 
 
-registry.register(VimeoSuite)
+registry.register(Suite)

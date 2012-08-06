@@ -35,7 +35,7 @@ Project links
 :docs:         http://vidscraper.readthedocs.org/
 :bugtracker:   http://bugzilla.pculture.org/
 :code:         https://github.com/pculture/vidscraper/
-:irc:          `#vidscraper on irc.freenode.net <irc://irc.freenode.net/vidscraper`
+:irc:          `#vidscraper on irc.freenode.net <irc://irc.freenode.net/vidscraper>`_
 :build status: |build-image|
 
 .. |build-image| image:: https://secure.travis-ci.org/pculture/vidscraper.png?branch=develop

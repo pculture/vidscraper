@@ -37,9 +37,9 @@ DISQUS_DATA = {
     'guid': u'4809E60A-C2AB-11DF-BBAC-A6337D0214E0',
     'link': "http://blip.tv/file/4135225",
     'title': "Scaling the World's Largest Django Application",
-    'description': "<p>Disqus, one of the largest Django applications in "
+    'description': "Disqus, one of the largest Django applications in "
                     "the world, will explain how they deal with scaling "
-                    "complexities in a small startup.</p>",
+                    "complexities in a small startup.",
     'files': [VideoFile(url=u'http://blip.tv/file/get/Robertlofthouse-'
                             u'ScalingTheWorldsLargestDjangoApplication558.ogv',
                         length=u'73533796',

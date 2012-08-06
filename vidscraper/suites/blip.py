@@ -33,7 +33,6 @@ from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_accepted_enclosures)
-from vidscraper.utils.http import clean_description_html
 from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
                                VideoLoader, OEmbedLoaderMixin, VideoFile)
 
@@ -159,8 +158,7 @@ class Suite(BaseSuite):
             'guid': entry['id'],
             'link': entry['link'],
             'title': entry['title'],
-            'description': clean_description_html(
-                entry['blip_puredescription']),
+            'description': entry['blip_puredescription'],
             'files': files,
             'embed_code': entry['media_player']['content'],
             'publish_datetime': datetime.strptime(entry['blip_datestamp'],

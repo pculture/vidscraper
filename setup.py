@@ -1,12 +1,9 @@
 from setuptools import setup, find_packages
 
 
-__version__ = __import__('vidscraper').__version__
-
-
 setup(
     name="vidscraper",
-    version='.'.join([str(v) for v in __version__]),
+    version='1.0.0-rc',
     maintainer='Participatory Culture Foundation',
     maintainer_email='dev@mirocommunity.org',
     url='https://github.com/pculture/vidscraper',

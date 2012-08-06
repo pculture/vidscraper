@@ -46,17 +46,27 @@ one-off scraping.
 Requirements
 ++++++++++++
 
-* Python 2.6+
-* BeautifulSoup 4.0.2
-* feedparser 5.1.2+
-* lxml 2.3.4+
-* python-requests 0.13.0+
+* Python_ 2.6+
+* BeautifulSoup_ 4.0.2+
+* feedparser_ 5.1.2+
+* `python-requests`_ 0.13.0+
+
+.. _Python: http://www.python.org/
+.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
+.. _feedparser: http://code.google.com/p/feedparser/
+.. _`python-requests`: http://python-requests.org/
 
 Optional
 --------
-* requests-oauth 0.4.1+ (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
-* unittest2 (for tests)
-* mock (for tests)
+* `requests-oauth`_ 0.4.1+ (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
+* unittest2_ (for tests)
+* mock_ (for tests)
+* tox_ (for tests)
+
+.. _`requests-oauth`: https://github.com/maraujop/requests-oauth
+.. _unittest2: http://pypi.python.org/pypi/unittest2/
+.. _mock: http://www.voidspace.org.uk/python/mock/
+.. _tox: http://tox.readthedocs.org/
 
 
 Contents
@@ -76,7 +86,7 @@ Release notes
 .. toctree::
    :maxdepth: 1
 
-   release-notes/0.6
+   release-notes/1.0
 
 Indices and tables
 ==================

@@ -1,10 +1,12 @@
 from setuptools import setup, find_packages
 
-version = '0.6-a'
+
+__version__ = __import__('vidscraper').__version__
+
 
 setup(
     name="vidscraper",
-    version=version,
+    version='.'.join([str(v) for v in __version__]),
     maintainer='Participatory Culture Foundation',
     maintainer_email='dev@mirocommunity.org',
     url='https://github.com/pculture/vidscraper',
@@ -12,7 +14,6 @@ setup(
     packages=find_packages(),
     scripts=['bin/vidscraper-cmd'],
     install_requires=[
-        'lxml>=2.3.4',
         'feedparser>=5.1.2',
         'beautifulsoup4>=4.0.2',
         'requests>=0.13.0',

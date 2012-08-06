@@ -29,7 +29,7 @@ import requests
 
 from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites.youtube import (Suite, ApiLoader,
-                                       ScrapeLoader,
+                                       VideoInfoLoader,
                                        OEmbedLoader,
                                        PathMixin)
 from vidscraper.tests.base import BaseTestCase
@@ -187,7 +187,7 @@ Humpbacks especially have extremely complex communication systems.")
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
-        self.loader = ScrapeLoader(self.url)
+        self.loader = VideoInfoLoader(self.url)
 
     def test_get_url(self):
         scrape_url = self.loader.get_url()
@@ -197,7 +197,7 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
              'el=embedded&ps=default&eurl='))
 
     def test_get_video_data(self):
-        scrape_file = self.get_data_file('youtube/scrape.txt')
+        scrape_file = self.get_data_file('youtube/video_info.txt')
         response = self.get_response(scrape_file.read())
         data = self.loader.get_video_data(response)
         self.assertEqual(set(data), self.loader.fields)
@@ -218,13 +218,13 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         self.assertDictEqual(data, expected_data)
 
     def test_get_video_data__fail_150(self):
-        scrape_file = self.get_data_file('youtube/scrape2.txt')
+        scrape_file = self.get_data_file('youtube/video_info2.txt')
         response = self.get_response(scrape_file.read())
         data = self.loader.get_video_data(response)
         self.assertDictEqual(data, {'is_embeddable': False})
 
     def test_get_video_data__fail_other(self):
-        scrape_file = self.get_data_file('youtube/scrape2.txt')
+        scrape_file = self.get_data_file('youtube/video_info2.txt')
         scrape_data = scrape_file.read().replace('150', 'other')
         response = self.get_response(scrape_data)
         data = self.loader.get_video_data(response)

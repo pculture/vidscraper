@@ -89,7 +89,7 @@ class ApiLoader(PathMixin, VideoLoader):
         return Suite.parse_api_video(entry)
 
 
-class ScrapeLoader(PathMixin, VideoLoader):
+class VideoInfoLoader(PathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
                   'files'))
 
@@ -283,7 +283,7 @@ class Search(VideoSearch):
 
 class Suite(BaseSuite):
     loader_classes = (OEmbedLoader, ApiLoader,
-                      ScrapeLoader)
+                      VideoInfoLoader)
 
     feed_class = Feed
     search_class = Search

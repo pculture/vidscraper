@@ -113,6 +113,7 @@ Contents
    exceptions
    api/suites
    api/videos
+   topics/command-line
 
 Release notes
 +++++++++++++

@@ -33,12 +33,14 @@ Want to get the metadata for a YouTube video?
 
 ::
 
-    $ vidscraper-cmd video http://www.youtube.com/watch?v=J_DV9b0x7v4
+    $ vidscraper video http://www.youtube.com/watch?v=J_DV9b0x7v4
 
 
 Want just the title and embed code?
 
 ::
 
-    $ vidscraper-cmd video --fields=title,embed_code \
+    $ vidscraper video --fields=title,embed_code \
         http://www.youtube.com/watch?v=J_DV9b0x7v4
+
+The metadata will be printed as indented JSON.

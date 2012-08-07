@@ -32,7 +32,6 @@ import sys
 from optparse import OptionParser
 
 from vidscraper.suites import registry
-from vidscraper.videos import Video, VideoSearch, VideoFeed
 
 
 def auto_scrape(url, fields=None, api_keys=None):

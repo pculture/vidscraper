@@ -33,7 +33,7 @@ from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_accepted_enclosures)
-from vidscraper.videos import (FeedparserVideoFeed, FeedparserVideoSearch,
+from vidscraper.videos import (FeedparserFeed, FeedparserSearch,
                                VideoLoader, OEmbedLoaderMixin, VideoFile)
 
 
@@ -82,7 +82,7 @@ class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
     new_url_format = u"http://blip.tv/{user}/{slug}-{post_id}"
 
 
-class Feed(FeedparserVideoFeed):
+class Feed(FeedparserFeed):
     """
     Supports the following known blip feeds:
 
@@ -126,7 +126,7 @@ class Feed(FeedparserVideoFeed):
         return Suite.parse_feed_entry(item)
 
 
-class Search(FeedparserVideoSearch):
+class Search(FeedparserSearch):
     page_url_format = "http://blip.tv/rss?page={page}&search={query}"
     # pagelen doesn't work with searches. Huh.
     per_page = 10

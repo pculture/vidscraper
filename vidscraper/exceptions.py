@@ -41,7 +41,7 @@ class UnhandledVideo(VidscraperError):
 class UnhandledFeed(VidscraperError):
     """
     Raised if a feed can't be handled by a :doc:`suite </api/suites>` or
-    :class:`.VideoFeed` subclass.
+    :class:`.BaseFeed` subclass.
 
     """
     pass
@@ -50,7 +50,7 @@ class UnhandledFeed(VidscraperError):
 class UnhandledSearch(VidscraperError):
     """
     Raised if a search can't be handled by a :doc:`suite </api/suites>` or
-    :class:`.VideoSearch` subclass.
+    :class:`.BaseSearch` subclass.
 
     """
     pass

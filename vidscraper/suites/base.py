@@ -109,13 +109,14 @@ class SuiteRegistry(object):
     def get_feed(self, url, last_modified=None, etag=None, start_index=1,
                  max_results=None, video_fields=None, api_keys=None):
         """
-        Tries to get a :class:`.VideoFeed` instance from each suite in sequence.
-        The parameters are the same as those for :class:`.VideoFeed`.
+        Tries to get a :class:`.BaseFeed` instance from each suite in
+        sequence. The parameters are the same as those for :class:`.BaseFeed`.
 
-        :returns: A :class:`VideoFeed` instance which yields
-                  :class:`.Video` instances for the items in the feed.
+        :returns: A :class:`.BaseFeed` instance which yields :class:`.Video`
+                  instances for the items in the feed.
 
-        :raises UnhandledFeed: if no registered suites know how to handle this url.
+        :raises UnhandledFeed: if no registered suites know how to handle this
+                               url.
 
         """
         for suite in self.suites:
@@ -136,8 +137,8 @@ class SuiteRegistry(object):
                      max_results=None, video_fields=None, api_keys=None):
         """
         Returns a dictionary mapping each registered suite to a
-        :class:`.VideoSearch` instance which has been instantiated for that suite
-        and the given arguments.
+        :class:`.BaseSearch` instance which has been instantiated for that
+        suite and the given arguments.
 
         """
         searches = {}
@@ -218,11 +219,11 @@ class BaseSuite(object):
     #: .. seealso:: :meth:`.Video.run_loaders`
     loader_classes = ()
 
-    #: A :class:`VideoFeed` subclass that will be used to parse feeds for this
+    #: A :class:`.BaseFeed` subclass that will be used to parse feeds for this
     #: suite.
     feed_class = None
 
-    #: A :class:`VideoFeed` subclass that will be used to run searches for
+    #: A :class:`.BaseSearch` subclass that will be used to run searches for
     #: this suite.
     search_class = None
 

@@ -525,7 +525,7 @@ class OEmbedLoaderMixin(object):
         return data
 
 
-class BaseVideoIterator(object):
+class VideoIterator(object):
     """
     Generic base class for iterating over groups of videos spread across
     multiple urls - for example, an rss feed, an api response, or a video list
@@ -786,12 +786,12 @@ class FeedparserVideoIteratorMixin(object):
         return response.entries
 
 
-class VideoFeed(BaseVideoIterator):
+class BaseFeed(VideoIterator):
     """
     Represents a list of videos which can be found at a certain url. The
     source could easily be an RSS feed, an API response, or a video list page.
 
-    In addition to the parameters for :class:`BaseVideoIterator`, this class
+    In addition to the parameters for :class:`VideoIterator`, this class
     takes the following arguments:
 
     :param url: A url representing a feed page.
@@ -807,7 +807,7 @@ class VideoFeed(BaseVideoIterator):
     :raises: :exc:`.UnhandledFeed` if the url can't be handled by the class
              being instantiated.
 
-    :class:`VideoFeed` also supports the following "fields", which are
+    :class:`BaseFeed` also supports the following "fields", which are
     populated with :meth:`data_from_response`. Fields which have not been
     populated will be ``None``.
 
@@ -817,11 +817,11 @@ class VideoFeed(BaseVideoIterator):
     .. attribute:: last_modified
         A python datetime representing when the feed was last changed. Before
         loading the feed, this will be equal to the ``last_modified`` date
-        the :class:`VideoFeed` was instantiated with.
+        the :class:`BaseFeed` was instantiated with.
 
     .. attribute:: etag
         A marker representing a feed's current state. Before loading the feed,
-        this will be equal to the ``etag`` the :class:`VideoFeed` was
+        this will be equal to the ``etag`` the :class:`BaseFeed` was
         instantiated with.
 
     .. attribute:: description
@@ -856,7 +856,7 @@ class VideoFeed(BaseVideoIterator):
     guid = None
 
     def __init__(self, url, last_modified=None, etag=None, **kwargs):
-        super(VideoFeed, self).__init__(**kwargs)
+        super(BaseFeed, self).__init__(**kwargs)
 
         self.url = url
         self.url_data = self.get_url_data(url)
@@ -873,19 +873,19 @@ class VideoFeed(BaseVideoIterator):
         raise UnhandledFeed(url)
 
     def get_page_url_data(self, page_start, page_max):
-        data = super(VideoFeed, self).get_page_url_data(page_start, page_max)
+        data = super(BaseFeed, self).get_page_url_data(page_start, page_max)
         data.update(self.url_data)
         return data
 
 
-class FeedparserVideoFeed(FeedparserVideoIteratorMixin, VideoFeed):
+class FeedparserFeed(FeedparserVideoIteratorMixin, BaseFeed):
     pass
 
 
-class VideoSearch(BaseVideoIterator):
+class BaseSearch(VideoIterator):
     """
     Represents a search on a video site. In addition to the parameters for
-    :class:`BaseVideoIterator`, this class takes the following arguments:
+    :class:`VideoIterator`, this class takes the following arguments:
 
     :param query: The raw string for the search.
     :param order_by: The ordering to apply to the search results. If a suite
@@ -897,7 +897,7 @@ class VideoSearch(BaseVideoIterator):
     :raises: :exc:`.UnhandledSearch` if the class doesn't support the given
              parameters.
 
-    :class:`VideoSearch` also supports the following "fields", which are
+    :class:`BaseSearch` also supports the following "fields", which are
     populated with :meth:`data_from_response`. Fields which have not been
     populated will be ``None``.
 
@@ -916,7 +916,7 @@ class VideoSearch(BaseVideoIterator):
     }
 
     def __init__(self, query, order_by='relevant', **kwargs):
-        super(VideoSearch, self).__init__(**kwargs)
+        super(BaseSearch, self).__init__(**kwargs)
         # Normalize the search
         self.include_terms, self.exclude_terms = terms_from_search_string(
             query)
@@ -930,7 +930,7 @@ class VideoSearch(BaseVideoIterator):
                                                 order_by))
 
     def get_page_url_data(self, page_start, page_max):
-        data = super(VideoSearch, self).get_page_url_data(page_start,
+        data = super(BaseSearch, self).get_page_url_data(page_start,
                                                           page_max)
         data.update({
             'query': urllib.quote_plus(unicode(self.query).encode('utf-8')),
@@ -939,5 +939,5 @@ class VideoSearch(BaseVideoIterator):
         return data
 
 
-class FeedparserVideoSearch(FeedparserVideoIteratorMixin, VideoSearch):
+class FeedparserSearch(FeedparserVideoIteratorMixin, BaseSearch):
     pass

@@ -43,7 +43,7 @@ import requests
 from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import struct_time_to_datetime
-from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
+from vidscraper.videos import (BaseFeed, BaseSearch, VideoLoader,
                                OEmbedLoaderMixin, VideoFile)
 
 
@@ -192,7 +192,7 @@ class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
         return super(OEmbedLoader, self).get_video_data(response)
 
 
-class Feed(VideoFeed):
+class Feed(BaseFeed):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
                        'uploads?alt=json&v=2&start-index={page_start}&max-results={page_max}')
@@ -255,7 +255,7 @@ class Feed(VideoFeed):
         }
 
 
-class Search(VideoSearch):
+class Search(BaseSearch):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/videos?v=2&alt=json&'
                        'q={query}&orderby={order_by}&start-index={page_start}&'

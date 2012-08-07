@@ -37,7 +37,7 @@ import requests
 from vidscraper.exceptions import (VideoDeleted, UnhandledVideo,
                                    UnhandledFeed, UnhandledSearch)
 from vidscraper.suites import BaseSuite, registry
-from vidscraper.videos import (VideoFeed, VideoSearch, VideoLoader,
+from vidscraper.videos import (BaseFeed, BaseSearch, VideoLoader,
                                OEmbedLoaderMixin)
 
 
@@ -134,7 +134,7 @@ class AdvancedLoader(AdvancedApiMixin, PathMixin, VideoLoader):
                                                response.json['video'][0])
 
 
-class SimpleFeed(VideoFeed):
+class SimpleFeed(BaseFeed):
     """
     Vimeo supports the following feeds for videos through its "Simple API":
 
@@ -354,7 +354,7 @@ class AdvancedIteratorMixin(AdvancedApiMixin):
         return response.json['videos']['video']
 
 
-class Search(AdvancedIteratorMixin, VideoSearch):
+class Search(AdvancedIteratorMixin, BaseSearch):
     # Vimeo's search api supports relevant, newest, oldest, most_played,
     # most_commented, and most_liked.
     order_by_map = {

@@ -3,10 +3,10 @@ from vidscraper.utils.html import convert_entities
 from vidscraper.utils.feedparser import (get_accepted_enclosures,
                                          get_entry_thumbnail_url,
                                          struct_time_to_datetime)
-from vidscraper.videos import FeedparserVideoFeed, VideoFile
+from vidscraper.videos import FeedparserFeed, VideoFile
 
 
-class Feed(FeedparserVideoFeed):
+class Feed(FeedparserFeed):
     """
     Generically handles some of the crazy things we've seen out there. Doesn't
     currently handle multi-page feeds.

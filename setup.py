@@ -9,7 +9,7 @@ setup(
     url='https://github.com/pculture/vidscraper',
     license='BSD',
     packages=find_packages(),
-    scripts=['bin/vidscraper-cmd'],
+    scripts=['bin/vidscraper'],
     install_requires=[
         'feedparser>=5.1.2',
         'beautifulsoup4>=4.0.2',

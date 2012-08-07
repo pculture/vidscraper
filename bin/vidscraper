@@ -1,0 +1,124 @@
+#!/usr/bin/env python
+
+# Copyright 2012 - Participatory Culture Foundation
+#
+# This file is part of vidscraper.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+from __future__ import absolute_import
+
+import json
+import sys
+from optparse import OptionParser
+
+from vidscraper import auto_scrape, __version__
+
+
+class CommandHandler(object):
+    """Command line handler for vidscraper.
+
+    This exposes functions in this module to the command line giving
+    vidscraper command line utility.
+
+    Subcommands are implemented in ``handle_SUBCOMMAND`` methods.  See
+    ``handle_video`` for an example.
+    """
+
+    def get_commands(self):
+        """Returns a list of subcommands implemented."""
+        return [attr.replace("handle_", "")
+                for attr in dir(self)
+                if attr.startswith("handle_")]
+
+    def build_parser(self, **kwargs):
+        """Builds a parser, supplying a version format."""
+        version = ".".join([str(v) for v in __version__])
+        kwargs.setdefault('version', "%prog {0}".format(version))
+        return OptionParser(**kwargs)
+
+    def handle_video(self):
+        """Handler for auto_scrape."""
+        parser = self.build_parser(usage="%prog video [options] URL")
+        parser.add_option("--fields", dest="fields",
+                          help="comma-separated list of fields to retrieve. "
+                          "e.g. --fields=a,b,c")
+        parser.add_option("--apikeys", dest="api_keys",
+                          help="api keys comma separated. "
+                          "e.g. --apikeys=key:val,key2:val")
+        (options, args) = parser.parse_args()
+
+        if len(args) == 0:
+            parser.error("URL needed.")
+
+        if options.fields:
+            fields = options.fields.split(",")
+        else:
+            fields = None
+
+        if options.api_keys:
+            api_keys = dict(mem.split(":", 1)
+                            for mem in options.api_keys.split(","))
+        else:
+            api_keys = None
+
+        for url in args:
+            print "Scraping {url}...".format(url=url)
+            video = auto_scrape(url, fields=fields, api_keys=api_keys)
+            print json.dumps(video.serialize(), indent=2, sort_keys=True)
+
+        return 0
+
+    def help(self, error=None):
+        """Handles help."""
+        parser = self.build_parser()
+        if error:
+            print "Error: {error}".format(error=error)
+            print ""
+        parser.print_help()
+        print ""
+        print "Commands:"
+        for cmd in self.get_commands():
+            print "    {cmd}".format(cmd=cmd)
+        return 1 if error else 0
+
+    def main(self):
+        if len(sys.argv) <= 1 or sys.argv[1] in ("-h", "--help"):
+            return self.help()
+
+        if "--version" in sys.argv:
+            parser = self.build_parser()
+            parser.print_version()
+            return 0
+
+        try:
+            cmd = sys.argv.pop(1)
+            cmd = "".join(c for c in cmd if c.isalpha())
+            handler = getattr(self, "handle_{cmd}".format(cmd=cmd))
+        except AttributeError:
+            return self.help(error='{cmd} is not a valid '
+                                   'command.'.format(cmd=cmd))
+
+        return handler()
+
+if __name__ == "__main__":
+    sys.exit(CommandHandler().main())

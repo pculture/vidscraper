@@ -79,7 +79,8 @@ class SimpleLoaderTestCase(VimeoTestCase):
         self.assertEqual(set(data), self.loader.fields)
         self.assertDictEqual(data, expected_data)
 
-    
+
+@unittest2.skipIf(oauth_hook is None, "Advanced api requires requests-oauth")
 class VimeoAdvancedLoaderTestCase(VimeoTestCase):
     def setUp(self):
         super(VimeoAdvancedLoaderTestCase, self).setUp()
@@ -434,6 +435,7 @@ class AdvancedFeedTestCase(VimeoTestCase):
         self.assertEqual(url, expected)
 
 
+@unittest2.skipIf(oauth_hook is None, "Advanced api requires requests-oauth")
 class VimeoSearchTestCase(VimeoTestCase):
     def setUp(self):
         VimeoTestCase.setUp(self)

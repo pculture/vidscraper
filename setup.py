@@ -14,6 +14,7 @@ setup(
         'feedparser>=5.1.2',
         'beautifulsoup4>=4.0.2',
         'requests>=0.13.0',
+        'lxml>=2.3.4',
     ],
     extras_require={
         'oauth': ['requests-oauth>=0.4.1'],

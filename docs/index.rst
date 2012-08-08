@@ -103,17 +103,25 @@ Optional
 .. _tox: http://tox.readthedocs.org/
 
 
-Contents
-++++++++
+User Guide
+++++++++++
 
 .. toctree::
    :maxdepth: 2
 
-   topics/getting-started
-   exceptions
+   guide/getting-started
+   guide/command-line
+
+API Documentation
++++++++++++++++++
+
+.. toctree::
+   :maxdepth: 2
+
+   api/main-interface
+   api/exceptions
    api/suites
    api/videos
-   topics/command-line
 
 Release notes
 +++++++++++++

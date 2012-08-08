@@ -29,15 +29,16 @@ Getting Started
 Scraping video pages
 ++++++++++++++++++++
 
-Most use cases will simply require the auto_scrape function.  Usage is
-incredibly easy::
+Most use cases will simply require the :func:`.auto_scrape` function.
+
+::
 
     >>> from vidscraper import auto_scrape
     >>> video = auto_scrape("http://www.youtube.com/watch?v=J_DV9b0x7v4")
     >>> video.title
     u'CaramellDansen (Full Version + Lyrics)'
 
-That's it!  Couldn't be easier.  auto_scrape will determine the right
+That's it!  Couldn't be easier.  :func:`.auto_scrape` will determine the right
 :doc:`scraping suite </api/suites>` to use for the url you pass in and will use that suite to return a :class:`.Video` instance that represents the data
 associated with the video at that url. If no suites are found which support the
 url, :exc:`.UnhandledVideo` will be raised.
@@ -46,6 +47,8 @@ If you only need certain fields (say you only need the "files" and
 "title" fields), you can pass those fields in as a second argument::
 
     >>> video = auto_scrape(url, fields=['files', 'title'])
+
+.. _video-fields:
 
 Video fields
 ------------
@@ -62,7 +65,7 @@ Getting videos for a feed
 +++++++++++++++++++++++++
 
 If you want to get every video for a feed, you can use
-:func:`vidscraper.auto_feed`::
+:func:`.auto_feed`::
 
     >>> from vidscraper import auto_feed
     >>> results = auto_feed("http://blip.tv/djangocon/rss")
@@ -80,7 +83,7 @@ This will read the feed at the given url and return a generator which yields :cl
 Crawling an entire feed
 -----------------------
 
-:func:`auto_feed` also supports feed crawling for some suites. You use it like this::
+:func:`.auto_feed` also supports feed crawling for some suites. You use it like this::
 
     >>> from vidscraper import auto_feed
     >>> results = auto_feed("http://blip.tv/djangocon/rss", crawl=True)

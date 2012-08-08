@@ -80,19 +80,20 @@ class SuiteRegistry(object):
 
     def get_video(self, url, fields=None, api_keys=None, require_loaders=True):
         """
-        Automatically determines which suite to use and scrapes ``url`` with
-        that suite. The parameters ``url``, ``fields``, and ``api_keys`` have
-        the same meaning as for :class:`.Video`.
+        For each registered :mod:`suite <vidscraper.suites>`, calls
+        :meth:`~BaseSuite.get_video` with the given ``url``, ``fields``, and
+        ``api_keys``, until a suite returns a :class:`.Video` instance.
 
-        :param require_loaders: If ``True``, a video will only be returned if
-                                a suite is found which can provide loaders.
-                                If ``False`` and no suite is found, a video
-                                with no loaders will be returned.
-        :type require_loaders: boolean
-        :returns: :class:`.Video` instance.
-
-        :raises UnhandledVideo: If ``require_loaders`` is ``True`` and no
-                                registered suite knows how to handle the url.
+        :param require_loaders: Changes the behavior if no suite is found
+                                which handles the given parameters. If
+                                ``True`` (default), :exc:`.UnhandledVideo`
+                                will be raised; otherwise, a video will 
+                                returned with the given ``url`` and
+                                ``fields``, but it will not be able to load
+                                any additional data.
+        :raises: :exc:`.UnhandledVideo` if ``require_loaders`` is ``True`` and
+                 no registered suite returns a video for the given parameters.
+        :returns: :class:`.Video` instance with no data loaded.
 
         """
         for suite in self.suites:
@@ -109,11 +110,12 @@ class SuiteRegistry(object):
     def get_feed(self, url, last_modified=None, etag=None, start_index=1,
                  max_results=None, video_fields=None, api_keys=None):
         """
-        Tries to get a :class:`.BaseFeed` instance from each suite in
-        sequence. The parameters are the same as those for :class:`.BaseFeed`.
+        For each registered :mod:`suite <vidscraper.suites>`, calls
+        :meth:`~BaseSuite.get_feed` with the given parameters, until a suite
+        returns a feed instance.
 
-        :returns: A :class:`.BaseFeed` instance which yields :class:`.Video`
-                  instances for the items in the feed.
+        :returns: An instance of a specific suite's
+                  :attr:`~.BaseSuite.feed_class` with no data loaded.
 
         :raises UnhandledFeed: if no registered suites know how to handle this
                                url.
@@ -136,9 +138,11 @@ class SuiteRegistry(object):
     def get_searches(self, query, order_by='relevant', start_index=1,
                      max_results=None, video_fields=None, api_keys=None):
         """
-        Returns a dictionary mapping each registered suite to a
-        :class:`.BaseSearch` instance which has been instantiated for that
-        suite and the given arguments.
+        For each registered :mod:`suite <vidscraper.suites>`, calls
+        :meth:`~.BaseSuite.get_search` with the given parameters.
+
+        :returns: a dictionary mapping suites which return search instances
+                  to those instances.
 
         """
         searches = {}
@@ -157,8 +161,8 @@ class SuiteRegistry(object):
 
     def handles_video(self, *args, **kwargs):
         """
-        Returns ``True`` if this registry can make a video with the given
-        parameters, and ``False`` otherwise.
+        Returns ``True`` if any registered suite can make a video with the
+        given parameters, and ``False`` otherwise.
 
         .. note:: This does all the work of creating a video, then discards
                   it. If you are going to use a video instance if one is
@@ -174,8 +178,8 @@ class SuiteRegistry(object):
 
     def handles_feed(self, *args, **kwargs):
         """
-        Returns ``True`` if this registry can make a feed with the given
-        parameters, and ``False`` otherwise.
+        Returns ``True`` if any registered suite can make a feed with the
+        given parameters, and ``False`` otherwise.
 
         .. note:: This does all the work of creating a feed, then discards
                   it. If you are going to use a feed instance if one is
@@ -260,10 +264,22 @@ class BaseSuite(object):
 
     def get_video(self, url, fields=None, api_keys=None):
         """
-        Returns a video using this suite's loaders.
+        Returns a video using this suite's loaders. This instance will not
+        have data loaded.
 
-        :raises UnhandledVideo: If none of this suite's loaders can handle the
-                                given url and api keys.
+        :param url: A video URL. Video website URLs generally work; more
+                    obscure urls (like API urls) might work as well.
+        :param fields: A list of fields to be fetched for the video. Limiting this
+                       may decrease the number of HTTP requests required for
+                       loading the video.
+
+                       .. seealso:: :ref:`video-fields`
+        :param api_keys: A dictionary of API keys for various services. Check
+                         the documentation for each
+                         :mod:`suite <vidscraper.suites>` to find what API
+                         keys they may want or require.
+        :raises: :exc:`.UnhandledVideo` if none of this suite's loaders can
+                 handle the given url and api keys.
 
         """
         loaders = []
@@ -281,7 +297,8 @@ class BaseSuite(object):
 
     def get_feed(self, url, *args, **kwargs):
         """
-        Returns an instance of :attr:`feed_class`.
+        Returns an instance of :attr:`feed_class`, which should be a subclass
+        of :class:`.BaseFeed`.
 
         :raises UnhandledFeed: If :attr:`feed_class` is None.
 
@@ -291,7 +308,13 @@ class BaseSuite(object):
         return self.feed_class(url, *args, **kwargs)
 
     def get_search(self, *args, **kwargs):
-        """Returns an instance of :attr:`search_class`."""
+        """
+        Returns an instance of :attr:`search_class`, which should be a
+        subclass of :class:`.BaseSearch`.
+
+        :raises UnhandledFeed: If :attr:`search_class` is None.
+
+        """
         if self.search_class is None:
             raise UnhandledSearch(u"{0} does not support searches.".format(
                                   self.__class__.__name__))

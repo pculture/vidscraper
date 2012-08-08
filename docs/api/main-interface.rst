@@ -23,25 +23,33 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-.. module:: vidscraper.suites
+Main Interface
+==============
 
-Suite API
-=========
+The 5 functions given here should handle most use cases.
 
-Vidscraper defines a simple API for "Suites", classes which provide the
-functionality necessary for scraping video information from a specific video
-service.
+.. autofunction:: vidscraper.auto_scrape
 
-The Suite Registry
-++++++++++++++++++
+.. autofunction:: vidscraper.auto_feed
 
-.. autodata:: vidscraper.suites.registry
+.. autofunction:: vidscraper.auto_search
 
-.. autoclass:: vidscraper.suites.base.SuiteRegistry
-	:members:
+.. function:: vidscraper.handles_video
 
-Built-in Suites
-+++++++++++++++
+    Returns ``True`` if any registered suite can make a video with the
+    given parameters, and ``False`` otherwise.
 
-.. autoclass:: vidscraper.suites.BaseSuite
-   :members:
+    .. note:: This does all the work of creating a video, then discards
+              it. If you are going to use a video instance if one is
+              created, it would be more efficient to use
+              :func:`auto_scrape` directly.
+
+.. function:: vidscraper.handles_feed
+
+    Returns ``True`` if any registered suite can make a feed with the
+    given parameters, and ``False`` otherwise.
+
+    .. note:: This does all the work of creating a feed, then discards
+              it. If you are going to use a feed instance if one is
+              created, it would be more efficient to use
+              :func:`auto_feed` directly.

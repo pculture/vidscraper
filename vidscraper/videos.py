@@ -534,10 +534,16 @@ class VideoIterator(object):
     :param start_index: The index of the first video to return. Default: 1.
     :type start_index: integer >= 1
     :param max_results: The maximum number of videos to return. If this is
-                        ``None``, as many videos as possible will be returned.
-    :param video_fields: Fields to be passed to any created :class:`Video`
-                         instances.
-    :param api_keys: A dictionary of api keys.
+                        ``None`` (the default), as many videos as possible
+                        will be returned.
+    :param video_fields: A list of fields to be fetched for each video in the
+                         iterator. Limiting this may decrease the number of
+                         HTTP requests required for loading video data.
+
+                         .. seealso:: :ref:`video-fields`
+    :param api_keys: A dictionary of API keys for various services. Check the
+                     documentation for each :mod:`suite <vidscraper.suites>`
+                     to find what API keys they may want or require.
 
     """
     #: Describes the number of videos expected on each page. This should be

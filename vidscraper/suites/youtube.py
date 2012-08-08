@@ -269,12 +269,20 @@ class Search(BaseSearch):
     }
 
     def get_response_items(self, response):
+        # Response will have a 400 error code if we're beyond the end of the
+        # search results (max 999).
+        if response.status_code == 400:
+            return []
         return response.json['feed'].get('entry', [])
 
     def get_video_data(self, item):
         return Suite.parse_api_video(item)
 
     def data_from_response(self, response):
+        # Response will have a 400 error code (and no useful metadata) if
+        # we're beyond the end of the search results (max 999).
+        if response.status_code == 400:
+            return {}
         feed = response.json['feed']
         return {
             'video_count': feed['openSearch$totalResults']['$t'],

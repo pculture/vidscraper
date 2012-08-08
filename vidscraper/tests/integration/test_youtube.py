@@ -184,6 +184,14 @@ Caramelldansen""",
                          datetime.datetime.utcnow()) > datetime.timedelta(
                 hours=4), video_file.expires - datetime.datetime.utcnow())
 
+    def test_video__18936(self):
+        video_url = 'http://www.youtube.com/watch?v=YquEJpyZ_3U'
+        video = self.suite.get_video(video_url, fields=['description'])
+        video.load()
+        self.assertEqual(video.description,
+                         "Like dolphins, whales communicate using sound. \
+Humpbacks especially have extremely complex communication systems.")
+
     def test_feed(self):
         feed_url = 'http://www.youtube.com/user/AssociatedPress'
         feed = self.suite.get_feed(feed_url)
@@ -203,26 +211,27 @@ Caramelldansen""",
         self.assertTrue(feed.webpage)
         self.assertTrue(feed.video_count > 55000, feed.video_count)
 
-    def test_feed_18790(self):
+    def test_feed__18790(self):
         feed_url = 'http://www.youtube.com/user/DukeJewishStudies/videos'
         feed = self.suite.get_feed(feed_url)
         feed.load()
         self.assertEqual(feed.title, 'Uploads by DukeJewishStudies')
 
-    def test_video_18936(self):
-        video_url = 'http://www.youtube.com/watch?v=YquEJpyZ_3U'
-        video = self.suite.get_video(video_url, fields=['description'])
-        video.load()
-        self.assertEqual(video.description,
-                         "Like dolphins, whales communicate using sound. \
-Humpbacks especially have extremely complex communication systems.")
-
-    def test_beyond_page_range(self):
-        """YouTube feeds only allow access to 999 videos."""
+    def test_feed__beyond_page_range(self):
+        """If you go beyond the end of a feed, StopIteration should be raised."""
         feed_url = 'http://www.youtube.com/user/AssociatedPress'
-        feed = self.suite.get_feed(feed_url)
+        feed = self.suite.get_feed(feed_url, max_results=1)
         feed.load()
-        feed.start_index = feed.video_count + 1
-        feed._response = None
-        self.assertRaises(StopIteration, feed.next)
-        self.assertTrue(feed.is_finished())
+        new_feed = self.suite.get_feed(feed_url, start_index=feed.video_count + 1000)
+        self.assertRaises(StopIteration, new_feed.next)
+        self.assertTrue(new_feed.is_finished())
+
+    def test_search__over_999(self):
+        """
+        If you go beyond the end of a search, StopIteration should be raised.
+        YouTube searches only return up to 999 results.
+
+        """
+        search = self.suite.get_search('parrot -dead', start_index=1000)
+        self.assertRaises(StopIteration, search.next)
+        self.assertTrue(search.is_finished())

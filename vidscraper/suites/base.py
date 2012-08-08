@@ -145,17 +145,19 @@ class SuiteRegistry(object):
                   to those instances.
 
         """
-        searches = {}
+        searches = []
         for suite in registry.suites:
             try:
-                searches[suite] = suite.get_search(query,
-                                                   order_by=order_by,
-                                                   start_index=start_index,
-                                                   max_results=max_results,
-                                                   video_fields=video_fields,
-                                                   api_keys=api_keys)
+                search = suite.get_search(query,
+                                          order_by=order_by,
+                                          start_index=start_index,
+                                          max_results=max_results,
+                                          video_fields=video_fields,
+                                          api_keys=api_keys)
             except UnhandledSearch:
                 pass
+            else:
+                searches.append(search)
 
         return searches
 

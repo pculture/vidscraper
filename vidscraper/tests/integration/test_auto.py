@@ -44,11 +44,11 @@ class AutoIntegrationTestCase(BaseTestCase):
     def test_auto_search(self):
         searches = auto_search('parrot -dead', max_results=20)
         results = []
-        for suite, search in searches.iteritems():
+        for search in searches:
             videos = list(search)
             self.assertTrue(len(videos) <= 20,
-                            "{0} suite has too many results ({1})".format(
-                                suite.__class__.__name__, len(videos)))
+                            "{0} search has too many results ({1})".format(
+                                search.__class__.__name__, len(videos)))
             results.extend(videos)
         self.assertTrue(len(videos) > 0)
 

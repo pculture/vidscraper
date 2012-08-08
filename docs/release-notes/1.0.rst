@@ -58,4 +58,6 @@ backwards-incompatible with 0.5.
 * Added support for testing with tox.
 * Added vidscraper-cmd for shell access to the api.
 * Replaced video pickling support with simple video serialization.
-* Started using python-requests where possible.
+* Started using `python-requests <http://python-requests.org/>`_ where possible.
+* :func:`.auto_search` now returns a simple list of searches rather than
+  a dictionary mapping suites to searches.

@@ -38,27 +38,31 @@ Most use cases will simply require the :func:`.auto_scrape` function.
     >>> video.title
     u'CaramellDansen (Full Version + Lyrics)'
 
-That's it!  Couldn't be easier.  :func:`.auto_scrape` will determine the right
-:doc:`scraping suite </api/suites>` to use for the url you pass in and will use that suite to return a :class:`.Video` instance that represents the data
-associated with the video at that url. If no suites are found which support the
-url, :exc:`.UnhandledVideo` will be raised.
+That's it! Couldn't be easier. :func:`.auto_scrape` will pull down
+metadata from all the places it can figure out based on the url you
+entered and return a :class:`.Video` instance loaded with that data.
 
-If you only need certain fields (say you only need the "files" and
-"title" fields), you can pass those fields in as a second argument::
+If :mod:`vidscraper` doesn't know how to fetch data for that url – for
+example, if you try to scrape google.com (which isn't a video page) –
+:exc:`.UnhandledVideo` will be raised.
 
-    >>> video = auto_scrape(url, fields=['files', 'title'])
+.. _video-fields
 
-.. _video-fields:
+Limiting metadata
+-----------------
 
-Video fields
-------------
+Videos can have metadata pulled from a number of sources - for
+example, a page scrape, an OEmbed API, and a service-specific API.
+When loading video data, :mod:`vidscraper` will query as many of these
+services as it needs to provide the data you ask for.
 
-If a :class:`.Video` is initialized without any fields, then
-:mod:`vidscraper` will assume you want all of the fields for the video. When the
-:class:`.Video` is being loaded, :mod:`vidscraper` will maximize the
-number of requested fields that it fills; occasionally, this may mean that it
-will make more than one HTTP request. This means that limiting the fields to
-what you are actually using can save quite a bit of work.
+So, if you only need certain pieces of metadata (say the title and
+description of a video), you can pass those fields to
+:func:`.auto_scrape` and potentially save HTTP requests::
+
+    >>> video = auto_scrape(url, fields=['title', 'description'])
+
+.. seealso:: :class:`.Video`
 
 
 Getting videos for a feed
@@ -68,37 +72,50 @@ If you want to get every video for a feed, you can use
 :func:`.auto_feed`::
 
     >>> from vidscraper import auto_feed
-    >>> results = auto_feed("http://blip.tv/djangocon/rss")
+    >>> feed = auto_feed("http://blip.tv/djangocon/rss")
 
-This will read the feed at the given url and return a generator which yields :class:`.Video` instances for each entry in the feed. The instances will be preloaded with metadata from the feed. In many cases this will fill out all the fields that you need. If you need more, however, you can tell the video to load more data manually::
+This will read the feed at the given url and return a generator which
+yields :class:`.Video` instances for each entry in the feed. The
+instances will be preloaded with metadata from the feed. In many cases
+this will fill out all the fields that you need. If you need more,
+however, you can tell the video to load more data manually::
 
-    >>> video = results.next()
+    >>> video = feed.next()
     >>> video.load()
 
-(Don't worry - if :mod:`vidscraper` can't figure out a way to get more data, it will simply do nothing!)
+(Don't worry - if :mod:`vidscraper` can't figure out a way to get more
+data, it will simply do nothing!)
 
-.. note:: Because this function returns a generator, the feed will actually be
-          fetched the first time the generator's :meth:`next` method is called.
+The feed instance is a lazy generator - it won't make any HTTP
+requests until you call :meth:`~.VideoIterator.next` the first time.
+It will only make a second request once you've gotten to the bottom of
+the first page.
 
-Crawling an entire feed
------------------------
+Not crawling a whole feed
+-------------------------
 
-:func:`.auto_feed` also supports feed crawling for some suites. You use it like this::
+By default, :func:`.auto_feed` will try to crawl through the entire
+feed. Depending on the feed you're crawling, you could be there for a
+while. If you're pressed for time (or bandwidth) you can limit the
+number of videos you pull down::
 
     >>> from vidscraper import auto_feed
-    >>> results = auto_feed("http://blip.tv/djangocon/rss", crawl=True)
-
-Now, when the generator runs out of results on the first page, it will
-automatically fetch the next page, and then the next, and so on. This is not for
-the faint of heart. Depending on the feed you're crawling, you could be there
-for a while.
+    >>> feed = auto_feed("http://blip.tv/djangocon/rss")
+    >>> len(list(feed))
+    117
+    >>> feed = auto_feed("http://blip.tv/djangocon/rss", max_results=20)
+    >>> len(list(feed))
+    20
 
 Searching video services
 ++++++++++++++++++++++++
 
-It's also easy to run a search on a variety of services that support it. Simply do the following::
+It's also easy to run a search on a variety of services with
+:func:`.auto_search`::
 
     >>> from vidscraper import auto_search
-    >>> results = auto_search(['parrot'], exclude_terms=['dead']).values()
+    >>> searches = auto_search('parrot -dead')
 
-The search will be run on all suites that support searching, and the results will be returned as a dictionary mapping the suite used to the results for that feed.
+The search will be run on all suites that support the parameters, and
+the you'll get back a dictionary mapping the suite used to an iterator
+over the results for that suite.

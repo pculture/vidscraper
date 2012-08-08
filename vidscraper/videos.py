@@ -81,8 +81,9 @@ class Video(object):
     :param url: The "pasted" url for the video.
     :param loaders: An iterable of :class:`VideoLoader` instances that will
                     be used to load video data.
-    :param fields: A list of fields which should be fetched for the video. This
-                   will be used to optimize the fetching process.
+    :param fields: A list of fields which should be fetched for the video.
+                   This will be used to optimize the fetching process. Other
+                   fields will not populated, even if the data is available.
 
     """
     # FIELDS
@@ -130,13 +131,6 @@ class Video(object):
     # These were pretty suite-specific and should perhaps be treated as such?
     #: Whether the video is embeddable? (Youtube, Vimeo)
     is_embeddable = None
-
-    # OTHER ATTRS
-    #: The url for this video to scrape based on.
-    url = None
-    #: An iterable of fields to be fetched for this video. Other fields will
-    #: not populated during scraping.
-    fields = None
 
     def __init__(self, url, loaders=None, fields=None):
         if fields is None:

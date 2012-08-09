@@ -114,8 +114,17 @@ It's also easy to run a search on a variety of services with
 :func:`.auto_search`::
 
     >>> from vidscraper import auto_search
-    >>> searches = auto_search('parrot -dead')
+    >>> searches = auto_search('parrot -dead', max_results=20)
+    >>> searches
+    [<vidscraper.suites.blip.Search object at 0x10b490f90>,
+     <vidscraper.suites.youtube.Search object at 0x10b49f090>]
 
-The search will be run on all suites that support the parameters, and
-the you'll get back a dictionary mapping the suite used to an iterator
-over the results for that suite.
+You'll get back a list of search iterables for suites which support
+the search parameters. These have the same behavior in terms of
+loading new pages that you see in the feed iterator.
+
+::
+
+    >>> video = searches[0].next()
+    >>> video.title
+    u"Episode 57: iMovie HD '06, Part II"

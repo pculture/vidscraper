@@ -46,7 +46,7 @@ If :mod:`vidscraper` doesn't know how to fetch data for that url – for
 example, if you try to scrape google.com (which isn't a video page) –
 :exc:`.UnhandledVideo` will be raised.
 
-.. _video-fields
+.. _video-fields:
 
 Limiting metadata
 -----------------

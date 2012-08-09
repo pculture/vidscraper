@@ -117,8 +117,8 @@ class SuiteRegistry(object):
         :returns: An instance of a specific suite's
                   :attr:`~.BaseSuite.feed_class` with no data loaded.
 
-        :raises UnhandledFeed: if no registered suites know how to handle this
-                               url.
+        :raises: :exc:`.UnhandledFeed` if no registered suites know how
+                 to handle this url.
 
         """
         for suite in self.suites:
@@ -141,8 +141,8 @@ class SuiteRegistry(object):
         For each registered :mod:`suite <vidscraper.suites>`, calls
         :meth:`~.BaseSuite.get_search` with the given parameters.
 
-        :returns: a dictionary mapping suites which return search instances
-                  to those instances.
+        :returns: a list of iterators over search results for suites
+                  which support the given parameters.
 
         """
         searches = []
@@ -302,7 +302,7 @@ class BaseSuite(object):
         Returns an instance of :attr:`feed_class`, which should be a subclass
         of :class:`.BaseFeed`.
 
-        :raises UnhandledFeed: If :attr:`feed_class` is None.
+        :raises: :exc:`.UnhandledFeed` if :attr:`feed_class` is None.
 
         """
         if self.feed_class is None:
@@ -314,7 +314,7 @@ class BaseSuite(object):
         Returns an instance of :attr:`search_class`, which should be a
         subclass of :class:`.BaseSearch`.
 
-        :raises UnhandledFeed: If :attr:`search_class` is None.
+        :raises: :exc:`.UnhandledSearch` if :attr:`search_class` is None.
 
         """
         if self.search_class is None:

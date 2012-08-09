@@ -43,7 +43,7 @@ backwards-incompatible with 0.5.
   generic way to represent getting data for a single video.
 * :mod:`vidscraper.errors` was renamed to :mod:`vidscraper.exceptions`,
   and unused exceptions were removed. :exc:`.CantIdentifyUrl` was split
-  into two exceptions (:exc:`.UnhandledVideo` and :exc:`UnhandledFeed`)
+  into two exceptions (:exc:`.UnhandledVideo` and :exc:`.UnhandledFeed`)
   and :exc:`Error` is now :exc:`.VidscraperError`.
 * :func:`vidscraper.handles_video_url` and
   :func:`vidscraper.handles_feed_url` were renamed to

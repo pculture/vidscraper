@@ -42,7 +42,7 @@ The 5 functions given here should handle most use cases.
     .. note:: This does all the work of creating a video, then discards
               it. If you are going to use a video instance if one is
               created, it would be more efficient to use
-              :func:`auto_scrape` directly.
+              :func:`.auto_scrape` directly.
 
 .. function:: vidscraper.handles_feed
 
@@ -52,4 +52,4 @@ The 5 functions given here should handle most use cases.
     .. note:: This does all the work of creating a feed, then discards
               it. If you are going to use a feed instance if one is
               created, it would be more efficient to use
-              :func:`auto_feed` directly.
+              :func:`.auto_feed` directly.

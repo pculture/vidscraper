@@ -31,7 +31,7 @@ class VidscraperError(Exception):
 
 class UnhandledVideo(VidscraperError):
     """
-    Raised by :class:`VideoLoader`\ s and :doc:`suites </api/suites>` if a
+    Raised by :class:`.VideoLoader`\ s and :doc:`suites </api/suites>` if a
     given video can't be handled.
 
     """

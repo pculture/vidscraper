@@ -812,14 +812,17 @@ class BaseFeed(VideoIterator):
     populated will be ``None``.
 
     .. attribute:: video_count
+
         The estimated number of videos for the feed.
 
     .. attribute:: last_modified
+
         A python datetime representing when the feed was last changed. Before
         loading the feed, this will be equal to the ``last_modified`` date
         the :class:`BaseFeed` was instantiated with.
 
     .. attribute:: etag
+
         A marker representing a feed's current state. Before loading the feed,
         this will be equal to the ``etag`` the :class:`BaseFeed` was
         instantiated with.
@@ -902,6 +905,7 @@ class BaseSearch(VideoIterator):
     populated will be ``None``.
 
     .. attribute:: video_count
+
         The estimated number of total videos for this search.
 
     """

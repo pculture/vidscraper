@@ -48,14 +48,15 @@ def search_string_from_terms(include_terms, exclude_terms):
     return search_string
 
 
-def intersperse_results(suite_dict, max_results):
+def intersperse_results(iterators, max_results):
     """
-    Given a dictionary of suite results, returns an iterator which cycles
-    through the suites, yielding one result per suite until either all suite
-    results are exhausted or ``max_results`` results have been returned.
+    Given a list of video iterators, returns an iterator which returns one
+    result for each iterator until either all iterators are exhausted or
+    ``max_results`` videos have been returned.
 
     """
-    iterators = [iter(i) for i in suite_dict.values()]
+    # Make a copy of the original list.
+    iterators = list(iterators)
     num_results = 0
     while len(iterators) > 0 and num_results < max_results:
         for iterator in iterators[:]:

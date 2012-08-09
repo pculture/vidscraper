@@ -24,31 +24,44 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
+import json
+import re
+import urlparse
 
-from vidscraper.compat import json
+from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites import BaseSuite, registry
+from vidscraper.videos import VideoLoader, OEmbedLoaderMixin
 
 
-class UstreamSuite(BaseSuite):
-    """Suite for fetching data on ustream videos."""
-    # TODO: Ustream has feeds and search functionality - add support for that!
-    video_regex = 'https?://(www\.)?ustream\.tv/recorded/(?P<id>\d+)'
+class PathMixin(object):
+    path_re = re.compile(r'/recorded/(?P<id>\d+)/?$')
 
-    oembed_endpoint = "http://www.ustream.tv/oembed/"
+    def get_url_data(self, url):
+        parsed_url = urlparse.urlsplit(url)
+        if (parsed_url.scheme in ('http', 'https') and
+            parsed_url.netloc in ('ustream.tv', 'www.ustream.tv')):
+            match = self.path_re.match(parsed_url.path)
+            if match:
+                return match.groupdict()
+        raise UnhandledVideo(url)
 
-    api_fields = set(['link', 'title', 'description', 'flash_enclosure_url',
-                      'embed_code', 'thumbnail_url', 'publish_date', 'tags',
-                      'user', 'user_url'])
 
-    def get_api_url(self, video):
-        video_id = self.video_regex.match(video.url).group('id')
-        if video.api_keys is None or 'ustream_key' not in video.api_keys:
-            raise ValueError("API key must be set for Ustream API requests.")
-        return 'http://api.ustream.tv/json/video/%s/getInfo/?key=%s' % (
-                                video_id, video.api_keys['ustream_key'])
+class ApiLoader(PathMixin, VideoLoader):
+    fields = set(['link', 'title', 'description', 'flash_enclosure_url',
+                  'thumbnail_url', 'publish_date', 'tags', 'user',
+                  'user_url'])
 
-    def parse_api_response(self, response_text):
-        parsed = json.loads(response_text)['results']
+    url_format = u'http://api.ustream.tv/json/video/{id}/getInfo/?key={ustream_key}'
+
+    def get_url_data(self, url):
+        if 'ustream_key' not in self.api_keys:
+            raise UnhandledVideo(url)
+        data = super(ApiLoader, self).get_url_data(url)
+        data.update(self.api_keys)
+        return data
+
+    def get_video_data(self, response):
+        parsed = json.loads(response.text)['results']
         url = parsed['embedTagSourceUrl']
         publish_date = datetime.datetime.strptime(parsed['createdAt'],
                                                  '%Y-%m-%d %H:%M:%S')
@@ -57,7 +70,6 @@ class UstreamSuite(BaseSuite):
             'title': parsed['title'],
             'description': parsed['description'],
             'flash_enclosure_url': url,
-            'embed_code': "<iframe src='%s' width='320' height='260' />" % url,
             'thumbnail_url': parsed['imageUrl']['medium'],
             'publish_date': publish_date,
             'tags': [unicode(tag) for tag in parsed['tags']],
@@ -65,4 +77,17 @@ class UstreamSuite(BaseSuite):
             'user_url': parsed['user']['url']
         }
         return data
-registry.register(UstreamSuite)
+
+
+class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
+    endpoint = "http://www.ustream.tv/oembed/"
+    url_format = "http://www.ustream.tv/recorded/{id}"
+
+
+class Suite(BaseSuite):
+    """Suite for fetching data on ustream videos."""
+    # TODO: Ustream has feeds and search functionality - add support for that!
+    loader_classes = (OEmbedLoader, ApiLoader)
+
+
+registry.register(Suite)

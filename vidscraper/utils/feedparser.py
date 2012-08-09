@@ -38,31 +38,42 @@ def struct_time_to_datetime(struct_time):
     return datetime.datetime(*struct_time[:6])
 
 
+def _is_accepted_enclosure(enclosure):
+    return (is_accepted_type(enclosure.get('type', '')) or
+            is_accepted_filename(enclosure.get('url', '')))
+
+
 def get_entry_enclosures(entry):
-    """Returns a list of enclosures or media_content for the entry."""
-    return entry.get('media_content') or entry.get('enclosures') or []
-
-
-def get_first_accepted_enclosure(entry):
     """
-    Returns the first accepted enclosure in a feedparser entry, or ``None`` if
-    no such enclosure is found. An enclosure is accepted if it contains a file
-    which passes the :func:`.is_accepted_filename` or :func:`.is_accepted_type`
-    checks.
+    Returns a list of either media_content or enclosures for the entry.
+
+    The enclosures (or media_content) are only returned if they are non-empty
+    and contain a non-empty first item.
 
     """
-    enclosures = get_entry_enclosures(entry)
-    if not enclosures:
-        return None
-    best_enclosure = None
+    media_content = entry.get('media_content')
+    if media_content and media_content[0]:
+        return media_content
+    enclosures = entry.get('enclosures')
+    if enclosures and enclosures[0]:
+        return enclosures
+    return []
+
+
+def get_accepted_enclosures(entry):
+    """
+    Returns a list of either media_content or enclosure items with accepted
+    mime types for the entry.
+
+    """
+    return filter(_is_accepted_enclosure, get_entry_enclosures(entry))
+
+
+def get_default_enclosure(enclosures):
     for enclosure in enclosures:
-        if (is_accepted_type(enclosure.get('type', '')) or
-                is_accepted_filename(enclosure.get('url', ''))):
-            if enclosure.get('isdefault'):
-                return enclosure
-            elif best_enclosure is None:
-                best_enclosure = enclosure
-    return best_enclosure
+        if enclosure.get('isdefault'):
+            return enclosure
+    return None
 
 
 def get_item_thumbnail_url(item):
@@ -72,7 +83,7 @@ def get_item_thumbnail_url(item):
         return item['media_thumbnail'][0]['url']
     blip_thumbnail_src = item.get('blip_thumbnail_src', None)
     if blip_thumbnail_src:
-        return u'http://a.images.blip.tv/%s' % blip_thumbnail_src
+        return u'http://a.images.blip.tv/{0}'.format(blip_thumbnail_src)
     if 'itunes_image' in item:
         return item['itunes_image']['href']
     if 'image' in item:
@@ -83,26 +94,29 @@ def get_item_thumbnail_url(item):
 def get_entry_thumbnail_url(entry):
     """
     Returns the URL for a thumbnail from a feedparser entry, or ``None`` if
-    no thumbnail is found. First tries to return a video thumbnail, then any
-    enclosure thumbnail, then the general entry thumbnail. If these all fail and
-    the entry is from youtube, the content of the entry will be searched for an
-    image to use as the thumbnail.
+    no thumbnail is found. First tries to return the thumbnail for the default
+    enclosure, then for any enclosure, then for the entry in general. If these
+    all fail and the entry is from youtube, the content of the entry will be
+    searched for an image to use as the thumbnail.
 
     """
-    # Try the video enclosure's thumbnail
-    video_enclosure = get_first_accepted_enclosure(entry)
-    if video_enclosure is not None:
+    enclosures = get_accepted_enclosures(entry)
+
+    # Try the default enclosure's thumbnail.
+    default_enclosure = get_default_enclosure(enclosures)
+    if default_enclosure is not None:
         try:
-            return get_item_thumbnail_url(video_enclosure)
+            return get_item_thumbnail_url(default_enclosure)
         except KeyError:
             pass
 
     # Try to get any enclosure thumbnail
-    for enclosure in get_entry_enclosures(entry):
-        try:
-            return get_item_thumbnail_url(enclosure)
-        except KeyError:
-            pass
+    for enclosure in enclosures:
+        if enclosure is not default_enclosure:
+            try:
+                return get_item_thumbnail_url(enclosure)
+            except KeyError:
+                pass
 
     # Try to get the general thumbnail for the entry
     try:

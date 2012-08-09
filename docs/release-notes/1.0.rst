@@ -1,0 +1,63 @@
+.. Copyright 2009 - Participatory Culture Foundation
+
+   This file is part of vidscraper.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions
+   are met:
+
+   1. Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS`` AND ANY EXPRESS OR
+   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+   OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+   IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+1.0.0 release notes
+===================
+
+1.0.0 introduces the following changes, many of which are
+backwards-incompatible with 0.5.
+
+* :class:`.VideoFeed` and :class:`.VideoSearch` have been renamed to
+  :class:`.BaseFeed` and :class:`.BaseSearch`, respectively.
+* :class:`.Video`, :class:`.BaseFeed`, and :class:`.BaseSearch` are 
+  now found in :mod:`vidscraper.videos`. They can no longer be imported
+  from :mod:`vidscraper` or :mod:`vidscraper.suites`.
+* :class:`.BaseFeed` and :class:`.BaseSearch` now fully implement the
+  python generator API.
+* :class:`.BaseFeed` and :class:`.BaseSearch` now support fetching
+  specific slices of videos instead of fetching a certain number of
+  pages.
+* :class:`VideoLoaders <.VideoLoader>` were introduced as a more
+  generic way to represent getting data for a single video.
+* :mod:`vidscraper.errors` was renamed to :mod:`vidscraper.exceptions`,
+  and unused exceptions were removed. :exc:`.CantIdentifyUrl` was split
+  into two exceptions (:exc:`.UnhandledVideo` and :exc:`.UnhandledFeed`)
+  and :exc:`Error` is now :exc:`.VidscraperError`.
+* :func:`vidscraper.handles_video_url` and
+  :func:`vidscraper.handles_feed_url` were renamed to
+  :func:`vidscraper.handles_video` and :func:`vidscraper.handles_feed`, respectively. They now accept the same parameters as
+  :func:`vidscraper.auto_scrape` and :func:`vidscraper.auto_feed`.
+* Multiple :class:`.VideoFile`\ s are now made available for
+  :class:`.Video` instances, rather than having a single set of fields
+  on the :class:`.Video` class.
+* Removed :mod:`vidscraper.utils.http` since the single function there
+  was unrelated to HTTP, was only used by a single suite, and was of
+  questionable usefulness period.
+* Added support for testing with tox.
+* Added vidscraper-cmd for shell access to the api.
+* Replaced video pickling support with simple video serialization.
+* Started using `python-requests <http://python-requests.org/>`_ where possible.
+* :func:`.auto_search` now returns a simple list of searches rather than
+  a dictionary mapping suites to searches.

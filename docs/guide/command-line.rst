@@ -1,4 +1,4 @@
-.. Copyright 2009 - Participatory Culture Foundation
+.. Copyright 2012 - Participatory Culture Foundation
 
    This file is part of vidscraper.
 
@@ -23,8 +23,24 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Exceptions
-==========
+Command Line
+============
 
-.. automodule:: vidscraper.errors
-    :members:
+vidscraper comes with a command line utility allowing you to do crazy
+awesome things on the command line.
+
+Want to get the metadata for a YouTube video?
+
+::
+
+    $ vidscraper video http://www.youtube.com/watch?v=J_DV9b0x7v4
+
+
+Want just the title and embed code?
+
+::
+
+    $ vidscraper video --fields=title,embed_code \
+        http://www.youtube.com/watch?v=J_DV9b0x7v4
+
+The metadata will be printed as indented JSON.

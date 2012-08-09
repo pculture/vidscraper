@@ -24,25 +24,32 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import urlparse
 
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
+from vidscraper.exceptions import UnhandledVideo
 from vidscraper.suites import BaseSuite, registry
+from vidscraper.videos import VideoLoader
 
 
-ID_REGEX = re.compile(r'video-title|video-description|embed-video-code')
+class ScrapeLoader(VideoLoader):
+    fields = set(['title', 'description', 'embed_code'])
+    id_regex = re.compile(r'video-title|video-description|embed-video-code')
 
+    url_format = '{url}'
 
-class GoogleSuite(BaseSuite):
-    """Suite for scraping video pages from videos.google.com"""
-    video_regex = r'^https?://video.google.com/videoplay'
-    scrape_fields = set(['title', 'description', 'embed_code'])
+    def get_url_data(self, url):
+        parsed = urlparse.urlsplit(url)
+        if (parsed.scheme in ('http', 'https') and
+            parsed.netloc == 'video.google.com' and
+            parsed.path == '/videoplay' and
+            'docid' in parsed.query):
+            return {'url': url}
+        raise UnhandledVideo(url)
 
-    def get_scrape_url(self, video):
-        return video.url
-
-    def parse_scrape_response(self, response_text):
-        soup = BeautifulSoup(response_text).findAll(attrs={'id': ID_REGEX})
+    def get_video_data(self, response):
+        soup = BeautifulSoup(response.text).findAll(id=self.id_regex)
         data = {}
         for tag in soup:
             if tag['id'] == 'video-title':
@@ -54,4 +61,11 @@ class GoogleSuite(BaseSuite):
                 # but this is a scrape and liable to break anyway. KISS.
                 data['embed_code'] = unicode(tag.string).replace("&gt;", ">").replace("&lt;", "<")
         return data
-registry.register(GoogleSuite)
+
+
+class Suite(BaseSuite):
+    """Suite for scraping video pages from videos.google.com"""
+    loader_classes = (ScrapeLoader,)
+
+
+registry.register(Suite)

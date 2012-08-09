@@ -24,15 +24,15 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import datetime
-import unittest
 
-from vidscraper.suites.youtube import YouTubeSuite
+from vidscraper.suites.youtube import Suite
+from vidscraper.tests.base import BaseTestCase
 
 
-class YouTubeFunctionalTestCase(unittest.TestCase):
+class YouTubeIntegrationTestCase(BaseTestCase):
 
     def setUp(self):
-        self.suite = YouTubeSuite()
+        self.suite = Suite()
 
     def test_video(self):
         video_url = u'http://www.youtube.com/watch?v=J_DV9b0x7v4'
@@ -158,52 +158,80 @@ Caramelldansen""",
             'flash_enclosure_url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4&feature=youtube_gdata_player',
             'user_url': u'http://www.youtube.com/user/DrunkenVuko',
             'url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
-            'fields': ['title', 'description', 'publish_datetime', 'file_url', 'file_url_mimetype', 'file_url_length', 'file_url_expires', 'flash_enclosure_url', 'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid', 'index', 'license'],
-            'file_url_mimetype': u'video/x-flv',
+            'fields': ['title', 'description', 'publish_datetime',
+                       'flash_enclosure_url', 'is_embeddable', 'embed_code',
+                       'thumbnail_url', 'user', 'user_url', 'tags', 'link',
+                       'guid', 'license', 'files'],
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
             'link': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
             'user': u'DrunkenVuko',
             'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
-            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop', u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga', u'schweden', u'anime', u'musik', u'music', u'funny', u'caramelldansen', u'U-U-U-Aua', u'Dance']
+            'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop',
+                     u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
+                     u'schweden', u'anime', u'musik', u'music', u'funny',
+                     u'caramelldansen', u'U-U-U-Aua', u'Dance']
             }
         for key, value in expected.items():
             self.assertEqual(value, getattr(video, key))
 
         # check file_url_*
-        self.assertTrue('videoplayback' in video.file_url)
-        self.assertTrue((video.file_url_expires -
+        self.assertGreater(len(video.files), 0)
+        video_file = video.files[0]
+        self.assertEqual(video_file.mime_type, 'video/mp4')
+        self.assertTrue('videoplayback' in video_file.url)
+        self.assertTrue((video_file.expires -
                          datetime.datetime.utcnow()) > datetime.timedelta(
-                hours=4), video.file_url_expires - datetime.datetime.utcnow())
+                hours=4), video_file.expires - datetime.datetime.utcnow())
 
-    def test_feed(self):
-        feed_url = 'http://www.youtube.com/user/AssociatedPress'
-        feed = self.suite.get_feed(feed_url)
-        feed.load()
-        expected = {
-            'url': u'http://gdata.youtube.com/feeds/base/users/AssociatedPress/uploads?alt=rss&v=2',
-            'title': u'Uploads by AssociatedPress',
-            'description': u'',
-            'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
-            'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
-            }
-        for key, value in expected.items():
-            self.assertEqual(value, getattr(feed, key), '%s: %r != %r' % (
-                    key, value, getattr(feed, key)))
-        # YouTube changes this sometimes, so just make sure it's there
-        self.assertTrue(feed.webpage)
-        self.assertTrue(feed.entry_count > 55000, feed.entry_count)
-
-    def test_feed_18790(self):
-        feed_url = 'http://www.youtube.com/user/DukeJewishStudies/videos'
-        feed = self.suite.get_feed(feed_url)
-        feed.load()
-        self.assertEqual(feed.title, 'Uploads by DukeJewishStudies')
-
-    def test_video_18936(self):
+    def test_video__18936(self):
         video_url = 'http://www.youtube.com/watch?v=YquEJpyZ_3U'
         video = self.suite.get_video(video_url, fields=['description'])
         video.load()
         self.assertEqual(video.description,
                          "Like dolphins, whales communicate using sound. \
 Humpbacks especially have extremely complex communication systems.")
+
+    def test_feed(self):
+        feed_url = 'http://www.youtube.com/user/AssociatedPress'
+        feed = self.suite.get_feed(feed_url)
+        feed.load()
+        expected = {
+            'url': 'http://www.youtube.com/user/AssociatedPress',
+            'title': u'Uploads by AssociatedPress',
+            'description': None,
+            'thumbnail_url': u'http://www.youtube.com/img/pic_youtubelogo_123x63.gif',
+            'guid': u'tag:youtube.com,2008:user:AssociatedPress:uploads',
+            }
+        data = dict((key, getattr(feed, key)) for key in expected)
+        self.assertEqual(data, expected)
+
+        # YouTube changes the channel URL sometimes, so just make sure it's
+        # there
+        self.assertTrue(feed.webpage)
+        self.assertTrue(feed.video_count > 55000, feed.video_count)
+
+    def test_feed__18790(self):
+        feed_url = 'http://www.youtube.com/user/DukeJewishStudies/videos'
+        feed = self.suite.get_feed(feed_url)
+        feed.load()
+        self.assertEqual(feed.title, 'Uploads by DukeJewishStudies')
+
+    def test_feed__beyond_page_range(self):
+        """If you go beyond the end of a feed, StopIteration should be raised."""
+        feed_url = 'http://www.youtube.com/user/AssociatedPress'
+        feed = self.suite.get_feed(feed_url, max_results=1)
+        feed.load()
+        new_feed = self.suite.get_feed(feed_url, start_index=feed.video_count + 1000)
+        self.assertRaises(StopIteration, new_feed.next)
+        self.assertTrue(new_feed.is_finished())
+
+    def test_search__over_999(self):
+        """
+        If you go beyond the end of a search, StopIteration should be raised.
+        YouTube searches only return up to 999 results.
+
+        """
+        search = self.suite.get_search('parrot -dead', start_index=1000)
+        self.assertRaises(StopIteration, search.next)
+        self.assertTrue(search.is_finished())

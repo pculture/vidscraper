@@ -23,25 +23,9 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-.. module:: vidscraper.suites
+Exceptions
+==========
 
-Suite API
-=========
-
-Vidscraper defines a simple API for "Suites", classes which provide the
-functionality necessary for scraping video information from a specific video
-service.
-
-The Suite Registry
-++++++++++++++++++
-
-.. autodata:: vidscraper.suites.registry
-
-.. autoclass:: vidscraper.suites.base.SuiteRegistry
-	:members:
-
-Built-in Suites
-+++++++++++++++
-
-.. autoclass:: vidscraper.suites.BaseSuite
+.. automodule:: vidscraper.exceptions
    :members:
+   :member-order: bysource

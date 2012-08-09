@@ -23,39 +23,30 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import unittest
-
-from vidscraper.suites.google import GoogleSuite
+from vidscraper.suites.google import Suite, ScrapeLoader
+from vidscraper.tests.base import BaseTestCase
 
 
-class GoogleTestCase(unittest.TestCase):
+class GoogleTestCase(BaseTestCase):
     def setUp(self):
-        self.suite = GoogleSuite()
-
-    @property
-    def data_file_dir(self):
-        if not hasattr(self, '_data_file_dir'):
-            test_dir = os.path.abspath(os.path.dirname(
-                                                os.path.dirname(__file__)))
-            self._data_file_dir = os.path.join(test_dir, 'data', 'google')
-        return self._data_file_dir
+        self.suite = Suite()
 
 
 class GoogleScrapeTestCase(GoogleTestCase):
     def setUp(self):
         GoogleTestCase.setUp(self)
-        self.base_url = "http://video.google.com/videoplay?docid=3372610739323185039"
-        self.video = self.suite.get_video(self.base_url)
+        self.url = "http://video.google.com/videoplay?docid=3372610739323185039"
+        self.loader = ScrapeLoader(self.url)
 
-    def test_get_scrape_url(self):
-        self.assertEqual(self.suite.get_scrape_url(self.video), self.base_url)
+    def test_get_url(self):
+        self.assertEqual(self.loader.get_url(), self.url)
 
-    def test_parse_scrape_response(self):
-        scrape_file = open(os.path.join(self.data_file_dir, 'scrape.html'))
-        data = self.suite.parse_scrape_response(scrape_file.read())
+    def test_get_video_data(self):
+        scrape_file = self.get_data_file('google/scrape.html')
+        response = self.get_response(scrape_file.read())
+        data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
-        self.assertEqual(set(data), self.suite.scrape_fields)
+        self.assertEqual(set(data), self.loader.fields)
         expected_data = {
             'title': "Tom and Jerry. Texas",
             'description': 'Tom and Jerry.',
@@ -64,6 +55,4 @@ src="http://video.google.com/googleplayer.swf?docid=3372610739323185039&\
 hl=en&fs=true" style="width:400px;height:326px" allowFullScreen="true" \
 allowScriptAccess="always" type="application/x-shockwave-flash"> </embed>"""
         }
-        for key in expected_data:
-            self.assertTrue(key in data)
-            self.assertEqual(data[key], expected_data[key])
+        self.assertDictEqual(data, expected_data)

@@ -90,8 +90,7 @@ class ApiLoader(PathMixin, VideoLoader):
 
 
 class VideoInfoLoader(PathMixin, VideoLoader):
-    fields = set(('title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                  'files'))
+    fields = set(('title', 'thumbnail_url', 'tags', 'files'))
 
     # the ordering of fmt codes we prefer to download
     preferred_fmt_types = [
@@ -134,9 +133,6 @@ class VideoInfoLoader(PathMixin, VideoLoader):
             return {}
         data = {
             'title': params['title'][0].decode('utf8'),
-            'user': params['author'][0].decode('utf8'),
-            'user_url': u'http://www.youtube.com/user/{0}'
-                        u''.format(params['author'][0].decode('utf8')),
             'thumbnail_url': params['thumbnail_url'][0],
             }
         if 'keywords' in params:
@@ -298,7 +294,7 @@ class Suite(BaseSuite):
 
     @staticmethod
     def parse_api_video(video):
-        username = video['author'][0]['name']['$t']
+        username = video['author'][0]['uri']['$t'].rsplit('/', 1)[-1]
         if 'published' in video:
             date_key = 'published'
         else:

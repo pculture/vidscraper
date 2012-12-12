@@ -156,6 +156,16 @@ class YouTubeApiTestCase(YouTubeTestCase):
         data['tags'] = set(data['tags'])
         self.assertDictEqual(data, CARAMELL_DANSEN_API_DATA)
 
+    def test_get_video_data__pretty_name(self):
+        """
+        The author's "name" isn't the same as their username. We want their username.
+
+        """
+        api_file = self.get_data_file('youtube/api_pretty_name.json')
+        response = self.get_response(api_file.read())
+        data = self.loader.get_video_data(response)
+        self.assertEqual(data['user'], 'marketingcoachmike')
+
     def test_get_video_data__forbidden(self):
         expected_data = {'is_embeddable': False}
         response = self.get_response('', code=requests.codes.forbidden)
@@ -204,8 +214,6 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         expected_data = {
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
-            'user': u'DrunkenVuko',
-            'user_url': u'http://www.youtube.com/user/DrunkenVuko',
             'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop',
                      u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
                      u'schweden', u'anime', u'musik', u'music', u'funny',

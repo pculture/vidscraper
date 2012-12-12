@@ -498,7 +498,7 @@ class Suite(BaseSuite):
             'title': api_video['title'],
             'link': api_video['url'],
             'description': api_video['description'],
-            'thumbnail_url': api_video['thumbnail_medium'],
+            'thumbnail_url': api_video['thumbnail_large'],
             'user': api_video['user_name'],
             'user_url': api_video['user_url'],
             'publish_datetime': datetime.datetime.strptime(

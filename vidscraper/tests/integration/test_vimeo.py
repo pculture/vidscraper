@@ -51,7 +51,7 @@ right to choose after the National Day of Action Rally to Stop Stupak-Pitts, \
             'publish_datetime': datetime.datetime(2009, 12, 4, 8, 23, 47),
             'tags': ['Stupak-Pitts', 'Pro-Choice'],
             'thumbnail_url':
-                u'http://b.vimeocdn.com/ts/360/198/36019806_200.jpg',
+                u'http://b.vimeocdn.com/ts/360/198/36019806_640.jpg',
             'title': u'Tishana - Pro-Choicers on Stupak',
             'url': u'http://vimeo.com/7981161',
             'user': u'Latoya Peterson',

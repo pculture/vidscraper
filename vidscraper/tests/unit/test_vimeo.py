@@ -61,7 +61,7 @@ class SimpleLoaderTestCase(VimeoTestCase):
 
     def test_get_video_data(self):
         expected_data = {
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
             'link': u'http://vimeo.com/2',
             'description': u'I shot this myself!',
             'title': u'Good morning, universe',
@@ -96,7 +96,7 @@ class VimeoAdvancedLoaderTestCase(VimeoTestCase):
 
     def test_get_video_data(self):
         expected_data = {
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_200.jpg',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/228/979/22897998_640.jpg',
             'link': u'http://vimeo.com/2',
             'description': u'I shot this myself!',
             'title': u'Good morning, universe',
@@ -319,7 +319,7 @@ class SimpleFeedTestCase(VimeoTestCase):
             'user_url': u"http://vimeo.com/jakob",
             "tags": [],
             'guid': u'tag:vimeo,2011-06-06:clip24714980',
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_200.jpg',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/162/178/162178490_640.jpg',
         }
         self.assertEqual(data, expected)
 
@@ -338,7 +338,7 @@ class SimpleFeedTestCase(VimeoTestCase):
             'publish_datetime': datetime.datetime(2011, 5, 16, 20, 1, 30),
             'user': u"Jake Lodwick",
             'user_url': u"http://vimeo.com/jakob",
-            'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_200.jpg",
+            'thumbnail_url': u"http://b.vimeocdn.com/ts/155/495/155495891_640.jpg",
             'flash_enclosure_url': u"http://vimeo.com/moogaloop.swf?clip_id=23833511",
             'tags': [u'archives', u'santa', u'easter bunny'],
             'guid': u'tag:vimeo,2011-05-16:clip23833511',
@@ -406,7 +406,7 @@ class AdvancedFeedTestCase(VimeoTestCase):
             'title': u'Tula "Dragon" - March 30th, 2012 @ Franz Mehlhose, Erfurt (GER)',
             'tags': [u'Tula', u'Dragon', u'Franz Mehlhose', u'Erfurt',
                      u'Patrick Richter', u'Roman Hagenbrock'],
-            'thumbnail_url': u'http://b.vimeocdn.com/ts/273/118/273118277_200.jpg',
+            'thumbnail_url': u'http://b.vimeocdn.com/ts/273/118/273118277_640.jpg',
             'publish_datetime': datetime.datetime(2012, 4, 1, 15, 49, 22)
         }
         self.assertEqual(data, expected)
@@ -453,7 +453,7 @@ class VimeoSearchTestCase(VimeoTestCase):
             'title': u'Dancing Pigeons - Ritalin',
             'link': 'http://vimeo.com/13639493',
             'description': u"""Directed by Tomas Mankovsky\n\nCast/ Performers (in order of appearance)\n\t\t\nOld Man -                           Keith Francis\nFlame Man - \t                     Adam Speers\nIce Man -\t                             Phil Zimmerman\n\t\nProducer\t  -                           Patrick Craig\n\t\nCasting Director -               \t     Sophie North\n\t\nEditor\t    -                         Julian Tranquille\n\t\nPost Production Supervisor\t -    Justin Brukman\n\t\n1st AD\t                          -   Chris Kelly\n1st AD\t                           -  Ben Fogg\nProduction Manager\t            - Adam Shaw\n\t\nDirector Of Photography\t     - Adam Frisch\nFocus Puller\t                     - Jeremy Fusco\nPhantom Technician\t            -  John Hadfield\nCamera Assistant\t            - Roland Philip\n7D Camera Assistant\t            - Chris Nunn\nGaffer\t                            - Tony Miller\nSpark\t                            - Jim Okeffe\nSpark\t                            - Chris Georgeous\nSpark\t                            - Jason Fletcher\nGenny Op\t                            - Kevin Cooli\nGenny Op\t                            - Lee Parfit\n\t\nArt Director\t                    - Arthur De Borman\nArt Director                            - Sam Ludgate\n\t\nSpecial Effects\t         -            Artem\nSpecial Effects Supervisor\t-     Simon Tayler\nSpecial Effects Technicians\t -    Toby Stewart\nSpecial Effects Technicians\t  -   Jonathan Bickerdike\nSpecial Effects Technicians\t   -  Matt Loader\n\t\nHair & Make Up\t                  -   Izzy Broad\nStylist\t                          -   Tess Loe\nStylist Assistant\t                   -  Daisy Babbington \n\t\nFire Cover\t                           -  1st Defense\nMedical Cover\t                   -  Location Medical\nAnimals\t                            - A-Z Animals - Gerry Cott\n\t\nPhotography\t                    - Marcus Palmqvist\nPhotography Assistant\t            - Belinda Foord\n\t\nProduction Assistant\t           -  Rob Leonard\nRunner\t                            - Sophia Marks\nRunner\t                            - Lola Marks\nRunner\t                            - Anna Fogg\n\t\nSpecial Thanks To\t             \n\nCut and Run\n\t                                     Take 2 Films\n\t                                     MPC\n\t                                     Green Door Films\n\t                                     Panalux\n\t                                     Black Country Parks\n\t                                     San Remo Caf\xe9\n\nCommissioned by Diesel:U:Music""",
-            'thumbnail_url': 'http://b.vimeocdn.com/ts/786/198/78619855_200.jpg',
+            'thumbnail_url': 'http://b.vimeocdn.com/ts/786/198/78619855_640.jpg',
             'user': 'Blink',
             'user_url': 'http://vimeo.com/user4230856',
             'publish_datetime': datetime.datetime(2010, 07, 26, 4, 29, 33),

@@ -37,7 +37,7 @@ class SuiteTestCase(BaseTestCase):
     def setUp(self):
         self.suite = Suite()
         self.feed = self.suite.get_feed(
-            'file://{0}'.format(self._data_file_path('feed/feed.rss')))
+            'file://{0}'.format(self._data_file_path('generic/feed.rss')))
         self.old_SANITIZE = feedparser.SANITIZE_HTML
         feedparser.SANITIZE_HTML = False
 
@@ -124,13 +124,13 @@ h.264</p>""")
                          datetime.datetime(2011, 10, 20, 14, 17, 44))
 
     def test_parse_feed_entry_rel_via(self):
-        fp = feedparser.parse(self._data_file_path('feed/feed_with_link_via.atom'))
+        fp = feedparser.parse(self._data_file_path('generic/feed_with_link_via.atom'))
         data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['link'],
                          "http://www.example.org/entries/1")
 
     def test_parse_feed_entry_atom(self):
-        fp = feedparser.parse(self._data_file_path('feed/feed.atom'))
+        fp = feedparser.parse(self._data_file_path('generic/feed.atom'))
         data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(
             data,
@@ -154,7 +154,7 @@ h.264</p>""")
              'license': 'http://creativecommons.org/licenses/by/2.5/'})
 
     def test_parse_feed_media_player(self):
-        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player.atom'))
+        fp = feedparser.parse(self._data_file_path('generic/feed_with_media_player.atom'))
         data = self.feed.get_video_data(fp.entries[0])
         self.assertEqual(data['embed_code'],
                          u'<object width="425" height="271">'
@@ -172,7 +172,7 @@ h.264</p>""")
                          '</object>')
 
     def test_parse_feed_media_content(self):
-        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_content.rss'))
+        fp = feedparser.parse(self._data_file_path('generic/feed_with_media_content.rss'))
         data = self.feed.get_video_data(fp.entries[0])
         video_file = data['files'][0]
         self.assertEqual(
@@ -186,10 +186,21 @@ h.264</p>""")
         Because the media:player doesn't have any content, and this entry has
         an enclosure, we don't use the media:player attribute.
         """
-        fp = feedparser.parse(self._data_file_path('feed/feed_with_media_player_url.rss'))
+        fp = feedparser.parse(self._data_file_path('generic/feed_with_media_player_url.rss'))
         data = self.feed.get_video_data(fp.entries[0])
         video_file = data['files'][0]
         self.assertEqual(video_file.url, 'http://vimeo.com/moogaloop.swf?clip_id=7981161')
         self.assertEqual(video_file.mime_type, 'application/x-shockwave-flash')
         self.assertEqual(video_file.length, '15993252')
         self.assertEqual(data['embed_code'], None)
+
+    def test_entry_no_title(self):
+        """
+        If one of the entries is missing a title, the feed should be able to
+        parse data out of it (rather than choking).
+
+        """
+        fp = feedparser.parse(self._data_file_path('generic/garbage.rss'))
+        entry = fp.entries[3]
+        self.assertTrue('title' not in entry)
+        data = self.feed.get_video_data(entry)

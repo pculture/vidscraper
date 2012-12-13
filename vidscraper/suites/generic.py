@@ -65,7 +65,7 @@ class Feed(FeedparserFeed):
             license = item.get('license')
         return {
             'link': link,
-            'title': convert_entities(item['title']),
+            'title': convert_entities(item.get('title', '')),
             'description': description,
             'thumbnail_url': get_entry_thumbnail_url(item),
             'files': files,

@@ -88,7 +88,7 @@ class AdvancedApiMixin(object):
             'link': [u['_content'] for u in item['urls']['url']
                     if u['type'] == 'video'][0],
             'description': item['description'],
-            'thumbnail_url': item['thumbnails']['thumbnail'][1]['_content'],
+            'thumbnail_url': item['thumbnails']['thumbnail'][2]['_content'],
             'user': item['owner']['realname'],
             'user_url': item['owner']['profileurl'],
             'publish_datetime': datetime.datetime.strptime(

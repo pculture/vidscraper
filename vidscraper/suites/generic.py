@@ -22,9 +22,9 @@ class Feed(FeedparserFeed):
         super(Feed, self)._next_page()
 
     def get_video_data(self, item):
-        if 'published_parsed' in item:
+        if item.get('published_parsed'):
             best_date = struct_time_to_datetime(item['published_parsed'])
-        elif 'updated_parsed' in item:
+        elif item.get('updated_parsed'):
             best_date = struct_time_to_datetime(item['updated_parsed'])
         else:
             best_date = None

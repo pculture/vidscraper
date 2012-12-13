@@ -204,3 +204,17 @@ h.264</p>""")
         entry = fp.entries[3]
         self.assertTrue('title' not in entry)
         data = self.feed.get_video_data(entry)
+
+    def test_entry_invalid_date(self):
+        """
+        If one of the entries has an unparseable publish date, the feed
+        shouldn't choke on that.
+
+        """
+        fp = feedparser.parse(self._data_file_path('generic/invalid_dates.rss'))
+        entry = fp.entries[0]
+        self.assertTrue('published_parsed' in entry)
+        self.assertTrue(entry.published_parsed is None)
+        self.assertTrue('updated_parsed' in entry)
+        self.assertTrue(entry.updated_parsed is None)
+        data = self.feed.get_video_data(entry)

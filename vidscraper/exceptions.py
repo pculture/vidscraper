@@ -56,6 +56,15 @@ class UnhandledSearch(VidscraperError):
     pass
 
 
+class InvalidVideo(VidscraperError):
+    """
+    Raised if a video is found to be invalid in some way after data has
+    been collected on it.
+
+    """
+    pass
+
+
 class VideoDeleted(VidscraperError):
     """Raised if the remote server has deleted the video being scraped."""
     pass

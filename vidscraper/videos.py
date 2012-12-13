@@ -41,7 +41,7 @@ except (RuntimeError, ImportError):
 
 from vidscraper import __version__
 from vidscraper.exceptions import (UnhandledVideo, UnhandledFeed,
-                                   UnhandledSearch)
+                                   UnhandledSearch, InvalidVideo)
 from vidscraper.utils.feedparser import (get_item_thumbnail_url,
                                          struct_time_to_datetime)
 from vidscraper.utils.search import (search_string_from_terms,
@@ -612,7 +612,10 @@ class VideoIterator(object):
         items = self.get_response_items(response)
         self._page_videos_count = 0
         for item in items:
-            data = self.get_video_data(item)
+            try:
+                data = self.get_video_data(item)
+            except InvalidVideo:
+                continue
             url = data['link']
             video = registry.get_video(url,
                                        fields=self.video_fields,
@@ -666,7 +669,8 @@ class VideoIterator(object):
         """
         Parses a single item for the feed and returns a data dictionary for
         populating a :class:`Video` instance. By default, returns an empty
-        dictionary.
+        dictionary. Raises :exc:`.InvalidVideo` if the item is found to be
+        invalid in some way; this causes the item to be ignored.
 
         """
         return {}

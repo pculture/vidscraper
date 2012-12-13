@@ -29,7 +29,7 @@ import urlparse
 
 import feedparser
 
-from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
+from vidscraper.exceptions import UnhandledVideo, UnhandledFeed, InvalidVideo
 from vidscraper.suites import BaseSuite, registry
 from vidscraper.utils.feedparser import (get_entry_thumbnail_url,
                                          get_accepted_enclosures)
@@ -123,6 +123,8 @@ class Feed(FeedparserFeed):
         return data
 
     def get_video_data(self, item):
+        if 'blip_puredescription' not in item:
+            raise InvalidVideo
         return Suite.parse_feed_entry(item)
 
 

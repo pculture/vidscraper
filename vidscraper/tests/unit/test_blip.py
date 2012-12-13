@@ -26,6 +26,7 @@
 import datetime
 
 import feedparser
+import mock
 
 from vidscraper.exceptions import UnhandledSearch, UnhandledVideo
 from vidscraper.suites.blip import Suite, ApiLoader, OEmbedLoader
@@ -130,7 +131,6 @@ class BlipFeedTestCase(BlipTestCase):
         BlipTestCase.setUp(self)
         self.feed_url = 'http://blip.tv/djangocon'
         self.feed = self.suite.get_feed(self.feed_url)
-        self.response = feedparser.parse(self.get_data_file('blip/feed.rss'))
 
     def test_feed_urls(self):
         valid_show_urls = (
@@ -157,13 +157,28 @@ class BlipFeedTestCase(BlipTestCase):
         self.assertEqual(url, expected)
 
     def test_get_video_data(self):
-        items = self.feed.get_response_items(self.response)
+        response = feedparser.parse(self.get_data_file('blip/feed.rss'))
+        items = self.feed.get_response_items(response)
         data = self.feed.get_video_data(items[1])
         self.assertEqual(data, DISQUS_DATA)
 
     def test_get_response_items(self):
-        videos = self.feed.get_response_items(self.response)
+        response = feedparser.parse(self.get_data_file('blip/feed.rss'))
+        videos = self.feed.get_response_items(response)
         self.assertEqual(len(videos), 77)
+
+    def test_invalid_items(self):
+        """
+        If there are invalid items in a feed, the feed shouldn't choke on them.
+
+        """
+        response = feedparser.parse(self.get_data_file('blip/feed_invalid_items.rss'))
+        self.assertEqual(len(response.entries), 37)
+        self.assertFalse('blip_puredescription' in response.entries[29])
+        self.assertFalse('blip_puredescription' in response.entries[34])
+        with mock.patch.object(self.feed, 'get_page', return_value=response):
+            self.feed.load()
+        self.assertEqual(len(list(self.feed)), 35)
 
 
 class BlipSearchTestCase(BlipTestCase):

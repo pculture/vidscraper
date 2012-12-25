@@ -73,7 +73,62 @@ class PathMixin(object):
         raise UnhandledVideo(url)
 
 
-class ApiLoader(PathMixin, VideoLoader):
+class ApiMixin(object):
+    def get_headers(self):
+        headers = super(ApiMixin, self).get_headers()
+        if 'youtube_key' in self.api_keys:
+            headers['X-GData-Key'] = "key=" + self.api_keys['youtube_key']
+        return headers
+
+    def get_video_data(self, item):
+        username = item['author'][0]['uri']['$t'].rsplit('/', 1)[-1]
+        if 'published' in item:
+            date_key = 'published'
+        else:
+            date_key = 'updated'
+
+        media_group = item['media$group']
+        description = media_group['media$description']
+        if description['type'] != 'plain':
+            # HTML-ified description. SB: Is this correct? Added in
+            # 5ca9e928 originally.
+            soup = BeautifulSoup(description['$t']).findAll('span')[0]
+            description = unicode(soup.string)
+        else:
+            description = description['$t']
+
+        thumbnail_url = None
+        for thumbnail in media_group['media$thumbnail']:
+            if thumbnail_url is None and thumbnail['yt$name'] == 'default':
+                thumbnail_url = thumbnail['url']
+            if thumbnail['yt$name'] == 'hqdefault':
+                thumbnail_url = thumbnail['url']
+                break
+        if '$t' in media_group['media$keywords']:
+            tags = media_group['media$keywords']['$t'].split(', ')
+        else:
+            tags = []
+        tags.extend(
+            [cat['$t'] for cat in media_group['media$category']])
+        data = {
+            'link': item['link'][0]['href'].split('&', 1)[0],
+            'title': item['title']['$t'],
+            'description': description.replace('\r', ''),
+            'thumbnail_url': thumbnail_url,
+            'publish_datetime': datetime.strptime(item[date_key]['$t'],
+                                                  "%Y-%m-%dT%H:%M:%S.000Z"),
+            'tags': tags,
+            'user': username,
+            'user_url': u'http://www.youtube.com/user/{0}'.format(username),
+            'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
+                        item['id']['$t'].split(':')[-1]),
+            'license': media_group['media$license']['href'],
+            'flash_enclosure_url': media_group['media$player']['url']
+        }
+        return data
+
+
+class ApiLoader(ApiMixin, PathMixin, VideoLoader):
     fields = set(('link', 'title', 'description', 'guid', 'thumbnail_url',
                   'publish_datetime', 'tags', 'flash_enclosure_url', 'user',
                   'user_url', 'license'))
@@ -85,7 +140,7 @@ class ApiLoader(PathMixin, VideoLoader):
             return {'is_embeddable': False}
         parsed = json.loads(response.text)
         entry = parsed['entry']
-        return Suite.parse_api_video(entry)
+        return ApiMixin.get_video_data(self, entry)
 
 
 class VideoInfoLoader(PathMixin, VideoLoader):
@@ -176,7 +231,7 @@ class OEmbedLoader(OEmbedLoaderMixin, PathMixin, VideoLoader):
         return super(OEmbedLoader, self).get_video_data(response)
 
 
-class Feed(BaseFeed):
+class Feed(ApiMixin, BaseFeed):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
                        'uploads?alt=json&v=2&start-index={page_start}&max-results={page_max}')
@@ -218,9 +273,6 @@ class Feed(BaseFeed):
     def get_response_items(self, response):
         return response.json['feed'].get('entry', [])
 
-    def get_video_data(self, item):
-        return Suite.parse_api_video(item)
-
     def data_from_response(self, response):
         feed = response.json['feed']
         for l in feed['link']:
@@ -239,7 +291,7 @@ class Feed(BaseFeed):
         }
 
 
-class Search(BaseSearch):
+class Search(ApiMixin, BaseSearch):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/videos?v=2&alt=json&'
                        'q={query}&orderby={order_by}&start-index={page_start}&'
@@ -259,9 +311,6 @@ class Search(BaseSearch):
             return []
         return response.json['feed'].get('entry', [])
 
-    def get_video_data(self, item):
-        return Suite.parse_api_video(item)
-
     def data_from_response(self, response):
         # Response will have a 400 error code (and no useful metadata) if
         # we're beyond the end of the search results (max 999).
@@ -279,54 +328,6 @@ class Suite(BaseSuite):
 
     feed_class = Feed
     search_class = Search
-
-    @staticmethod
-    def parse_api_video(video):
-        username = video['author'][0]['uri']['$t'].rsplit('/', 1)[-1]
-        if 'published' in video:
-            date_key = 'published'
-        else:
-            date_key = 'updated'
-
-        media_group = video['media$group']
-        description = media_group['media$description']
-        if description['type'] != 'plain':
-            # HTML-ified description. SB: Is this correct? Added in
-            # 5ca9e928 originally.
-            soup = BeautifulSoup(description['$t']).findAll('span')[0]
-            description = unicode(soup.string)
-        else:
-            description = description['$t']
-
-        thumbnail_url = None
-        for thumbnail in media_group['media$thumbnail']:
-            if thumbnail_url is None and thumbnail['yt$name'] == 'default':
-                thumbnail_url = thumbnail['url']
-            if thumbnail['yt$name'] == 'hqdefault':
-                thumbnail_url = thumbnail['url']
-                break
-        if '$t' in media_group['media$keywords']:
-            tags = media_group['media$keywords']['$t'].split(', ')
-        else:
-            tags = []
-        tags.extend(
-            [cat['$t'] for cat in media_group['media$category']])
-        data = {
-            'link': video['link'][0]['href'].split('&', 1)[0],
-            'title': video['title']['$t'],
-            'description': description.replace('\r', ''),
-            'thumbnail_url': thumbnail_url,
-            'publish_datetime': datetime.strptime(video[date_key]['$t'],
-                                                  "%Y-%m-%dT%H:%M:%S.000Z"),
-            'tags': tags,
-            'user': username,
-            'user_url': u'http://www.youtube.com/user/{0}'.format(username),
-            'guid' : 'http://gdata.youtube.com/feeds/api/videos/{0}'.format(
-                        video['id']['$t'].split(':')[-1]),
-            'license': media_group['media$license']['href'],
-            'flash_enclosure_url': media_group['media$player']['url']
-        }
-        return data
 
 
 registry.register(Suite)

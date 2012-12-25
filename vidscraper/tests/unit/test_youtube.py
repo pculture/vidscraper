@@ -87,6 +87,7 @@ class SuiteTestCase(YouTubeTestCase):
                  'user_url', 'thumbnail_url', 'link', 'user', 'guid',
                  'publish_datetime', 'tags', 'license', 'files']))
 
+
 class YouTubePathTestCase(YouTubeTestCase):
     def test_valid_urls(self):
         mixin = PathMixin()
@@ -136,6 +137,11 @@ class YouTubeApiTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
         self.loader = ApiLoader(self.url)
+
+    def test_get_headers__api_key(self):
+        loader = ApiLoader(self.url, api_keys={'youtube_key': 'BLANK'})
+        self.assertEqual(loader.get_headers().get('X-GData-Key'),
+                         "key=BLANK")
 
     def test_get_url(self):
         api_url = self.loader.get_url()
@@ -193,6 +199,7 @@ Humpbacks especially have extremely complex communication systems.")
         data = self.loader.get_video_data(response)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(data['tags'], ['Nonprofit'])
+
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
     def setUp(self):
@@ -284,6 +291,12 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         feed_file = self.get_data_file('youtube/feed.json')
         self.response = self.get_response(feed_file.read())
 
+    def test_get_headers__api_key(self):
+        feed = self.suite.get_feed(self.feed_url,
+                                   api_keys={'youtube_key': 'BLANK'})
+        self.assertEqual(feed.get_headers().get('X-GData-Key'),
+                         "key=BLANK")
+
     def test_feed_urls(self):
         valid_urls = (
             'youtube.com/associatedpress',
@@ -347,6 +360,7 @@ class YouTubeFeedTestCase(YouTubeTestCase):
         data = self.feed.get_video_data(entries[0])
         self.assertEqual(data, expected)
 
+
 class YouTubeSearchTestCase(YouTubeTestCase):
     def setUp(self):
         YouTubeTestCase.setUp(self)
@@ -354,6 +368,12 @@ class YouTubeSearchTestCase(YouTubeTestCase):
         response = self.get_response(search_file.read())
         self.search = self.suite.get_search(u'query \u65e5\u672c\u8a9e')
         self.results = self.search.get_response_items(response)
+
+    def test_get_headers__api_key(self):
+        search = self.suite.get_search('query',
+                                       api_keys={'youtube_key': 'BLANK'})
+        self.assertEqual(search.get_headers().get('X-GData-Key'),
+                         "key=BLANK")
 
     def test_parse_search_result(self):
         data = self.search.get_video_data(self.results[0])

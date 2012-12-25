@@ -41,7 +41,7 @@ class YouTubeIntegrationTestCase(BaseTestCase):
         expected = {
             'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
             'license': u'http://www.youtube.com/t/terms',
-            'embed_code': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/J_DV9b0x7v4?fs=1&feature=oembed" frameborder="0" allowfullscreen></iframe>',
+            'embed_code': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/J_DV9b0x7v4?feature=oembed" frameborder="0" allowfullscreen></iframe>',
             'description': u"""English:
 do-do-do-oo, yeah-yeah-yeah-yeah
 

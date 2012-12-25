@@ -218,10 +218,26 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
                      u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
                      u'schweden', u'anime', u'musik', u'music', u'funny',
                      u'caramelldansen', u'U-U-U-Aua', u'Dance'],
-            'files': [VideoFile(url='http://o-o.preferred.comcast-lga1.v8.lscache2.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Cratebypass%2Ccp&fexp=914999%2C908425&itag=18&ip=71.0.0.0&signature=1CC7A83C7A8408F4EE2E5DD63342EEB09A6E3E57.609DC29367653DDED4BB2B81337BF0E8EB8DBF70&sver=3&ratebypass=yes&source=youtube&expire=1322614800&key=yt1&ipbits=8&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=medium&fallback_host=tc.v8.cache2.c.youtube.com&type=video/mp4', width=640, expires=datetime.datetime(2011, 11, 30, 1, 0), mime_type=u'video/mp4', height=360),
-                      VideoFile(url='http://o-o.preferred.comcast-lga1.v14.lscache4.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Calgorithm%2Cburst%2Cfactor%2Ccp&fexp=914999%2C908425&algorithm=throttle-factor&itag=34&ip=71.0.0.0&burst=40&sver=3&signature=6CB4B6686D3992609FB9D1284BB485332B73A188.A0346C4382AF0C8D93B84FFC14EB0DE1A8EB9522&source=youtube&expire=1322614800&key=yt1&ipbits=8&factor=1.25&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=medium&fallback_host=tc.v14.cache4.c.youtube.com&type=video/x-flv&itag=34', width=640, expires=datetime.datetime(2011, 11, 30, 1, 0), mime_type=u'video/x-flv', height=360),
-                      VideoFile(url='http://o-o.preferred.comcast-lga1.v6.lscache7.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Calgorithm%2Cburst%2Cfactor%2Ccp&fexp=914999%2C908425&algorithm=throttle-factor&itag=5&ip=71.0.0.0&burst=40&sver=3&signature=67657D04EC6665D74BD0B736A9C3C3305B41A72B.48096D7D9D9D1DB4BEDF185A14B15AA19DE2A9C6&source=youtube&expire=1322614800&key=yt1&ipbits=8&factor=1.25&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=small&fallback_host=tc.v6.cache7.c.youtube.com&type=video/x-flv&itag=5', width=400, expires=datetime.datetime(2011, 11, 30, 1, 0), mime_type=u'video/x-flv', height=240),
-                      VideoFile(url='http://o-o.preferred.comcast-lga1.v13.lscache3.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Cratebypass%2Ccp&fexp=914999%2C908425&itag=43&ip=71.0.0.0&signature=9A71404F0B2981C8D0B39D213C8D05ACC311584A.05901F792C765853714E7D0C19799D1497603124&sver=3&ratebypass=yes&source=youtube&expire=1322614800&key=yt1&ipbits=8&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=medium&fallback_host=tc.v13.cache3.c.youtube.com&type=video/webm', width=640, expires=datetime.datetime(2011, 11, 30, 1, 0), mime_type=u'video/webm', height=360)]
+            'files': [VideoFile(url='http://r10---sn-nx57yn7k.c.youtube.com/videoplayback?upn=p0pWpkfxwq4&sparams=cp%2Cgcr%2Cid%2Cip%2Cipbits%2Citag%2Cratebypass%2Csource%2Cupn%2Cexpire&fexp=919330%2C916611%2C920704%2C912806%2C928001%2C922403%2C922405%2C929901%2C913605%2C929104%2C913546%2C913556%2C908496%2C920201%2C913302%2C919009%2C911116%2C901451%2C902556&key=yt1&expire=1356417961&source=youtube&ipbits=8&itag=18&gcr=us&sver=3&signature=7D1D4A9CF0626C3B2A10F6567390165729FA00B8.89C64C08C8B1CA689E4CE21169531E34A56761C1&ratebypass=yes&mt=1356395169&mv=m&ms=au&ip=74.61.34.250&cp=U0hUS1RMVV9LS0NONF9MRllKOmZQN1JFU3lOX2Js&id=27f0d5f5bd31eefe',
+                                width=640,
+                                height=360,
+                                expires=datetime.datetime(2012, 12, 25, 6, 46, 1),
+                                mime_type=u'video/mp4'),
+                      VideoFile(url='http://r15---sn-nx57yn7r.c.youtube.com/videoplayback?upn=p0pWpkfxwq4&sparams=algorithm%2Cburst%2Ccp%2Cfactor%2Cgcr%2Cid%2Cip%2Cipbits%2Citag%2Csource%2Cupn%2Cexpire&fexp=919330%2C916611%2C920704%2C912806%2C928001%2C922403%2C922405%2C929901%2C913605%2C929104%2C913546%2C913556%2C908496%2C920201%2C913302%2C919009%2C911116%2C901451%2C902556&key=yt1&algorithm=throttle-factor&itag=34&ipbits=8&burst=40&gcr=us&sver=3&signature=9DAA96CCF4CA172A92C78907B0ECE241BAFB07D6.09AF4B0F7C6558D1B9B184A5F60232EDC296FF95&mv=m&mt=1356395169&ip=74.61.34.250&expire=1356417961&source=youtube&ms=au&factor=1.25&cp=U0hUS1RMVV9LS0NONF9MRllKOmZQN1JFU3lOX2Js&id=27f0d5f5bd31eefe',
+                                width=640,
+                                height=360,
+                                expires=datetime.datetime(2012, 12, 25, 6, 46, 1),
+                                mime_type=u'video/x-flv'),
+                      VideoFile(url='http://r2---sn-nx57yn7d.c.youtube.com/videoplayback?upn=p0pWpkfxwq4&sparams=algorithm%2Cburst%2Ccp%2Cfactor%2Cgcr%2Cid%2Cip%2Cipbits%2Citag%2Csource%2Cupn%2Cexpire&fexp=919330%2C916611%2C920704%2C912806%2C928001%2C922403%2C922405%2C929901%2C913605%2C929104%2C913546%2C913556%2C908496%2C920201%2C913302%2C919009%2C911116%2C901451%2C902556&key=yt1&algorithm=throttle-factor&itag=5&ipbits=8&burst=40&gcr=us&sver=3&signature=A909DD7537DD821A0F5AE14FF1E83C87DD7C4EDF.4FCE8516F456B96DD45DB35A7AB8624A1A45498F&mv=m&mt=1356395169&ip=74.61.34.250&expire=1356417961&source=youtube&ms=au&factor=1.25&cp=U0hUS1RMVV9LS0NONF9MRllKOmZQN1JFU3lOX2Js&id=27f0d5f5bd31eefe',
+                                width=400,
+                                height=240,
+                                expires=datetime.datetime(2012, 12, 25, 6, 46, 1),
+                                mime_type=u'video/x-flv'),
+                      VideoFile(url='http://r11---sn-nx57yn76.c.youtube.com/videoplayback?upn=p0pWpkfxwq4&sparams=cp%2Cgcr%2Cid%2Cip%2Cipbits%2Citag%2Cratebypass%2Csource%2Cupn%2Cexpire&fexp=919330%2C916611%2C920704%2C912806%2C928001%2C922403%2C922405%2C929901%2C913605%2C929104%2C913546%2C913556%2C908496%2C920201%2C913302%2C919009%2C911116%2C901451%2C902556&key=yt1&expire=1356417961&source=youtube&ipbits=8&itag=43&gcr=us&sver=3&signature=7D0403EBD72E0A28695B35F7BD542A88BC9FE4FA.C4D2BFDD22BBFDC002F8C67CF66363BCC93501EC&ratebypass=yes&mt=1356395169&mv=m&ms=au&ip=74.61.34.250&cp=U0hUS1RMVV9LS0NONF9MRllKOmZQN1JFU3lOX2Js&id=27f0d5f5bd31eefe',
+                                width=640,
+                                height=360,
+                                expires=datetime.datetime(2012, 12, 25, 6, 46, 1),
+                                mime_type=u'video/webm')]
         }
         self.assertDictEqual(data, expected_data)
 
@@ -242,6 +258,20 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         response = self.get_response('', code=402)
         data = self.loader.get_video_data(response)
         self.assertEqual(data, {})
+
+    def test_get_video_data__no_files(self):
+        scrape_file = self.get_data_file('youtube/video_info_no_files.txt')
+        response = self.get_response(scrape_file.read())
+        data = self.loader.get_video_data(response)
+        expected_data = {
+            'files': [],
+            'thumbnail_url': 'http://i1.ytimg.com/vi/8SCZaB3ZtAE/hqdefault.jpg',
+            'tags': [u'Atlanta SEO services', u'Atlanta SEO Company', u'AL Loise',
+                     u'Audience Targeting', u'SEO Target', u'Online Business',
+                     u'Onli'],
+            'title': u'Audience Targeting'
+        }
+        self.assertEqual(data, expected_data)
 
 
 class YouTubeFeedTestCase(YouTubeTestCase):

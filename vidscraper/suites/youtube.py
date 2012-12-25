@@ -24,7 +24,6 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from datetime import datetime
-import itertools
 import json
 import re
 import time
@@ -92,30 +91,29 @@ class ApiLoader(PathMixin, VideoLoader):
 class VideoInfoLoader(PathMixin, VideoLoader):
     fields = set(('title', 'thumbnail_url', 'tags', 'files'))
 
-    # the ordering of fmt codes we prefer to download
-    preferred_fmt_types = [
-        (38, u'video/mp4', 4096, 3072),
-        (37, u'video/mp4', 1920, 1080),
-        (22, u'video/mp4', 1280, 720),
-        (18, u'video/mp4', 640, 360),
-        (35, u'video/x-flv', 854, 480),
-        (34, u'video/x-flv', 640, 360),
-        (6, u'video/x-flv', 480, 270),
-        (5, u'video/x-flv', 400, 240),
-        ]
-    other_fmt_types = [
-        (45, u'video/webm', 1280, 720),
-        (44, u'video/webm', 854, 480),
-        (43, u'video/webm', 640, 360),
-        (84, u'video/mp4-3d', 1280, 720),
-        (85, u'video/mp4-3d', 1920, 520),
-        (82, u'video/mp4-3d', 640, 360),
-        (83, u'video/mp4-3d', 854, 240),
-        (102, u'video/webm-3d', 1280, 720),
-        (46, u'video/webm-3d', 1920, 540),
-        (101, u'video/webm-3d', 854, 480),
-        (100, u'video/webm-3d', 640, 360),
-        ]
+    # the ordering of format codes we prefer to download
+    # (code, mimetype, width, height)
+    formats = (
+        ('38', u'video/mp4', 4096, 3072),
+        ('37', u'video/mp4', 1920, 1080),
+        ('22', u'video/mp4', 1280, 720),
+        ('18', u'video/mp4', 640, 360),
+        ('35', u'video/x-flv', 854, 480),
+        ('34', u'video/x-flv', 640, 360),
+        ('6', u'video/x-flv', 480, 270),
+        ('5', u'video/x-flv', 400, 240),
+        ('45', u'video/webm', 1280, 720),
+        ('44', u'video/webm', 854, 480),
+        ('43', u'video/webm', 640, 360),
+        ('84', u'video/mp4-3d', 1280, 720),
+        ('85', u'video/mp4-3d', 1920, 520),
+        ('82', u'video/mp4-3d', 640, 360),
+        ('83', u'video/mp4-3d', 854, 240),
+        ('102', u'video/webm-3d', 1280, 720),
+        ('46', u'video/webm-3d', 1920, 540),
+        ('101', u'video/webm-3d', 854, 480),
+        ('100', u'video/webm-3d', 640, 360),
+    )
 
     url_format = u"http://www.youtube.com/get_video_info?video_id={video_id}&el=embedded&ps=default&eurl="
 
@@ -142,36 +140,26 @@ class VideoInfoLoader(PathMixin, VideoLoader):
             data['thumbnail_url'] = data['thumbnail_url'].replace(
                 '/default.jpg', '/hqdefault.jpg')
 
-        # fmt_url_map is a comma separated list of pipe separated
-        # pairs of fmt, url
-        # build the format codes.
-        fmt_list = [int(x.split('/')[0])
-                    for x in params['fmt_list'][0].split(',')]
-        # build the list of available urls.
-        fmt_url_map = params["url_encoded_fmt_stream_map"][0].split(",")
-        # strip url= from url=xxxxxx, strip trailer.
-        fmt_url_map = [urllib.unquote_plus(x[4:]).split(';')[0]
-                       for x in fmt_url_map]
-        # now build the actual fmt_url_map ...
-        fmt_url_map = dict(zip(fmt_list, fmt_url_map))
-        def _parse_fmt(fmt):
-            file_url = fmt_url_map[fmt]
-            parsed_url = urlparse.urlparse(file_url)
-            file_url_qs = urlparse.parse_qs(parsed_url.query)
-            file_url_expires = struct_time_to_datetime(
-                time.gmtime(int(file_url_qs['expire'][0])))
-            return file_url, file_url_expires
-        data['files'] = files = []
-        for fmt, mime_type, width, height in itertools.chain(
-            self.preferred_fmt_types, self.other_fmt_types):
-            if fmt in fmt_url_map:
-                file_url, file_url_expires = _parse_fmt(fmt)
-                files.append(VideoFile(
-                        url=file_url,
-                        expires=file_url_expires,
-                        mime_type=mime_type,
-                        width=width,
-                        height=height))
+        url_querystrings = params["url_encoded_fmt_stream_map"][0].split(",")
+        url_data = [urlparse.parse_qs(qs) for qs in url_querystrings]
+        url_data_map = dict((ud['itag'][0], ud) for ud in url_data if 'itag' in ud)
+
+        data['files'] = []
+        for code, mime_type, width, height in self.formats:
+            if code in url_data_map:
+                file_data = url_data_map[code]
+                parsed_file_url = urlparse.urlsplit(file_data['url'][0])
+                parsed_file_url_qs = dict(urlparse.parse_qsl(parsed_file_url.query))
+                expires = struct_time_to_datetime(time.gmtime(int(parsed_file_url_qs['expire'])))
+                parsed_file_url_qs['signature'] = file_data['sig'][0]
+                url = urlparse.urlunsplit(parsed_file_url[:3] +
+                                          (urllib.urlencode(parsed_file_url_qs),) +
+                                          parsed_file_url[4:])
+                data['files'].append(VideoFile(url=url,
+                                               expires=expires,
+                                               mime_type=mime_type,
+                                               width=width,
+                                               height=height))
         return data
 
 

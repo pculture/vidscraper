@@ -63,6 +63,33 @@ Quick example
     'http://gdata.youtube.com/feeds/api/videos/PMpu8jH1LE8'
 
 
+Command line
+++++++++++++
+
+vidscraper also comes with a command line utility allowing you to get
+video metadata from the command line. The example above could look like
+this:
+
+.. code-block:: bash
+
+    $ vidscraper video http://www.youtube.com/watch?v=PMpu8jH1LE8 \
+      --fields=title,description,user,guid
+    Scraping http://www.youtube.com/watch?v=PMpu8jH1LE8...
+    {
+      "description": "Ermintrude's been at the poppies again, but it's Dougal who ends up high as a kite!", 
+      "fields": [
+        "title", 
+        "description", 
+        "user", 
+        "guid"
+      ], 
+      "guid": "http://gdata.youtube.com/feeds/api/videos/PMpu8jH1LE8", 
+      "title": "The Magic Roundabout - Ermintrude's Folly", 
+      "url": "http://www.youtube.com/watch?v=PMpu8jH1LE8", 
+      "user": "nickhirst999"
+    }
+
+
 Project links
 =============
 
@@ -83,7 +110,7 @@ Requirements
 * Python_ 2.6+
 * BeautifulSoup_ 4.0.2+
 * feedparser_ 5.1.2+
-* `python-requests`_ 0.13.0+
+* `python-requests`_ 0.13.0+ (But less than 1.0.0!)
 
 .. _Python: http://www.python.org/
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
@@ -93,11 +120,13 @@ Requirements
 Optional
 --------
 * `requests-oauth`_ 0.4.1+ (for some APIs *\*cough\* Vimeo searching \*cough\** which require authentication)
-* unittest2_ (for tests)
-* mock_ (for tests)
-* tox_ (for tests)
+* lxml_ 2.3.4+ (recommended for BeautifulSoup; assumed parser for test results.)
+* unittest2_ 0.5.1+ (for tests)
+* mock_ 0.8.0+ (for tests)
+* tox_ 1.4.2+ (for tests)
 
 .. _`requests-oauth`: https://github.com/maraujop/requests-oauth
+.. _lxml: http://lxml.de/
 .. _unittest2: http://pypi.python.org/pypi/unittest2/
 .. _mock: http://www.voidspace.org.uk/python/mock/
 .. _tox: http://tox.readthedocs.org/
@@ -110,7 +139,6 @@ User Guide
    :maxdepth: 2
 
    guide/getting-started
-   guide/command-line
 
 API Documentation
 +++++++++++++++++

@@ -258,12 +258,13 @@ class Video(object):
         """
         data = dict(self.items())
 
-        dt = data['publish_datetime']
+        dt = data.get('publish_datetime')
         if isinstance(dt, datetime):
             data['publish_datetime'] = dt.isoformat()
 
-        if data['files'] is not None:
-            data['files'] = [f.serialize() for f in data['files']]
+        files = data.get('files')
+        if files is not None:
+            data['files'] = [f.serialize() for f in files]
 
         data.update({
             'url': self.url,
@@ -290,13 +291,13 @@ class Video(object):
                                    api_keys=api_keys,
                                    require_loaders=False)
 
-        dt = data.get('publish_datetime', None)
+        dt = data.get('publish_datetime')
         if dt is not None:
             data['publish_datetime'] = _isoformat_to_datetime(dt)
 
-        if data['files'] is not None:
-            data['files'] = [VideoFile.deserialize(f_data)
-                             for f_data in data['files']]
+        files = data.get('files')
+        if files is not None:
+            data['files'] = [VideoFile.deserialize(f) for f in files]
 
         video._apply(data)
         return video

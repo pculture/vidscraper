@@ -130,6 +130,29 @@ class VideoTestCase(BaseTestCase):
         new_video = Video.deserialize(data)
         self.assertEqual(dict(video.items()), dict(new_video.items()))
 
+    def test_serialize__partial(self):
+        """
+        Tests that a video with only some fields can still be serialized and
+        deserialized.
+
+        """
+        video = Video("http://www.youtube.com/watch?v=J_DV9b0x7v4",
+                      fields=('title', 'embed_code'))
+        # we load the video data this way to avoid depending on the network
+        video_data = CARAMELL_DANSEN_API_DATA.copy()
+        video._apply(video_data)
+        data = video.serialize()
+
+        # verify that the data we expect is in the serialized version.
+        self.assertEqual(data['url'], video.url)
+        self.assertEqual(data['title'], video.title)
+        self.assertEqual(data['embed_code'], video.embed_code)
+
+        # Verify that the data can be deserialized as a video.
+        new_video = Video.deserialize(data)
+        self.assertEqual(video.url, new_video.url)
+        self.assertEqual(dict(video.items()), dict(new_video.items()))
+
     def test_get_file__open(self):
         """
         Tests that open video formats are preferred over proprietary.

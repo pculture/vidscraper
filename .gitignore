@@ -1,5 +1,7 @@
 *.py[co]
 *~
-/.coverage
-/vidscraper.egg-info
-.tox
+/.coverage/
+/vidscraper.egg-info/
+/.tox/
+/dist/
+/docs/_build/

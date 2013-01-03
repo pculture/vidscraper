@@ -1,0 +1,4 @@
+include .travis.yml LICENSE MANIFEST.in README.rst test_requirements.txt tox.ini
+recursive-include vidscraper/tests/data *.rss *.json *.html *.atom *.xml *.txt
+recursive-include docs *.py *.rst *.bat Makefile
+prune docs/_build

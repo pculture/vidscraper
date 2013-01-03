@@ -3,12 +3,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="vidscraper",
-    version='1.0.1',
+    version='1.0.2a',
     maintainer='Participatory Culture Foundation',
     maintainer_email='dev@mirocommunity.org',
     url='https://github.com/pculture/vidscraper',
     license='BSD',
     packages=find_packages(),
+    include_package_data=True,
     scripts=['bin/vidscraper'],
     install_requires=[
         'feedparser>=5.1.2',
@@ -18,7 +19,7 @@ setup(
     ],
     extras_require={
         'oauth': ['requests-oauth>=0.4.1'],
-        'tests': ['unittest2>=0.5.1', 'mock>=0.8.0', 'tox>=1.4.2'],
+        'tests': ['unittest2>=0.5.1', 'mock>=0.8.0', 'tox>=1.4.2', 'nose>=1.2.1'],
     },
     test_suite='vidscraper.tests',
     classifiers=(

@@ -34,7 +34,7 @@ class AutoFunctionalTestCase(unittest.TestCase):
         self.assertEqual(video.title,
                          u'CaramellDansen (Full Version + Lyrics)')
         self.assertNotEqual(video.file_url, None)
-        self.assertEqual(video.file_url_mimetype, u'video/x-flv')
+        self.assertEqual(video.file_url_mimetype, u'video/mp4')
         self.assertTrue(
             video.file_url_expires - datetime.datetime.now() >
             datetime.timedelta(hours=1))

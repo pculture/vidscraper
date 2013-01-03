@@ -249,6 +249,8 @@ Humpbacks especially have extremely complex communication systems.")
         self.assertEqual(data['tags'], ['Nonprofit'])
 
 class YouTubeScrapeTestCase(YouTubeTestCase):
+    maxDiff = None
+
     def test_get_scrape_url(self):
         scrape_url = self.suite.get_scrape_url(self.video)
         self.assertEqual(
@@ -264,18 +266,15 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
         expected = {
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
-            'user': u'DrunkenVuko',
-            'user_url': u'http://www.youtube.com/user/DrunkenVuko',
             'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop',
                      u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga',
                      u'schweden', u'anime', u'musik', u'music', u'funny',
                      u'caramelldansen', u'U-U-U-Aua', u'Dance'],
-            'file_url_expires': datetime.datetime(2011, 11, 30, 1, 0),
-            'file_url_mimetype': u'video/x-flv',
-            'file_url': 'http://o-o.preferred.comcast-lga1.v6.lscache7.c.youtube.com/videoplayback?sparams=id%2Cexpire%2Cip%2Cipbits%2Citag%2Csource%2Calgorithm%2Cburst%2Cfactor%2Ccp&fexp=914999%2C908425&algorithm=throttle-factor&itag=5&ip=71.0.0.0&burst=40&sver=3&signature=67657D04EC6665D74BD0B736A9C3C3305B41A72B.48096D7D9D9D1DB4BEDF185A14B15AA19DE2A9C6&source=youtube&expire=1322614800&key=yt1&ipbits=8&factor=1.25&cp=U0hRR1ZMUl9FSkNOMV9ORlZJOmNUdWlkbTNrcU4y&id=27f0d5f5bd31eefe&quality=small&fallback_host=tc.v6.cache7.c.youtube.com&type=video/x-flv&itag=5',
-            }
-        for field in self.suite.scrape_fields:
-            self.assertEqual(data[field], expected[field])
+            'file_url_expires': datetime.datetime(2012, 12, 25, 6, 46, 1),
+            'file_url_mimetype': u'video/mp4',
+            'file_url': 'http://r10---sn-nx57yn7k.c.youtube.com/videoplayback?upn=p0pWpkfxwq4&sparams=cp%2Cgcr%2Cid%2Cip%2Cipbits%2Citag%2Cratebypass%2Csource%2Cupn%2Cexpire&fexp=919330%2C916611%2C920704%2C912806%2C928001%2C922403%2C922405%2C929901%2C913605%2C929104%2C913546%2C913556%2C908496%2C920201%2C913302%2C919009%2C911116%2C901451%2C902556&key=yt1&expire=1356417961&source=youtube&ipbits=8&itag=18&gcr=us&sver=3&signature=7D1D4A9CF0626C3B2A10F6567390165729FA00B8.89C64C08C8B1CA689E4CE21169531E34A56761C1&ratebypass=yes&mt=1356395169&mv=m&ms=au&ip=74.61.34.250&cp=U0hUS1RMVV9LS0NONF9MRllKOmZQN1JFU3lOX2Js&id=27f0d5f5bd31eefe',
+        }
+        self.assertEqual(data, expected)
 
     def test_parse_scrape_response_fail_150(self):
         scrape_file = open(os.path.join(self.data_file_dir, 'scrape2.txt'))
@@ -298,6 +297,18 @@ class YouTubeScrapeTestCase(YouTubeTestCase):
     def test_parse_scrape_error_other(self):
         self.assertRaises(RuntimeError,
                           self.suite.parse_scrape_error, RuntimeError())
+
+    def test_parse_scrape__no_files(self):
+        scrape_file = open(os.path.join(self.data_file_dir, 'scrape_no_files.txt'))
+        data = self.suite.parse_scrape_response(scrape_file.read())
+        expected_data = {
+            'thumbnail_url': 'http://i1.ytimg.com/vi/8SCZaB3ZtAE/hqdefault.jpg',
+            'tags': [u'Atlanta SEO services', u'Atlanta SEO Company', u'AL Loise',
+                     u'Audience Targeting', u'SEO Target', u'Online Business',
+                     u'Onli'],
+            'title': u'Audience Targeting'
+        }
+        self.assertEqual(data, expected_data)
 
 
 class YouTubeFeedTestCase(YouTubeTestCase):

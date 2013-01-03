@@ -30,6 +30,7 @@ from vidscraper.suites.youtube import YouTubeSuite
 
 
 class YouTubeFunctionalTestCase(unittest.TestCase):
+    maxDiff = None
 
     def setUp(self):
         self.suite = YouTubeSuite()
@@ -41,7 +42,7 @@ class YouTubeFunctionalTestCase(unittest.TestCase):
         expected = {
             'publish_datetime': datetime.datetime(2007, 5, 7, 22, 15, 21),
             'license': u'http://www.youtube.com/t/terms',
-            'embed_code': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/J_DV9b0x7v4?fs=1&feature=oembed" frameborder="0" allowfullscreen></iframe>',
+            'embed_code': u'<iframe width="459" height="344" src="http://www.youtube.com/embed/J_DV9b0x7v4?feature=oembed" frameborder="0" allowfullscreen></iframe>',
             'description': u"""English:
 do-do-do-oo, yeah-yeah-yeah-yeah
 
@@ -159,7 +160,7 @@ Caramelldansen""",
             'user_url': u'http://www.youtube.com/user/DrunkenVuko',
             'url': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
             'fields': ['title', 'description', 'publish_datetime', 'file_url', 'file_url_mimetype', 'file_url_length', 'file_url_expires', 'flash_enclosure_url', 'is_embeddable', 'embed_code', 'thumbnail_url', 'user', 'user_url', 'tags', 'link', 'guid', 'index', 'license'],
-            'file_url_mimetype': u'video/x-flv',
+            'file_url_mimetype': u'video/mp4',
             'title': u'CaramellDansen (Full Version + Lyrics)',
             'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
             'link': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
@@ -168,7 +169,7 @@ Caramelldansen""",
             'tags': [u'caramell', u'dance', u'dansen', u'hip', u'hop', u's\xfcchtig', u'geil', u'cool', u'lustig', u'manga', u'schweden', u'anime', u'musik', u'music', u'funny', u'caramelldansen', u'U-U-U-Aua', u'Dance']
             }
         for key, value in expected.items():
-            self.assertEqual(value, getattr(video, key))
+            self.assertEqual(getattr(video, key), value)
 
         # check file_url_*
         self.assertTrue('videoplayback' in video.file_url)

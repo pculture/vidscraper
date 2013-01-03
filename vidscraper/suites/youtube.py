@@ -62,20 +62,32 @@ class YouTubeSuite(BaseSuite):
                       'thumbnail_url', 'publish_datetime', 'tags',
                       'flash_enclosure_url', 'user', 'user_url', 'license'])
 
-    scrape_fields = set(['title', 'thumbnail_url', 'user', 'user_url', 'tags',
-                         'file_url', 'file_url_mimetype', 'file_url_expires'])
+    scrape_fields = set(['title', 'thumbnail_url', 'tags', 'file_url',
+                         'file_url_mimetype', 'file_url_expires'])
 
-    # the ordering of fmt codes we prefer to download
-    preferred_fmt_types = [
-        (38, u'video/mp4'), # 4096x3072
-        (37, u'video/mp4'), # 1920x1080
-        (22, u'video/mp4'), # 1280x720
-        (18, u'video/mp4'), # 640x360
-        (35, u'video/x-flv'), # 854x480, MPEG-4 encoded
-        (34, u'video/x-flv'), # 640x360, MPEG-4 encoded
-        (6, u'video/x-flv'), # 480x270
-        (5, u'video/x-flv'), # 400x240
-        ]
+    # the ordering of format codes we prefer to download
+    # (code, mimetype, width, height)
+    formats = (
+        ('38', u'video/mp4', 4096, 3072),
+        ('37', u'video/mp4', 1920, 1080),
+        ('22', u'video/mp4', 1280, 720),
+        ('18', u'video/mp4', 640, 360),
+        ('35', u'video/x-flv', 854, 480),
+        ('34', u'video/x-flv', 640, 360),
+        ('6', u'video/x-flv', 480, 270),
+        ('5', u'video/x-flv', 400, 240),
+        ('45', u'video/webm', 1280, 720),
+        ('44', u'video/webm', 854, 480),
+        ('43', u'video/webm', 640, 360),
+        ('84', u'video/mp4-3d', 1280, 720),
+        ('85', u'video/mp4-3d', 1920, 520),
+        ('82', u'video/mp4-3d', 640, 360),
+        ('83', u'video/mp4-3d', 854, 240),
+        ('102', u'video/webm-3d', 1280, 720),
+        ('46', u'video/webm-3d', 1920, 540),
+        ('101', u'video/webm-3d', 854, 480),
+        ('100', u'video/webm-3d', 640, 360),
+    )
 
     def get_feed_url(self, url, extra_params=None):
         for regex in self.feed_regexes:
@@ -211,9 +223,6 @@ class YouTubeSuite(BaseSuite):
             return {}
         data = {
             'title': params['title'][0].decode('utf8'),
-            'user': params['author'][0].decode('utf8'),
-            'user_url': u'http://www.youtube.com/user/%s' % (
-                params['author'][0].decode('utf8')),
             'thumbnail_url': params['thumbnail_url'][0],
             }
         if 'keywords' in params:
@@ -223,26 +232,24 @@ class YouTubeSuite(BaseSuite):
             data['thumbnail_url'] = data['thumbnail_url'].replace(
                 '/default.jpg', '/hqdefault.jpg')
 
-        # fmt_url_map is a comma separated list of pipe separated
-        # pairs of fmt, url
-        # build the format codes.
-        fmt_list = [int(x.split('/')[0])
-                    for x in params['fmt_list'][0].split(',')]
-        # build the list of available urls.
-        fmt_url_map = params["url_encoded_fmt_stream_map"][0].split(",")
-        # strip url= from url=xxxxxx, strip trailer.
-        fmt_url_map = [urllib.unquote_plus(x[4:]).split(';')[0]
-                       for x in fmt_url_map]
-        # now build the actual fmt_url_map ...
-        fmt_url_map = dict(zip(fmt_list, fmt_url_map))
-        for fmt, mimetype in self.preferred_fmt_types:
-            if fmt in fmt_url_map:
-                data['file_url'] = file_url = fmt_url_map[fmt]
-                data['file_url_mimetype'] = mimetype
-                parsed_url = urlparse.urlparse(file_url)
-                file_url_qs = urlparse.parse_qs(parsed_url.query)
-                data['file_url_expires'] = struct_time_to_datetime(
-                    time.gmtime(int(file_url_qs['expire'][0])))
+        url_querystrings = params["url_encoded_fmt_stream_map"][0].split(",")
+        url_data = [urlparse.parse_qs(qs) for qs in url_querystrings]
+        url_data_map = dict((ud['itag'][0], ud) for ud in url_data if 'itag' in ud)
+
+        for code, mime_type, width, height in self.formats:
+            if code in url_data_map:
+                file_data = url_data_map[code]
+                parsed_file_url = urlparse.urlsplit(file_data['url'][0])
+                parsed_file_url_qs = dict(urlparse.parse_qsl(parsed_file_url.query))
+                expires = struct_time_to_datetime(time.gmtime(int(parsed_file_url_qs['expire'])))
+                parsed_file_url_qs['signature'] = file_data['sig'][0]
+                url = urlparse.urlunsplit(parsed_file_url[:3] +
+                                          (urllib.urlencode(parsed_file_url_qs),) +
+                                          parsed_file_url[4:])
+                data['file_url'] = url
+                data['file_url_mimetype'] = mime_type
+                data['file_url_expires'] = expires
+                break
         return data
 
     def parse_scrape_error(self, exc):

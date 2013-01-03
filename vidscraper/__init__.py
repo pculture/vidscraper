@@ -28,7 +28,7 @@ from vidscraper import errors
 from vidscraper.suites import Video, registry, VideoSearch, VideoFeed
 
 
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 
 def handles_video_url(url):

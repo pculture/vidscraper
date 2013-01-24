@@ -27,4 +27,4 @@
 ===================
 
 * Corrected package data installation.
-
+* Added basic sanity-checking for video urls.

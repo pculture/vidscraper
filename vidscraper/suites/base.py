@@ -284,6 +284,10 @@ class BaseSuite(object):
                  handle the given url and api keys.
 
         """
+        # Sanity-check the url.
+        if not url:
+            raise UnhandledVideo(url)
+
         loaders = []
 
         for cls in self.loader_classes:

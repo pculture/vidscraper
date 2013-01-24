@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="vidscraper",
-    version='1.0.2a',
+    version='1.0.2',
     maintainer='Participatory Culture Foundation',
     maintainer_email='dev@mirocommunity.org',
     url='https://github.com/pculture/vidscraper',
@@ -33,5 +33,3 @@ setup(
         'Topic :: Multimedia :: Sound/Audio',
     ),
 )
-
-

@@ -157,6 +157,7 @@ Release notes
 .. toctree::
    :maxdepth: 1
 
+   release-notes/1.0.2
    release-notes/1.0.1
    release-notes/1.0.0
 

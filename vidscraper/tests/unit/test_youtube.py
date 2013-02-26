@@ -25,6 +25,7 @@
 
 import datetime
 
+import mock
 import requests
 
 from vidscraper.exceptions import UnhandledVideo, UnhandledFeed
@@ -298,9 +299,9 @@ class YouTubeFeedTestCase(YouTubeTestCase):
                          "key=BLANK")
 
     def test_feed_urls(self):
+        # URLs with no prefix in the path are tested in
+        # feed_urls__canonical_url.
         valid_urls = (
-            'youtube.com/associatedpress',
-            'www.youtube.com/associatedpress',
             'www.youtube.com/user/associatedpress',
             'www.youtube.com/profile/?user=associatedpress',
             'www.youtube.com/profile_videos/?user=associatedpress',
@@ -317,6 +318,18 @@ class YouTubeFeedTestCase(YouTubeTestCase):
 
         for url in invalid_urls:
             self.assertRaises(UnhandledFeed, self.feed.get_url_data, url)
+
+    def test_feed_urls__canonical_url(self):
+        expected = {
+            'username': 'TEDtalksDirector',
+        }
+        with self.get_data_file('youtube/canonical_url.html') as f:
+            response = self.get_response(f.read())
+        with mock.patch('vidscraper.suites.youtube.requests') as requests:
+            requests.get.return_value = response
+            feed = self.suite.get_feed('http://youtube.com/TED')
+
+        self.assertEqual(feed.url_data, expected)
 
     def test_data_from_response(self):
         expected = {

@@ -30,7 +30,7 @@ import time
 import urllib
 import urlparse
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 
 import feedparser
 # add the OpenSearch namespace to FeedParser
@@ -235,7 +235,7 @@ class Feed(ApiMixin, BaseFeed):
     per_page = 50
     page_url_format = ('http://gdata.youtube.com/feeds/api/users/{username}/'
                        'uploads?alt=json&v=2&start-index={page_start}&max-results={page_max}')
-    path_re = re.compile(r'^/(?:user/)?(?P<username>\w+)(?:/videos)?/?$')
+    path_re = re.compile(r'^/(?P<user>user/)?(?P<username>\w+)(?:/videos)?/?$')
     # old_path_re means that the username is in the GET params as 'user'
     old_path_re = re.compile(r'^/profile(?:_videos)?/?$')
     gdata_re = re.compile(r'^/feeds/(?:base|api)/users/(?P<username>\w+)/?')
@@ -252,9 +252,24 @@ class Feed(ApiMixin, BaseFeed):
         if parsed_url.scheme in ('http', 'https'):
             if parsed_url.netloc in ('youtube.com', 'www.youtube.com'):
                 match = self.path_re.match(parsed_url.path)
-                if (match and
-                    match.group('username') not in self.invalid_usernames):
-                    return match.groupdict()
+                if match:
+                    groupdict = match.groupdict()
+                    if groupdict['username'] not in self.invalid_usernames:
+                        if groupdict['user'] is None:
+                            # Some URLs at root are a kind of vanity URL that
+                            # doesn't correspond to a username. The only way
+                            # to be sure is to actually fetch the page and
+                            # check for a canonical url.
+                            response = requests.get(url)
+                            if response.status_code == 200:
+                                strainer = SoupStrainer('link',
+                                                        rel='canonical')
+                                soup = BeautifulSoup(response.content,
+                                                     parse_only=strainer)
+                                if soup.link is not None:
+                                    return self.get_url_data(soup.link['href'])
+                        else:
+                            return {'username': groupdict['username']}
 
                 match = self.old_path_re.match(parsed_url.path)
                 if match:

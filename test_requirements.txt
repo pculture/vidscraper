@@ -5,5 +5,4 @@ mock==1.0.1
 requests==0.14.2
 requests-oauth==0.4.1
 unittest2==0.5.1
-vidscraper==1.0.1
 nose==1.2.1

@@ -403,12 +403,13 @@ class AdvancedFeed(AdvancedIteratorMixin, SimpleFeed):
     def __init__(self, *args, **kwargs):
         super(AdvancedFeed, self).__init__(*args, **kwargs)
         if not self.is_available():
+            clsname = self.__class__.__name__
             if oauth_hook is None:
-                raise UnhandledFeed(u"{0} requires requests-oauth.".format(
-                                    self.__class__.__name__))
+                msg = u"{0} requires requests-oauth.".format(clsname)
+                warnings.warn(msg)
+                raise UnhandledFeed(msg)
             else:
-                raise UnhandledFeed(u"{0} requires API keys.".format(
-                                    self.__class__.__name__))
+                raise UnhandledFeed(u"{0} requires API keys.".format(clsname))
 
     def get_page_url_data(self, *args, **kwargs):
         data = super(AdvancedFeed, self).get_page_url_data(*args, **kwargs)

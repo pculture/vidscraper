@@ -285,6 +285,7 @@ class Video(object):
                          the deserialized video with.
 
         """
+        data = data.copy()
         from vidscraper.suites import registry
         video = registry.get_video(data['url'],
                                    fields=data['fields'],
@@ -396,6 +397,7 @@ class VideoFile(object):
         :meth:`serialize`, constructs a :class:`VideoFile` instance.
 
         """
+        data = data.copy()
         dt = data.get('expires', None)
         if dt is not None:
             data['expires'] = _isoformat_to_datetime(dt)

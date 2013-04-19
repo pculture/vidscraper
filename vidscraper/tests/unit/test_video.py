@@ -70,6 +70,10 @@ class VideoTestCase(BaseTestCase):
         self.assertEqual(video.url, new_video.url)
         self.assertEqual(dict(video.items()), dict(new_video.items()))
 
+        # Verify that data can be deserialized more than once.
+        # (i.e. that it is not modified in-place during deserialization.)
+        Video.deserialize(data)
+
     def test_serialize__json(self):
         """
         Tests that serialized videos can be transformed to and from json.

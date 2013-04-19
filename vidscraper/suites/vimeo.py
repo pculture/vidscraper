@@ -330,10 +330,6 @@ class AdvancedIteratorMixin(AdvancedApiMixin):
                        u"method=vimeo.{method}&sort={sort}&page={page}&{method_params}")
     per_page = 50
 
-    def get_page(self, page_start, page_max):
-        url = self.get_page_url(page_start, page_max)
-        return self.request(url)
-
     def data_from_response(self, response):
         # Advanced api doesn't have etags, but it does have explicit
         # video counts.
@@ -401,7 +397,9 @@ class AdvancedFeed(AdvancedIteratorMixin, SimpleFeed):
 
     """
     def __init__(self, *args, **kwargs):
-        super(AdvancedFeed, self).__init__(*args, **kwargs)
+        # SimpleFeed's __init__ just warns us that it only returns 60
+        # results; we don't need that, so skip it!
+        super(SimpleFeed, self).__init__(*args, **kwargs)
         if not self.is_available():
             clsname = self.__class__.__name__
             if oauth_hook is None:

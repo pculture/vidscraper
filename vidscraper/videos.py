@@ -619,7 +619,7 @@ class VideoIterator(object):
                 data = self.get_video_data(item)
             except InvalidVideo:
                 continue
-            url = data['link']
+            url = data.get('link')
             video = registry.get_video(url,
                                        fields=self.video_fields,
                                        api_keys=self.api_keys,

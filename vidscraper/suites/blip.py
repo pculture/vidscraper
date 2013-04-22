@@ -123,8 +123,6 @@ class Feed(FeedparserFeed):
         return data
 
     def get_video_data(self, item):
-        if 'blip_puredescription' not in item:
-            raise InvalidVideo
         return Suite.parse_feed_entry(item)
 
 
@@ -150,6 +148,8 @@ class Suite(BaseSuite):
         and blip API requests (since those can also be done with feeds.)
 
         """
+        if 'blip_puredescription' not in entry:
+            raise InvalidVideo
         files = [VideoFile(url=enclosure.get('url'),
                            mime_type=enclosure.get('type'),
                            length=(enclosure.get('filesize') or

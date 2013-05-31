@@ -376,7 +376,8 @@ class AdvancedFeedTestCase(VimeoTestCase):
         If the page has 0 videos on it, no response items should be returned.
 
         """
-        response = mock.MagicMock(json={'videos': {'on_this_page': 0}})
+        response = mock.MagicMock()
+        response.json.return_value = {'videos': {'on_this_page': 0}}
         items = self.feed.get_response_items(response)
         self.assertEqual(len(items), 0)
 
@@ -386,7 +387,8 @@ class AdvancedFeedTestCase(VimeoTestCase):
         should be returned.
 
         """
-        response = mock.MagicMock(json={})
+        response = mock.MagicMock()
+        response.json.return_value = {}
         items = self.feed.get_response_items(response)
         self.assertEqual(len(items), 0)
 
@@ -423,7 +425,8 @@ class AdvancedFeedTestCase(VimeoTestCase):
         returned.
 
         """
-        response = mock.MagicMock(json={})
+        response = mock.MagicMock()
+        response.json.return_value = {}
         data = self.feed.data_from_response(response)
         self.assertEqual(data, {'video_count': 0})
 

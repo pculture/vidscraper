@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'feedparser>=5.1.2',
         'beautifulsoup4>=4.0.2',
-        'requests>=0.13.0,<1.0.0',
+        'requests>=1.0.0',
         'lxml>=2.3.4',
     ],
     extras_require={

@@ -114,7 +114,7 @@ class SimpleLoader(PathMixin, VideoLoader):
     url_format = u"http://vimeo.com/api/v2/video/{video_id}.json"
 
     def get_video_data(self, response):
-        return Suite.simple_api_video_to_data(response.json[0])
+        return Suite.simple_api_video_to_data(response.json()[0])
 
 
 class AdvancedLoader(AdvancedApiMixin, PathMixin, VideoLoader):
@@ -131,7 +131,7 @@ class AdvancedLoader(AdvancedApiMixin, PathMixin, VideoLoader):
 
     def get_video_data(self, response):
         return AdvancedApiMixin.get_video_data(self,
-                                               response.json['video'][0])
+                                               response.json()['video'][0])
 
 
 class SimpleFeed(BaseFeed):
@@ -223,7 +223,7 @@ class SimpleFeed(BaseFeed):
     def get_response_items(self, response):
         if response.status_code == 403:
             return []
-        return response.json
+        return response.json()
 
     def get_video_data(self, item):
         return Suite.simple_api_video_to_data(item)
@@ -257,26 +257,26 @@ class SimpleFeed(BaseFeed):
         """
         data = {}
         # User is very different
-        if "display_name" in response.json:
-            display_name = response.json['display_name']
+        if "display_name" in response.json():
+            display_name = response.json()['display_name']
             request_type = (self.url_data['request_type'] if
                             self.url_data['request_type'] in
                             ('videos', 'likes', 'appears_in',
                              'all_videos', 'subscriptions')
                             else 'videos')
             count = None
-            webpage = response.json['profile_url']
+            webpage = response.json()['profile_url']
             if request_type == 'videos':
                 title = "{0}'s videos".format(display_name)
-                count = response.json['total_videos_uploaded']
-                webpage = response.json['videos_url']
+                count = response.json()['total_videos_uploaded']
+                webpage = response.json()['videos_url']
             elif request_type == 'likes':
                 title = 'Videos {0} likes'.format(display_name)
-                count = response.json['total_videos_liked']
+                count = response.json()['total_videos_liked']
                 webpage = "{0}/likes".format(webpage)
             elif request_type == 'appears_in':
                 title = "Videos {0} appears in".format(display_name)
-                count = response.json['total_videos_appears_in']
+                count = response.json()['total_videos_appears_in']
             elif request_type == 'all_videos':
                 title = "{0}'s videos and videos {0} appears in".format(
                             display_name)
@@ -287,33 +287,33 @@ class SimpleFeed(BaseFeed):
                 # if this is the simple API, we can only get up to 60 videos;
                 # if it's the advanced API, this will be overridden anyway.
                 'video_count': min(count, 60),
-                'description': response.json['bio'],
+                'description': response.json()['bio'],
                 'webpage': webpage,
-                'thumbnail_url': response.json['portrait_huge']
+                'thumbnail_url': response.json()['portrait_huge']
             })
         else:
             # It's a channel, album, or group feed.
 
             # Title - albums use 'title'; channels/groups use 'name'
-            if "title" in response.json:
-                title = response.json['title']
+            if "title" in response.json():
+                title = response.json()['title']
             else:
-                title = response.json['name']
+                title = response.json()['name']
 
             # Albums and groups have a small thumbnail (~100x75). Groups and
             # channels have a large logo, as well, but it seems like a paid
             # feature - some groups/channels have a blank value there.
-            thumbnail_url = response.json.get('logo')
-            if not thumbnail_url and 'thumbnail' in response.json:
-                thumbnail_url = response.json['thumbnail']
+            thumbnail_url = response.json().get('logo')
+            if not thumbnail_url and 'thumbnail' in response.json():
+                thumbnail_url = response.json()['thumbnail']
 
             data.update({
                 'title': title,
                 # if this is the simple API, we can only get up to 60 videos;
                 # if it's the advanced API, this will be overridden anyway.
-                'video_count': min(response.json['total_videos'], 60),
-                'description': response.json['description'],
-                'webpage': response.json['url'],
+                'video_count': min(response.json()['total_videos'], 60),
+                'description': response.json()['description'],
+                'webpage': response.json()['url'],
                 'thumbnail_url': thumbnail_url
             })
 
@@ -337,21 +337,21 @@ class AdvancedIteratorMixin(AdvancedApiMixin):
     def data_from_response(self, response):
         # Advanced api doesn't have etags, but it does have explicit
         # video counts.
-        if 'videos' not in response.json:
+        if 'videos' not in response.json():
             video_count = 0
         else:
-            video_count = int(response.json['videos']['total'])
+            video_count = int(response.json()['videos']['total'])
         return {'video_count': video_count}
 
     def get_response_items(self, response):
-        if 'videos' not in response.json:
+        if 'videos' not in response.json():
             return []
 
         # A blank page will not include the 'video' key.
-        if response.json['videos']['on_this_page'] == 0:
+        if response.json()['videos']['on_this_page'] == 0:
             return []
 
-        return response.json['videos']['video']
+        return response.json()['videos']['video']
 
 
 class Search(AdvancedIteratorMixin, BaseSearch):

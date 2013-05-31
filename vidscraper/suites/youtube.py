@@ -271,10 +271,10 @@ class Feed(ApiMixin, BaseFeed):
         raise UnhandledFeed(url)
 
     def get_response_items(self, response):
-        return response.json['feed'].get('entry', [])
+        return response.json()['feed'].get('entry', [])
 
     def data_from_response(self, response):
-        feed = response.json['feed']
+        feed = response.json()['feed']
         for l in feed['link']:
             if l['rel'] == 'alternate':
                 link = l['href']
@@ -286,7 +286,7 @@ class Feed(ApiMixin, BaseFeed):
             'title': feed['title']['$t'],
             'webpage': link,
             'guid': feed['id']['$t'],
-            'etag': response.headers['etag'] or feed['gd$etag'],
+            'etag': response.headers.get('etag') or feed['gd$etag'],
             'thumbnail_url': feed['logo']['$t'],
         }
 
@@ -309,14 +309,14 @@ class Search(ApiMixin, BaseSearch):
         # search results (max 999).
         if response.status_code == 400:
             return []
-        return response.json['feed'].get('entry', [])
+        return response.json()['feed'].get('entry', [])
 
     def data_from_response(self, response):
         # Response will have a 400 error code (and no useful metadata) if
         # we're beyond the end of the search results (max 999).
         if response.status_code == 400:
             return {}
-        feed = response.json['feed']
+        feed = response.json()['feed']
         return {
             'video_count': feed['openSearch$totalResults']['$t'],
         }

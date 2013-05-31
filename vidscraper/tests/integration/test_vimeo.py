@@ -59,6 +59,7 @@ right to choose after the National Day of Action Rally to Stop Stupak-Pitts, \
             }
 
         for key, value in expected.items():
+            print value, getattr(video, key)
             self.assertEqual(value, getattr(video, key))
 
     def test_feed(self):

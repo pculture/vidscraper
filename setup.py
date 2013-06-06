@@ -1,9 +1,22 @@
+import os
+import re
 from setuptools import setup, find_packages
+
+
+VERSIONFILE = os.path.join('vidscraper', '__init__.py')
+VSRE = r"""^__version__ = \(([^\)]+)\)"""
+
+
+def get_version():
+    version_file = open(VERSIONFILE, 'rt').read()
+    version = re.search(VSRE, version_file, re.M).group(1)
+    version = '.'.join([part.strip() for part in version.split(',')])
+    return version
 
 
 setup(
     name="vidscraper",
-    version='1.0.2',
+    version=get_version(),
     maintainer='Participatory Culture Foundation',
     maintainer_email='dev@mirocommunity.org',
     url='https://github.com/pculture/vidscraper',

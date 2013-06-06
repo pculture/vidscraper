@@ -257,26 +257,27 @@ class SimpleFeed(BaseFeed):
         """
         data = {}
         # User is very different
-        if "display_name" in response.json():
-            display_name = response.json()['display_name']
+        response_json = response.json()
+        if "display_name" in response_json:
+            display_name = response_json['display_name']
             request_type = (self.url_data['request_type'] if
                             self.url_data['request_type'] in
                             ('videos', 'likes', 'appears_in',
                              'all_videos', 'subscriptions')
                             else 'videos')
             count = None
-            webpage = response.json()['profile_url']
+            webpage = response_json['profile_url']
             if request_type == 'videos':
                 title = "{0}'s videos".format(display_name)
-                count = response.json()['total_videos_uploaded']
-                webpage = response.json()['videos_url']
+                count = response_json['total_videos_uploaded']
+                webpage = response_json['videos_url']
             elif request_type == 'likes':
                 title = 'Videos {0} likes'.format(display_name)
-                count = response.json()['total_videos_liked']
+                count = response_json['total_videos_liked']
                 webpage = "{0}/likes".format(webpage)
             elif request_type == 'appears_in':
                 title = "Videos {0} appears in".format(display_name)
-                count = response.json()['total_videos_appears_in']
+                count = response_json['total_videos_appears_in']
             elif request_type == 'all_videos':
                 title = "{0}'s videos and videos {0} appears in".format(
                             display_name)
@@ -287,33 +288,33 @@ class SimpleFeed(BaseFeed):
                 # if this is the simple API, we can only get up to 60 videos;
                 # if it's the advanced API, this will be overridden anyway.
                 'video_count': min(count, 60),
-                'description': response.json()['bio'],
+                'description': response_json['bio'],
                 'webpage': webpage,
-                'thumbnail_url': response.json()['portrait_huge']
+                'thumbnail_url': response_json['portrait_huge']
             })
         else:
             # It's a channel, album, or group feed.
 
             # Title - albums use 'title'; channels/groups use 'name'
-            if "title" in response.json():
-                title = response.json()['title']
+            if "title" in response_json:
+                title = response_json['title']
             else:
-                title = response.json()['name']
+                title = response_json['name']
 
             # Albums and groups have a small thumbnail (~100x75). Groups and
             # channels have a large logo, as well, but it seems like a paid
             # feature - some groups/channels have a blank value there.
-            thumbnail_url = response.json().get('logo')
+            thumbnail_url = response_json.get('logo')
             if not thumbnail_url and 'thumbnail' in response.json():
-                thumbnail_url = response.json()['thumbnail']
+                thumbnail_url = response_json['thumbnail']
 
             data.update({
                 'title': title,
                 # if this is the simple API, we can only get up to 60 videos;
                 # if it's the advanced API, this will be overridden anyway.
-                'video_count': min(response.json()['total_videos'], 60),
-                'description': response.json()['description'],
-                'webpage': response.json()['url'],
+                'video_count': min(response_json['total_videos'], 60),
+                'description': response_json['description'],
+                'webpage': response_json['url'],
                 'thumbnail_url': thumbnail_url
             })
 
@@ -335,23 +336,25 @@ class AdvancedIteratorMixin(AdvancedApiMixin):
         return self.request(url)
 
     def data_from_response(self, response):
+        response_json = response.json()
         # Advanced api doesn't have etags, but it does have explicit
         # video counts.
-        if 'videos' not in response.json():
+        if 'videos' not in response_json:
             video_count = 0
         else:
-            video_count = int(response.json()['videos']['total'])
+            video_count = int(response_json['videos']['total'])
         return {'video_count': video_count}
 
     def get_response_items(self, response):
-        if 'videos' not in response.json():
+        response_json = response.json()
+        if 'videos' not in response_json:
             return []
 
         # A blank page will not include the 'video' key.
-        if response.json()['videos']['on_this_page'] == 0:
+        if response_json['videos']['on_this_page'] == 0:
             return []
 
-        return response.json()['videos']['video']
+        return response_json['videos']['video']
 
 
 class Search(AdvancedIteratorMixin, BaseSearch):

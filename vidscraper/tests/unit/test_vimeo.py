@@ -1,3 +1,5 @@
+# encoding: utf8
+
 # Copyright 2009 - Participatory Culture Foundation
 #
 # This file is part of vidscraper.
@@ -187,7 +189,7 @@ class SimpleFeedTestCase(VimeoTestCase):
         info_file = self.get_data_file('vimeo/info_user.json')
         response = self.get_response(info_file.read())
         expected = {
-            'title': "Jake Lodwick's videos",
+            'title': u"Jake Lødwick's videos",
             'video_count': 60,
             'description': '',
             'webpage': u'http://vimeo.com/jakob/videos',
@@ -198,7 +200,7 @@ class SimpleFeedTestCase(VimeoTestCase):
 
         self.feed.url_data['request_type'] = 'likes'
         expected.update({
-            'title': "Videos Jake Lodwick likes",
+            'title': u"Videos Jake Lødwick likes",
             'webpage': u'http://vimeo.com/jakob/likes',
         })
         data = self.feed.data_from_response(response)
@@ -206,7 +208,7 @@ class SimpleFeedTestCase(VimeoTestCase):
 
         self.feed.url_data['request_type'] = 'appears_in'
         expected.update({
-            'title': "Videos Jake Lodwick appears in",
+            'title': u"Videos Jake Lødwick appears in",
             'webpage': u'http://vimeo.com/jakob',
         })
         data = self.feed.data_from_response(response)
@@ -214,7 +216,7 @@ class SimpleFeedTestCase(VimeoTestCase):
 
         self.feed.url_data['request_type'] = 'all_videos'
         expected.update({
-            'title': "Jake Lodwick's videos and videos Jake Lodwick appears in",
+            'title': u"Jake Lødwick's videos and videos Jake Lødwick appears in",
             'video_count': None,
         })
         data = self.feed.data_from_response(response)
@@ -222,7 +224,7 @@ class SimpleFeedTestCase(VimeoTestCase):
 
         self.feed.url_data['request_type'] = 'subscriptions'
         expected.update({
-            'title': "Videos Jake Lodwick is subscribed to",
+            'title': u"Videos Jake Lødwick is subscribed to",
         })
         data = self.feed.data_from_response(response)
         self.assertEqual(data, expected)

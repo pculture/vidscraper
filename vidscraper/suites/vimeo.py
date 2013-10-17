@@ -23,6 +23,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import unicode_literals
+
 import datetime
 import re
 import urlparse
@@ -331,10 +333,6 @@ class AdvancedIteratorMixin(AdvancedApiMixin):
                        u"method=vimeo.{method}&sort={sort}&page={page}&{method_params}")
     per_page = 50
 
-    def get_page(self, page_start, page_max):
-        url = self.get_page_url(page_start, page_max)
-        return self.request(url)
-
     def data_from_response(self, response):
         response_json = response.json()
         # Advanced api doesn't have etags, but it does have explicit
@@ -404,14 +402,17 @@ class AdvancedFeed(AdvancedIteratorMixin, SimpleFeed):
 
     """
     def __init__(self, *args, **kwargs):
-        super(AdvancedFeed, self).__init__(*args, **kwargs)
+        # SimpleFeed's __init__ just warns us that it only returns 60
+        # results; we don't need that, so skip it!
+        super(SimpleFeed, self).__init__(*args, **kwargs)
         if not self.is_available():
+            clsname = self.__class__.__name__
             if oauth_hook is None:
-                raise UnhandledFeed(u"{0} requires requests-oauth.".format(
-                                    self.__class__.__name__))
+                msg = u"{0} requires requests-oauth.".format(clsname)
+                warnings.warn(msg)
+                raise UnhandledFeed(msg)
             else:
-                raise UnhandledFeed(u"{0} requires API keys.".format(
-                                    self.__class__.__name__))
+                raise UnhandledFeed(u"{0} requires API keys.".format(clsname))
 
     def get_page_url_data(self, *args, **kwargs):
         data = super(AdvancedFeed, self).get_page_url_data(*args, **kwargs)

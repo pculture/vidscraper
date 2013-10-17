@@ -163,7 +163,7 @@ Caramelldansen""",
                        'thumbnail_url', 'user', 'user_url', 'tags', 'link',
                        'guid', 'license', 'files'],
             'title': u'CaramellDansen (Full Version + Lyrics)',
-            'thumbnail_url': 'http://i3.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
+            'thumbnail_url': 'http://i1.ytimg.com/vi/J_DV9b0x7v4/hqdefault.jpg',
             'link': u'http://www.youtube.com/watch?v=J_DV9b0x7v4',
             'user': u'DrunkenVuko',
             'guid': u'http://gdata.youtube.com/feeds/api/videos/J_DV9b0x7v4',
@@ -215,7 +215,7 @@ Humpbacks especially have extremely complex communication systems.")
         feed_url = 'http://www.youtube.com/user/DukeJewishStudies/videos'
         feed = self.suite.get_feed(feed_url)
         feed.load()
-        self.assertEqual(feed.title, 'Uploads by DukeJewishStudies')
+        self.assertEqual(feed.title, 'Uploads by Duke Jewish Studies')
 
     def test_feed__beyond_page_range(self):
         """If you go beyond the end of a feed, StopIteration should be raised."""

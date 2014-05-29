@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="vidscraper",
+    description="Python library which provides a simple API for fetching video data",
     version='1.0.2',
     maintainer='Participatory Culture Foundation',
     maintainer_email='dev@mirocommunity.org',
